@@ -18,8 +18,8 @@ COMPANY_FOOTER = "Data from Unity Catalog gold tables. Comments stored in Postgr
 # Actions page subtitle (under the app name on /actions)
 COMPANY_ACTIONS_SUBTITLE = "Actions by role"
 
-# Primary brand color (hex). Novelis burgundy/dark red from brand palette.
-COMPANY_PRIMARY_COLOR = "#8B0304"
+# Primary brand color (hex). Novelis blue from brand palette.
+COMPANY_PRIMARY_COLOR = "#0072CE"
 
 
 def get_company():
