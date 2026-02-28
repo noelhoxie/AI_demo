@@ -18,7 +18,7 @@ from pathlib import Path
 from flask import Flask, Response, request, jsonify
 
 import db
-from build_sap_data import build_sap_data
+from data_pipeline.build_sap_data import build_sap_data
 from supply_chain_simulator import run_simulation
 from tariff_rates import enrich_procurement_with_tariff
 

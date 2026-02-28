@@ -72,11 +72,11 @@ displayHTML(iframe_html)
 For a **ready-to-run implementation** in Databricks using Delta tables:
 
 1. **Import this repo** into Databricks (Repos or Workspace).
-2. **Run once:** `databricks/notebooks/01_setup_sap_delta_tables.py` — creates SAP-style Delta tables (or use your own).
-3. **Run to view:** `databricks/notebooks/02_control_tower_dashboard.py` — loads from Delta and runs `displayHTML()` with the Control Tower. Set the HTML path (e.g. `/Workspace/Repos/<org>/<repo>/supply_chain_control_tower.html`) if needed.
-4. **(Optional)** `databricks/notebooks/03_demand_forecast.py` — demand aggregation and simple forecast.
+2. **Run once:** `data_pipeline/01_setup_sap_delta_tables.py` — creates SAP-style Delta tables (or use your own).
+3. **Run to view:** `data_pipeline/02_control_tower_dashboard.py` — loads from Delta and runs `displayHTML()` with the Control Tower. Set the HTML path (e.g. `/Workspace/Repos/<org>/<repo>/supply_chain_control_tower.html`) if needed.
+4. **(Optional)** `data_pipeline/03_demand_forecast.py` — demand aggregation and simple forecast.
 
-See **`databricks/README.md`** for config, table-to-UI mapping, scheduling, and Asset Bundles.
+See **`data_pipeline/README.md`** for pipeline structure. Use **`databricks.yml`** and Asset Bundles for job scheduling and deployment.
 
 ## Flask app with PostgreSQL (same connection as your Dash app)
 
@@ -96,9 +96,11 @@ The app creates schema `{PGAPPNAME}_schema_{PGUSER}` and tables `procurement`, `
 
 - **app_supply_chain.py** — Flask app that serves the control tower with data from PostgreSQL.
 
-- **build_sap_data.py** — Generates SAP-style mock data; used for seeding and for Databricks displayHTML.
+- **app/** — All app assets: **novelis_dashboard**, **databricks-flask-app**, **AI_App**. See **`app/README.md`**.
 
-- **databricks/** — Notebooks and README to implement the Control Tower in Databricks with Delta tables and displayHTML.
+- **resources/dashboards/** — Three **Databricks Lakeview dashboards** (SAP Orders & Delivery, SAP Procurement & Inventory, QAD OEE) that display gold table data. Deploy with the bundle after setting `warehouse_id` in `databricks.yml`. See **`resources/dashboards/README.md`**.
+
+- **data_pipeline/** — All data pipelines: SAP bronze/silver/gold notebooks (`sap/`), QAD OEE pipeline (`qad/`), **build_sap_data.py**, **seed_1000_pos.py**, cleanup and setup notebooks. See **`data_pipeline/README.md`**.
 
 - **adient_procurement_app.html** — **Adient procurement app**: raw material cost forecasting and make-buy decisions. Uses demo SAP-style data (MARA, LFA1, EKPO/MBEW price history) for Adient-relevant materials (steel, foam, fabric, plastic, mechanisms).  
   - **Cost forecast**: per-material historical and 6‑month forward forecast (linear trend).  

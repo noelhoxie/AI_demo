@@ -11,6 +11,9 @@ variables:
     default: serverless_hadnqm_catalog
   schema:
     default: ai_sc_test
+  # SQL warehouse ID for Lakeview dashboards. Set in target (e.g. dev.variables.warehouse_id) or use lookup.
+  warehouse_id:
+    default: ""
 
 resources:
   jobs:
@@ -21,55 +24,55 @@ resources:
       tasks:
         - task_key: bronze_ekko
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_ekko.py
+            notebook_path: data_pipeline/sap/bronze_ekko.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
         - task_key: bronze_ekpo
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_ekpo.py
+            notebook_path: data_pipeline/sap/bronze_ekpo.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
         - task_key: bronze_vbak
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_vbak.py
+            notebook_path: data_pipeline/sap/bronze_vbak.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
         - task_key: bronze_vbap
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_vbap.py
+            notebook_path: data_pipeline/sap/bronze_vbap.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
         - task_key: bronze_likp
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_likp.py
+            notebook_path: data_pipeline/sap/bronze_likp.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
         - task_key: bronze_lips
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_lips.py
+            notebook_path: data_pipeline/sap/bronze_lips.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
         - task_key: bronze_mard
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_mard.py
+            notebook_path: data_pipeline/sap/bronze_mard.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
         - task_key: bronze_aufk
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_aufk.py
+            notebook_path: data_pipeline/sap/bronze_aufk.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
         - task_key: silver_procurement
           notebook_task:
-            notebook_path: databricks/notebooks/sap/silver_procurement.py
+            notebook_path: data_pipeline/sap/silver_procurement.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -78,7 +81,7 @@ resources:
             - task_key: bronze_ekpo
         - task_key: silver_orders
           notebook_task:
-            notebook_path: databricks/notebooks/sap/silver_orders.py
+            notebook_path: data_pipeline/sap/silver_orders.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -87,7 +90,7 @@ resources:
             - task_key: bronze_vbap
         - task_key: silver_delivery
           notebook_task:
-            notebook_path: databricks/notebooks/sap/silver_delivery.py
+            notebook_path: data_pipeline/sap/silver_delivery.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -96,7 +99,7 @@ resources:
             - task_key: bronze_lips
         - task_key: silver_inventory
           notebook_task:
-            notebook_path: databricks/notebooks/sap/silver_inventory.py
+            notebook_path: data_pipeline/sap/silver_inventory.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -104,7 +107,7 @@ resources:
             - task_key: bronze_mard
         - task_key: gold_orders
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_orders.py
+            notebook_path: data_pipeline/sap/gold_orders.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -112,7 +115,7 @@ resources:
             - task_key: silver_orders
         - task_key: gold_procurement
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_procurement.py
+            notebook_path: data_pipeline/sap/gold_procurement.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -120,7 +123,7 @@ resources:
             - task_key: silver_procurement
         - task_key: gold_inventory
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_inventory.py
+            notebook_path: data_pipeline/sap/gold_inventory.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -128,7 +131,7 @@ resources:
             - task_key: silver_inventory
         - task_key: gold_kpi_orders
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_kpi_orders.py
+            notebook_path: data_pipeline/sap/gold_kpi_orders.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -136,7 +139,7 @@ resources:
             - task_key: gold_orders
         - task_key: gold_kpi_procurement
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_kpi_procurement.py
+            notebook_path: data_pipeline/sap/gold_kpi_procurement.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -144,7 +147,7 @@ resources:
             - task_key: gold_procurement
         - task_key: gold_kpi_inventory
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_kpi_inventory.py
+            notebook_path: data_pipeline/sap/gold_kpi_inventory.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -152,7 +155,7 @@ resources:
             - task_key: gold_inventory
         - task_key: gold_kpi_delivery
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_kpi_delivery.py
+            notebook_path: data_pipeline/sap/gold_kpi_delivery.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -165,13 +168,13 @@ resources:
       tasks:
         - task_key: cleanup_schema
           notebook_task:
-            notebook_path: databricks/notebooks/cleanup_schema.py
+            notebook_path: data_pipeline/cleanup_schema.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
         - task_key: bronze_ekko
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_ekko.py
+            notebook_path: data_pipeline/sap/bronze_ekko.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -179,7 +182,7 @@ resources:
             - task_key: cleanup_schema
         - task_key: bronze_ekpo
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_ekpo.py
+            notebook_path: data_pipeline/sap/bronze_ekpo.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -187,7 +190,7 @@ resources:
             - task_key: cleanup_schema
         - task_key: bronze_vbak
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_vbak.py
+            notebook_path: data_pipeline/sap/bronze_vbak.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -195,7 +198,7 @@ resources:
             - task_key: cleanup_schema
         - task_key: bronze_vbap
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_vbap.py
+            notebook_path: data_pipeline/sap/bronze_vbap.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -203,7 +206,7 @@ resources:
             - task_key: cleanup_schema
         - task_key: bronze_likp
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_likp.py
+            notebook_path: data_pipeline/sap/bronze_likp.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -211,7 +214,7 @@ resources:
             - task_key: cleanup_schema
         - task_key: bronze_lips
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_lips.py
+            notebook_path: data_pipeline/sap/bronze_lips.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -219,7 +222,7 @@ resources:
             - task_key: cleanup_schema
         - task_key: bronze_mard
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_mard.py
+            notebook_path: data_pipeline/sap/bronze_mard.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -227,7 +230,7 @@ resources:
             - task_key: cleanup_schema
         - task_key: bronze_aufk
           notebook_task:
-            notebook_path: databricks/notebooks/sap/bronze_aufk.py
+            notebook_path: data_pipeline/sap/bronze_aufk.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -235,7 +238,7 @@ resources:
             - task_key: cleanup_schema
         - task_key: silver_procurement
           notebook_task:
-            notebook_path: databricks/notebooks/sap/silver_procurement.py
+            notebook_path: data_pipeline/sap/silver_procurement.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -244,7 +247,7 @@ resources:
             - task_key: bronze_ekpo
         - task_key: silver_orders
           notebook_task:
-            notebook_path: databricks/notebooks/sap/silver_orders.py
+            notebook_path: data_pipeline/sap/silver_orders.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -253,7 +256,7 @@ resources:
             - task_key: bronze_vbap
         - task_key: silver_delivery
           notebook_task:
-            notebook_path: databricks/notebooks/sap/silver_delivery.py
+            notebook_path: data_pipeline/sap/silver_delivery.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -262,7 +265,7 @@ resources:
             - task_key: bronze_lips
         - task_key: silver_inventory
           notebook_task:
-            notebook_path: databricks/notebooks/sap/silver_inventory.py
+            notebook_path: data_pipeline/sap/silver_inventory.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -270,7 +273,7 @@ resources:
             - task_key: bronze_mard
         - task_key: gold_orders
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_orders.py
+            notebook_path: data_pipeline/sap/gold_orders.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -278,7 +281,7 @@ resources:
             - task_key: silver_orders
         - task_key: gold_procurement
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_procurement.py
+            notebook_path: data_pipeline/sap/gold_procurement.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -286,7 +289,7 @@ resources:
             - task_key: silver_procurement
         - task_key: gold_inventory
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_inventory.py
+            notebook_path: data_pipeline/sap/gold_inventory.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -294,7 +297,7 @@ resources:
             - task_key: silver_inventory
         - task_key: gold_kpi_orders
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_kpi_orders.py
+            notebook_path: data_pipeline/sap/gold_kpi_orders.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -302,7 +305,7 @@ resources:
             - task_key: gold_orders
         - task_key: gold_kpi_procurement
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_kpi_procurement.py
+            notebook_path: data_pipeline/sap/gold_kpi_procurement.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -310,7 +313,7 @@ resources:
             - task_key: gold_procurement
         - task_key: gold_kpi_inventory
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_kpi_inventory.py
+            notebook_path: data_pipeline/sap/gold_kpi_inventory.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -318,7 +321,7 @@ resources:
             - task_key: gold_inventory
         - task_key: gold_kpi_delivery
           notebook_task:
-            notebook_path: databricks/notebooks/sap/gold_kpi_delivery.py
+            notebook_path: data_pipeline/sap/gold_kpi_delivery.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -326,7 +329,7 @@ resources:
             - task_key: silver_delivery
         - task_key: qad_bronze_ingest
           notebook_task:
-            notebook_path: databricks/notebooks/qad/01_qad_bronze_ingest.py
+            notebook_path: data_pipeline/qad/01_qad_bronze_ingest.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -334,7 +337,7 @@ resources:
             - task_key: cleanup_schema
         - task_key: qad_silver_production
           notebook_task:
-            notebook_path: databricks/notebooks/qad/02_qad_silver_production.py
+            notebook_path: data_pipeline/qad/02_qad_silver_production.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -342,7 +345,7 @@ resources:
             - task_key: qad_bronze_ingest
         - task_key: qad_gold_oee
           notebook_task:
-            notebook_path: databricks/notebooks/qad/03_qad_gold_oee.py
+            notebook_path: data_pipeline/qad/03_qad_gold_oee.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -355,13 +358,13 @@ resources:
       tasks:
         - task_key: qad_bronze_ingest
           notebook_task:
-            notebook_path: databricks/notebooks/qad/01_qad_bronze_ingest.py
+            notebook_path: data_pipeline/qad/01_qad_bronze_ingest.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
         - task_key: qad_silver_production
           notebook_task:
-            notebook_path: databricks/notebooks/qad/02_qad_silver_production.py
+            notebook_path: data_pipeline/qad/02_qad_silver_production.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
@@ -369,21 +372,36 @@ resources:
             - task_key: qad_bronze_ingest
         - task_key: qad_gold_oee
           notebook_task:
-            notebook_path: databricks/notebooks/qad/03_qad_gold_oee.py
+            notebook_path: data_pipeline/qad/03_qad_gold_oee.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
           depends_on:
             - task_key: qad_silver_production
+  dashboards:
+    sap_orders_delivery:
+      display_name: SAP Orders and Delivery
+      file_path: resources/dashboards/sap_orders_delivery.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${var.schema}
+    sap_procurement_inventory:
+      display_name: SAP Procurement and Inventory
+      file_path: resources/dashboards/sap_procurement_inventory.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${var.schema}
+    qad_oee:
+      display_name: QAD OEE
+      file_path: resources/dashboards/qad_oee.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${var.schema}
   apps:
     novelis_dashboard:
       name: novelis-sc-oee-dashboard
-      source_code_path: novelis_dashboard
+      source_code_path: app/novelis_dashboard
       description: Supply chain and production OEE dashboard from gold tables (serverless_hadnqm_catalog / ai_sc_test)
-    supply_chain_dashboard:
-      name: supply-chain-dashboard
-      source_code_path: supply_chain_dashboard
-      description: SAP and QAD gold dashboard with comments (Orders, Procurement, Inventory & Delivery, Production OEE)
 
 targets:
   dev:
@@ -393,3 +411,5 @@ targets:
     variables:
       catalog: serverless_hadnqm_catalog
       schema: ai_sc_test
+      # Set your SQL warehouse ID for Lakeview dashboards (SQL > Warehouses > copy ID).
+      warehouse_id: ""
