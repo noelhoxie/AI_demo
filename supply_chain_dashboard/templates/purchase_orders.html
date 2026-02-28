@@ -1,0 +1,245 @@
+{% extends "dashboard_base.html" %}
+
+{% block content %}
+<section class="panel active">
+  <div class="panel-content" id="po-panel">
+    <h2 class="actions-title">Outstanding purchase orders</h2>
+    <p class="sim-intro">All outstanding purchase orders. Data from procurement gold tables.</p>
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label for="po-filter-vendor">Vendor</label>
+        <select id="po-filter-vendor" aria-label="Filter by vendor">
+          <option value="">All vendors</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="po-filter-status">Status</label>
+        <select id="po-filter-status" aria-label="Filter by status">
+          <option value="">All statuses</option>
+          <option value="Open">Open</option>
+          <option value="Partial">Partial</option>
+          <option value="Sent">Sent</option>
+          <option value="Pending">Pending</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="po-search">Search</label>
+        <input type="text" id="po-search" placeholder="PO number…" aria-label="Search by PO number" />
+      </div>
+      <div class="filter-group">
+        <label for="po-limit">Show</label>
+        <select id="po-limit" aria-label="Rows to show">
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100" selected>100</option>
+          <option value="9999">All</option>
+        </select>
+      </div>
+      <span class="filter-count" id="po-filter-count"></span>
+      <button type="button" class="btn btn-secondary btn-refresh" id="po-refresh" aria-label="Refresh">Refresh</button>
+    </div>
+    <div class="chart-card">
+      <div class="table-wrap" style="max-height: 65vh; overflow: auto;">
+        <table class="data-table" id="po-table">
+          <thead>
+            <tr>
+              <th data-sort data-sort-key="po_number">PO number<span class="sort-indicator"></span></th>
+              <th data-sort data-sort-key="vendor">Vendor<span class="sort-indicator"></span></th>
+              <th data-sort data-sort-key="value">Value<span class="sort-indicator"></span></th>
+              <th data-sort data-sort-key="order_date">Order date<span class="sort-indicator"></span></th>
+              <th data-sort data-sort-key="status">Status<span class="sort-indicator"></span></th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="po-tbody"></tbody>
+        </table>
+      </div>
+      <p class="meta" id="po-meta" style="margin-top: 0.75rem;"></p>
+    </div>
+  </div>
+  <div id="po-edit-modal" class="modal-overlay" role="dialog" aria-labelledby="po-edit-title" aria-modal="true" style="display: none;">
+    <div class="modal-dialog" onclick="event.stopPropagation()">
+      <h3 id="po-edit-title">Edit purchase order</h3>
+      <input type="hidden" id="po-edit-number" />
+      <div class="form-group">
+        <label for="po-edit-vendor">Vendor</label>
+        <input type="text" id="po-edit-vendor" />
+      </div>
+      <div class="form-group">
+        <label for="po-edit-value">Value</label>
+        <input type="number" id="po-edit-value" step="0.01" min="0" />
+      </div>
+      <div class="form-group">
+        <label for="po-edit-order-date">Order date</label>
+        <input type="text" id="po-edit-order-date" placeholder="YYYY-MM-DD" />
+      </div>
+      <div class="form-group">
+        <label for="po-edit-delivery-date">Delivery date (optional)</label>
+        <input type="text" id="po-edit-delivery-date" placeholder="YYYY-MM-DD" />
+      </div>
+      <div class="form-group">
+        <label for="po-edit-status">Status</label>
+        <select id="po-edit-status">
+          <option value="Open">Open</option>
+          <option value="Partial">Partial</option>
+          <option value="Sent">Sent</option>
+          <option value="Pending">Pending</option>
+        </select>
+      </div>
+      <div id="po-edit-message" class="modal-message" role="status"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="po-edit-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="po-edit-save">Save</button>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  function formatNum(x) { return Number(x).toLocaleString(); }
+  function formatMoney(x) { return '$' + formatNum(Math.round(Number(x) || 0)); }
+  var fullList = [];
+  var sortKey = 'po_number';
+  var sortDir = 'asc';
+
+  function populateVendorFilter() {
+    var vendors = [...new Set(fullList.map(function(po) { return po.vendor; }).filter(Boolean))].sort();
+    var sel = document.getElementById('po-filter-vendor');
+    if (!sel) return;
+    var current = sel.value;
+    sel.innerHTML = '<option value="">All vendors</option>' + vendors.map(function(v) {
+      return '<option value="' + (typeof escapeHtml !== 'undefined' ? escapeHtml(v) : v) + '">' + (typeof escapeHtml !== 'undefined' ? escapeHtml(v) : v) + '</option>';
+    }).join('');
+    if (vendors.indexOf(current) >= 0) sel.value = current;
+  }
+
+  function applyFiltersAndSort() {
+    var vendor = (document.getElementById('po-filter-vendor') && document.getElementById('po-filter-vendor').value) || '';
+    var status = (document.getElementById('po-filter-status') && document.getElementById('po-filter-status').value) || '';
+    var q = (document.getElementById('po-search') && document.getElementById('po-search').value.trim().toLowerCase()) || '';
+    var limit = parseInt((document.getElementById('po-limit') && document.getElementById('po-limit').value) || '100', 10);
+    var list = fullList.filter(function(po) {
+      if (vendor && (po.vendor || '') !== vendor) return false;
+      if (status && (po.status || '') !== status) return false;
+      if (q && String(po.po_number || '').toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+    list.sort(function(a, b) {
+      var va = a[sortKey];
+      var vb = b[sortKey];
+      if (sortKey === 'value') { va = Number(va) || 0; vb = Number(vb) || 0; return sortDir === 'asc' ? va - vb : vb - va; }
+      if (sortKey === 'order_date') return sortDir === 'asc' ? String(va || '').localeCompare(vb || '') : String(vb || '').localeCompare(va || '');
+      va = String(va || ''); vb = String(vb || '');
+      var c = va.localeCompare(vb, undefined, { numeric: true });
+      return sortDir === 'asc' ? c : -c;
+    });
+    var showing = list.slice(0, limit);
+    var countEl = document.getElementById('po-filter-count');
+    if (countEl) countEl.textContent = 'Showing ' + showing.length + (list.length > limit ? ' of ' + list.length : '') + ' of ' + fullList.length + ' total';
+    return showing;
+  }
+
+  function updateSortUI() {
+    var headers = document.querySelectorAll('#po-table thead th[data-sort]');
+    if (headers) headers.forEach(function(th) {
+      th.removeAttribute('data-sort-direction');
+      if (th.getAttribute('data-sort-key') === sortKey) th.setAttribute('data-sort-direction', sortDir);
+      var ind = th.querySelector('.sort-indicator');
+      if (ind) ind.textContent = th.getAttribute('data-sort-key') === sortKey ? (sortDir === 'asc' ? ' \u2191' : ' \u2193') : '';
+    });
+  }
+
+  function renderTable(rows) {
+    var tbody = document.getElementById('po-tbody');
+    var meta = document.getElementById('po-meta');
+    if (!tbody) return;
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No purchase orders match the current filters.</td></tr>';
+      if (meta) meta.textContent = fullList.length ? '0 of ' + fullList.length + ' match.' : '';
+      return;
+    }
+    var esc = typeof escapeHtml !== 'undefined' ? escapeHtml : function(s) { return String(s); };
+    tbody.innerHTML = rows.map(function(po) {
+      var num = esc(po.po_number || '');
+      return '<tr><td>' + (num || '—') + '</td><td>' + esc(po.vendor || '—') + '</td><td>' + formatMoney(po.value) + '</td><td>' + esc(po.order_date || '—') + '</td><td>' + esc(po.status || 'Open') + '</td><td><button type="button" class="btn btn-secondary" style="padding:4px 8px; font-size:0.8rem;" data-po-edit data-po-number="' + num + '" data-po-vendor="' + esc(po.vendor || '') + '" data-po-value="' + (po.value != null ? po.value : '') + '" data-po-order-date="' + esc(po.order_date || '') + '" data-po-status="' + esc(po.status || '') + '">Edit</button></td></tr>';
+    }).join('');
+    tbody.querySelectorAll('[data-po-edit]').forEach(function(btn) {
+      btn.addEventListener('click', openPoEditModal);
+    });
+    if (meta) meta.textContent = rows.length + ' purchase order(s) shown.';
+  }
+
+  function load() {
+    var panel = document.getElementById('po-panel');
+    if (panel) panel.classList.add('is-loading');
+    fetch('/api/purchase-orders').then(function(r) { return r.json(); }).then(function(d) {
+      fullList = d.purchase_orders || [];
+      populateVendorFilter();
+      updateSortUI();
+      renderTable(applyFiltersAndSort());
+    }).catch(function() {
+      var tbody = document.getElementById('po-tbody');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Failed to load purchase orders.</td></tr>';
+    }).finally(function() { if (panel) panel.classList.remove('is-loading'); });
+  }
+
+  load();
+
+  ['po-filter-vendor', 'po-filter-status', 'po-limit'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', function() { renderTable(applyFiltersAndSort()); });
+  });
+  var searchEl = document.getElementById('po-search');
+  if (searchEl) searchEl.addEventListener('input', function() { renderTable(applyFiltersAndSort()); });
+  document.getElementById('po-refresh') && document.getElementById('po-refresh').addEventListener('click', load);
+
+  document.querySelectorAll('#po-table thead th[data-sort]').forEach(function(th) {
+    th.addEventListener('click', function() {
+      var key = this.getAttribute('data-sort-key');
+      if (key === sortKey) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortKey = key; sortDir = 'asc'; }
+      updateSortUI();
+      renderTable(applyFiltersAndSort());
+    });
+  });
+
+  var poModal = document.getElementById('po-edit-modal');
+  function openPoEditModal() {
+    var btn = this;
+    document.getElementById('po-edit-number').value = btn.getAttribute('data-po-number') || '';
+    document.getElementById('po-edit-vendor').value = btn.getAttribute('data-po-vendor') || '';
+    document.getElementById('po-edit-value').value = btn.getAttribute('data-po-value') || '';
+    document.getElementById('po-edit-order-date').value = btn.getAttribute('data-po-order-date') || '';
+    document.getElementById('po-edit-status').value = btn.getAttribute('data-po-status') || 'Open';
+    document.getElementById('po-edit-message').textContent = '';
+    poModal.style.display = 'flex';
+  }
+  function closePoEditModal() { poModal.style.display = 'none'; }
+  document.getElementById('po-edit-cancel').addEventListener('click', closePoEditModal);
+  poModal.addEventListener('click', function(e) { if (e.target === poModal) closePoEditModal(); });
+  document.getElementById('po-edit-save').addEventListener('click', function() {
+    var num = document.getElementById('po-edit-number').value.trim();
+    if (!num) return;
+    var msgEl = document.getElementById('po-edit-message');
+    msgEl.textContent = '';
+    var payload = {
+      vendor: document.getElementById('po-edit-vendor').value.trim(),
+      value: parseFloat(document.getElementById('po-edit-value').value) || 0,
+      order_date: document.getElementById('po-edit-order-date').value.trim() || null,
+      delivery_date: document.getElementById('po-edit-delivery-date').value.trim() || null,
+      status: document.getElementById('po-edit-status').value
+    };
+    fetch('/api/purchase-orders/' + encodeURIComponent(num), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+      .then(function(r) {
+        if (r.ok) { closePoEditModal(); load(); }
+        else { msgEl.textContent = r.data.error || 'Update failed'; msgEl.classList.add('error'); }
+      })
+      .catch(function() { msgEl.textContent = 'Request failed'; msgEl.classList.add('error'); });
+  });
+})();
+</script>
+{% endblock %}

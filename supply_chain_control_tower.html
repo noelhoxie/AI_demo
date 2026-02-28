@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Novelis | Supply Chain Control Tower</title>
+  <style>
+    :root {
+      --bg-dark: #0f1419;
+      --bg-card: #1a2332;
+      --bg-tab-active: #2d3b4f;
+      --accent: #8B0304;
+      --accent-hover: #a80405;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --border: #30363d;
+      --warning: #d4a013;
+      --danger: #e5534b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    .header {
+      background: linear-gradient(135deg, var(--bg-card) 0%, #15202b 100%);
+      border-bottom: 2px solid var(--accent);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .header .badge {
+      background: var(--accent);
+      color: var(--bg-dark);
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .header h1 .header-subtitle {
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-left: 0.35rem;
+    }
+    .tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 1.5rem;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+    .tabs button {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 1rem 1.25rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .tabs button:hover { color: var(--text); }
+    .tabs button.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      background: var(--bg-tab-active);
+    }
+    .panels { padding: 1.5rem; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .panel h2 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--text-muted);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 0.75rem 1rem;
+      background: rgba(0,168,120,0.12);
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .card-body { padding: 1rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.03); }
+    .status { font-weight: 500; }
+    .status.open { color: var(--warning); }
+    .status.confirmed { color: var(--accent); }
+    .status.delivered { color: var(--text-muted); }
+    .status.overdue { color: var(--danger); }
+    .kpi-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .kpi {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      min-width: 140px;
+    }
+    .kpi .label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+    .kpi .value { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-left: 0.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .databricks-note {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background: rgba(0,0,0,0.2);
+      border-radius: 6px;
+    }
+    .sim-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: end;
+    }
+    .sim-form .field { display: flex; flex-direction: column; gap: 0.25rem; }
+    .sim-form label { font-size: 0.75rem; color: var(--text-muted); }
+    .sim-form select, .sim-form input[type="text"] {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      min-width: 140px;
+    }
+    .btn {
+      background: var(--accent);
+      color: var(--bg-dark);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { color: var(--text); border-color: var(--text-muted); }
+    .sim-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      font-size: 0.85rem;
+    }
+    .sim-list li {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sim-list li:last-child { border-bottom: none; }
+    .sim-actions { margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .sim-message { margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted); }
+    .sim-message.error { color: var(--danger); }
+    .sim-message.success { color: var(--accent); }
+    .sim-card .card-header { background: rgba(139,3,4,0.15); }
+    .sim-card .sim-presets { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem; }
+    .sim-card .sim-presets .field { margin-bottom: 0; }
+    .sim-card .sim-presets label { font-size: 0.75rem; color: var(--text-muted); }
+    .sim-card .sim-presets input, .sim-card .sim-presets select { min-width: 100px; }
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: flex-end;
+      padding: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    .filter-bar .field { display: flex; flex-direction: column; gap: 0.25rem; }
+    .filter-bar label { font-size: 0.75rem; color: var(--text-muted); }
+    .filter-bar input, .filter-bar select {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      min-width: 120px;
+    }
+    .filter-bar .filter-summary { font-size: 0.85rem; color: var(--text-muted); align-self: center; margin-left: auto; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div>
+      <h1>Novelis <span class="header-subtitle">| Supply Chain Tower</span></h1>
+      <span class="badge">SAP Data</span>
+    </div>
+    <div style="font-size:0.85rem; color: var(--text-muted);" id="lastRefresh">Last refresh: --</div>
+  </header>
+  <nav class="tabs">
+    <button type="button" class="tab active" data-tab="procurement">Procurement</button>
+    <button type="button" class="tab" data-tab="inventory">Inventory</button>
+    <button type="button" class="tab" data-tab="manufacturing">Manufacturing</button>
+    <button type="button" class="tab" data-tab="production-orders">Production orders</button>
+    <button type="button" class="tab" data-tab="production-all">All production orders</button>
+    <button type="button" class="tab" data-tab="logistics">Logistics</button>
+    <button type="button" class="tab" data-tab="demand">Demand Planning</button>
+    <button type="button" class="tab" data-tab="simulator">Disruption Simulator</button>
+  </nav>
+  <main class="panels">
+    <!-- Procurement -->
+    <section class="panel active" id="panel-procurement">
+      <h2>Procurement — Purchase orders &amp; suppliers</h2>
+      <div class="kpi-row" id="kpi-procurement"></div>
+      <div class="card">
+        <div class="card-header">Purchase orders (SAP EKKO / EKPO)</div>
+        <div class="card-body">
+          <p class="sim-message" style="margin-bottom:0.75rem;">Tariff % and Total cost (COGS) are based on current US tariff rates by country of origin. COGS = base value + tariff.</p>
+          <div id="procurement-loading" class="loading">Loading SAP data…</div>
+          <table id="procurement-table" style="display:none;">
+            <thead><tr><th>PO Number</th><th>Vendor</th><th>Country</th><th>Material</th><th>Quantity</th><th>Base Value</th><th>Tariff %</th><th>Tariff Amount</th><th>Total Cost (COGS)</th><th>Status</th><th>Delivery Date</th></tr></thead>
+            <tbody id="procurement-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card sim-card" style="margin-top:1rem;">
+        <div class="card-header">Simulation</div>
+        <div class="card-body">
+          <p class="sim-message" style="margin-bottom:0.75rem;">Run what-if scenarios for procurement. Add a supplier delay, then run to see impact on POs and delivery dates.</p>
+          <div class="sim-presets">
+            <div class="field">
+              <label>Severity</label>
+              <select id="sim-procurement-severity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select>
+            </div>
+            <div class="field">
+              <label>Vendor (optional)</label>
+              <input type="text" id="sim-procurement-scope" placeholder="e.g. V-10001" />
+            </div>
+            <button type="button" class="btn" data-page-add="supplier_delay" data-page-scope="sim-procurement-scope" data-page-severity="sim-procurement-severity">Add supplier delay</button>
+          </div>
+          <div class="sim-actions">
+            <button type="button" class="btn btn-page-run" data-page-msg="sim-msg-procurement">Run simulation</button>
+            <button type="button" class="btn btn-secondary btn-page-reset">Reset to live data</button>
+          </div>
+          <div id="sim-msg-procurement" class="sim-message"></div>
+        </div>
+      </div>
+    </section>
+    <!-- Inventory -->
+    <section class="panel" id="panel-inventory">
+      <h2>Inventory — Stock levels &amp; warehouses</h2>
+      <div class="kpi-row" id="kpi-inventory"></div>
+      <div class="card">
+        <div class="card-header">Stock overview (SAP MARD / MARC)</div>
+        <div class="card-body">
+          <div id="inventory-loading" class="loading">Loading SAP data…</div>
+          <table id="inventory-table" style="display:none;">
+            <thead><tr><th>Material</th><th>Plant</th><th>Storage Location</th><th>Unrestricted</th><th>Blocked</th><th>In Transit</th><th>Reorder Point</th></tr></thead>
+            <tbody id="inventory-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card sim-card" style="margin-top:1rem;">
+        <div class="card-header">Simulation</div>
+        <div class="card-body">
+          <p class="sim-message" style="margin-bottom:0.75rem;">Simulate inventory shortage (e.g. quality block or loss). Optionally limit to one plant.</p>
+          <div class="sim-presets">
+            <div class="field">
+              <label>Severity</label>
+              <select id="sim-inventory-severity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select>
+            </div>
+            <div class="field">
+              <label>Plant (optional)</label>
+              <input type="text" id="sim-inventory-scope" placeholder="e.g. 1000" />
+            </div>
+            <button type="button" class="btn" data-page-add="inventory_shortage" data-page-scope="sim-inventory-scope" data-page-severity="sim-inventory-severity">Add inventory shortage</button>
+          </div>
+          <div class="sim-actions">
+            <button type="button" class="btn btn-page-run" data-page-msg="sim-msg-inventory">Run simulation</button>
+            <button type="button" class="btn btn-secondary btn-page-reset">Reset to live data</button>
+          </div>
+          <div id="sim-msg-inventory" class="sim-message"></div>
+        </div>
+      </div>
+    </section>
+    <!-- Manufacturing -->
+    <section class="panel" id="panel-manufacturing">
+      <h2>Manufacturing — Production orders &amp; capacity</h2>
+      <div class="kpi-row" id="kpi-manufacturing"></div>
+      <div class="card">
+        <div class="card-header">Production orders (SAP AFPO / AUFK)</div>
+        <div class="card-body">
+          <div id="manufacturing-loading" class="loading">Loading SAP data…</div>
+          <table id="manufacturing-table" style="display:none;">
+            <thead><tr><th>Order</th><th>Material</th><th>Plant</th><th>Quantity</th><th>Status</th><th>Start</th><th>End</th></tr></thead>
+            <tbody id="manufacturing-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card sim-card" style="margin-top:1rem;">
+        <div class="card-header">Simulation</div>
+        <div class="card-body">
+          <p class="sim-message" style="margin-bottom:0.75rem;">Simulate a plant outage: delayed or cancelled orders and reduced inventory at the plant.</p>
+          <div class="sim-presets">
+            <div class="field">
+              <label>Severity</label>
+              <select id="sim-manufacturing-severity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select>
+            </div>
+            <div class="field">
+              <label>Plant (optional)</label>
+              <input type="text" id="sim-manufacturing-scope" placeholder="e.g. 1000" />
+            </div>
+            <button type="button" class="btn" data-page-add="plant_outage" data-page-scope="sim-manufacturing-scope" data-page-severity="sim-manufacturing-severity">Add plant outage</button>
+          </div>
+          <div class="sim-actions">
+            <button type="button" class="btn btn-page-run" data-page-msg="sim-msg-manufacturing">Run simulation</button>
+            <button type="button" class="btn btn-secondary btn-page-reset">Reset to live data</button>
+          </div>
+          <div id="sim-msg-manufacturing" class="sim-message"></div>
+        </div>
+      </div>
+    </section>
+    <!-- Production orders (outstanding only) -->
+    <section class="panel" id="panel-production-orders">
+      <h2>Production orders — Outstanding</h2>
+      <div class="kpi-row" id="kpi-production-orders"></div>
+      <div class="card">
+        <div class="card-header">Outstanding production orders (SAP AFPO / AUFK)</div>
+        <div class="card-body">
+          <div id="production-orders-loading" class="loading">Loading…</div>
+          <table id="production-orders-table" style="display:none;">
+            <thead><tr><th>Order</th><th>Material</th><th>Plant</th><th>Quantity</th><th>Status</th><th>Start</th><th>End</th></tr></thead>
+            <tbody id="production-orders-tbody"></tbody>
+          </table>
+          <p id="production-orders-empty" style="display:none; color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">No outstanding production orders.</p>
+        </div>
+      </div>
+      <div class="card sim-card" style="margin-top:1rem;">
+        <div class="card-header">Simulation</div>
+        <div class="card-body">
+          <p class="sim-message" style="margin-bottom:0.75rem;">Simulate a plant outage to see impact on outstanding production orders and dates.</p>
+          <div class="sim-presets">
+            <div class="field">
+              <label>Severity</label>
+              <select id="sim-production-orders-severity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select>
+            </div>
+            <div class="field">
+              <label>Plant (optional)</label>
+              <input type="text" id="sim-production-orders-scope" placeholder="e.g. 1000" />
+            </div>
+            <button type="button" class="btn" data-page-add="plant_outage" data-page-scope="sim-production-orders-scope" data-page-severity="sim-production-orders-severity">Add plant outage</button>
+          </div>
+          <div class="sim-actions">
+            <button type="button" class="btn btn-page-run" data-page-msg="sim-msg-production-orders">Run simulation</button>
+            <button type="button" class="btn btn-secondary btn-page-reset">Reset to live data</button>
+          </div>
+          <div id="sim-msg-production-orders" class="sim-message"></div>
+        </div>
+      </div>
+    </section>
+    <!-- All production orders (with filters) -->
+    <section class="panel" id="panel-production-all">
+      <h2>All production orders</h2>
+      <div class="filter-bar">
+        <div class="field">
+          <label for="filter-po-status">Status</label>
+          <select id="filter-po-status">
+            <option value="">All</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="filter-po-plant">Plant</label>
+          <input type="text" id="filter-po-plant" placeholder="e.g. 1000" />
+        </div>
+        <div class="field">
+          <label for="filter-po-material">Material</label>
+          <input type="text" id="filter-po-material" placeholder="e.g. FG-9001" />
+        </div>
+        <button type="button" class="btn btn-secondary" id="filter-po-clear">Clear filters</button>
+        <span class="filter-summary" id="filter-po-summary"></span>
+      </div>
+      <div class="card">
+        <div class="card-header">Production orders (SAP AFPO / AUFK)</div>
+        <div class="card-body">
+          <div id="production-all-loading" class="loading">Loading…</div>
+          <table id="production-all-table" style="display:none;">
+            <thead><tr><th>Order</th><th>Material</th><th>Plant</th><th>Quantity</th><th>Status</th><th>Start</th><th>End</th></tr></thead>
+            <tbody id="production-all-tbody"></tbody>
+          </table>
+          <p id="production-all-empty" style="display:none; color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">No production orders match the filters.</p>
+        </div>
+      </div>
+    </section>
+    <!-- Logistics -->
+    <section class="panel" id="panel-logistics">
+      <h2>Logistics — Shipments &amp; deliveries</h2>
+      <div class="kpi-row" id="kpi-logistics"></div>
+      <div class="card">
+        <div class="card-header">Shipments (SAP LIKP / LIPS)</div>
+        <div class="card-body">
+          <div id="logistics-loading" class="loading">Loading SAP data…</div>
+          <table id="logistics-table" style="display:none;">
+            <thead><tr><th>Delivery</th><th>Ship-to</th><th>Material</th><th>Quantity</th><th>Status</th><th>Planned Date</th><th>Carrier</th></tr></thead>
+            <tbody id="logistics-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card sim-card" style="margin-top:1rem;">
+        <div class="card-header">Simulation</div>
+        <div class="card-body">
+          <p class="sim-message" style="margin-bottom:0.75rem;">Simulate logistics delays: planned dates pushed out and some shipments set to Pending.</p>
+          <div class="sim-presets">
+            <div class="field">
+              <label>Severity</label>
+              <select id="sim-logistics-severity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select>
+            </div>
+            <div class="field">
+              <label>Carrier (optional)</label>
+              <input type="text" id="sim-logistics-scope" placeholder="e.g. DHL" />
+            </div>
+            <button type="button" class="btn" data-page-add="logistics_delay" data-page-scope="sim-logistics-scope" data-page-severity="sim-logistics-severity">Add logistics delay</button>
+          </div>
+          <div class="sim-actions">
+            <button type="button" class="btn btn-page-run" data-page-msg="sim-msg-logistics">Run simulation</button>
+            <button type="button" class="btn btn-secondary btn-page-reset">Reset to live data</button>
+          </div>
+          <div id="sim-msg-logistics" class="sim-message"></div>
+        </div>
+      </div>
+    </section>
+    <!-- Demand Planning -->
+    <section class="panel" id="panel-demand">
+      <h2>Demand Planning — Forecasts &amp; sales</h2>
+      <div class="kpi-row" id="kpi-demand"></div>
+      <div class="card">
+        <div class="card-header">Demand / Sales orders (SAP VBAK / VBAP)</div>
+        <div class="card-body">
+          <div id="demand-loading" class="loading">Loading SAP data…</div>
+          <table id="demand-table" style="display:none;">
+            <thead><tr><th>Order</th><th>Customer</th><th>Material</th><th>Quantity</th><th>Request Date</th><th>Status</th><th>Forecast Qty</th></tr></thead>
+            <tbody id="demand-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card sim-card" style="margin-top:1rem;">
+        <div class="card-header">Simulation</div>
+        <div class="card-body">
+          <p class="sim-message" style="margin-bottom:0.75rem;">Simulate a demand spike: higher quantities on open/confirmed orders. Optionally limit to one customer.</p>
+          <div class="sim-presets">
+            <div class="field">
+              <label>Severity</label>
+              <select id="sim-demand-severity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select>
+            </div>
+            <div class="field">
+              <label>Customer (optional)</label>
+              <input type="text" id="sim-demand-scope" placeholder="e.g. CUST-A100" />
+            </div>
+            <button type="button" class="btn" data-page-add="demand_spike" data-page-scope="sim-demand-scope" data-page-severity="sim-demand-severity">Add demand spike</button>
+          </div>
+          <div class="sim-actions">
+            <button type="button" class="btn btn-page-run" data-page-msg="sim-msg-demand">Run simulation</button>
+            <button type="button" class="btn btn-secondary btn-page-reset">Reset to live data</button>
+          </div>
+          <div id="sim-msg-demand" class="sim-message"></div>
+        </div>
+      </div>
+    </section>
+    <!-- Disruption Simulator -->
+    <section class="panel" id="panel-simulator">
+      <h2>Disruption Simulator — What-if scenarios</h2>
+      <p class="sim-message" style="margin-bottom:1rem;">Add one or more disruptions and run the simulation. All other tabs will then show the simulated state. Reset to return to live data.</p>
+      <div class="card">
+        <div class="card-header">Add disruption</div>
+        <div class="card-body">
+          <div class="sim-form" id="sim-form">
+            <div class="field">
+              <label for="sim-type">Type</label>
+              <select id="sim-type">
+                <option value="supplier_delay">Supplier delay</option>
+                <option value="plant_outage">Plant outage</option>
+                <option value="logistics_delay">Logistics delay</option>
+                <option value="demand_spike">Demand spike</option>
+                <option value="inventory_shortage">Inventory shortage</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="sim-severity">Severity</label>
+              <select id="sim-severity">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="sim-scope">Scope (optional)</label>
+              <input type="text" id="sim-scope" placeholder="Vendor, plant, carrier, or customer" />
+            </div>
+            <button type="button" class="btn" id="sim-add">Add</button>
+          </div>
+          <div style="margin-top:1rem;">
+            <label class="field" style="margin-bottom:0.5rem;"><span style="font-size:0.75rem; color: var(--text-muted);">Active disruptions</span></label>
+            <ul class="sim-list" id="sim-list"></ul>
+          </div>
+          <div class="sim-actions">
+            <button type="button" class="btn" id="sim-run">Run simulation</button>
+            <button type="button" class="btn btn-secondary" id="sim-reset">Reset to live data</button>
+          </div>
+          <div id="sim-message" class="sim-message"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class="databricks-note" id="databricks-note">
+    Deploy in Databricks: use <code>displayHTML(open('supply_chain_control_tower.html').read())</code> in a notebook, or serve this file as a static asset and embed the URL in an iframe.
+  </div>
+
+  <script>
+    (function() {
+      // SAP-style mock data — replace with Databricks SQL/API in production
+      var SAP = {
+        procurement: [
+          { po: '4500012345', vendor: 'V-10001', vendorName: 'Global Parts Inc.', material: 'MAT-8001', qty: 500, value: 12500, status: 'Open', delivery: '2025-03-01' },
+          { po: '4500012346', vendor: 'V-10002', vendorName: 'Steel Works Ltd.', material: 'MAT-8002', qty: 1200, value: 36000, status: 'Confirmed', delivery: '2025-02-28' },
+          { po: '4500012347', vendor: 'V-10003', vendorName: 'Chem Supply Co.', material: 'MAT-8003', qty: 200, value: 8400, status: 'Delivered', delivery: '2025-02-15' },
+          { po: '4500012348', vendor: 'V-10001', vendorName: 'Global Parts Inc.', material: 'MAT-8004', qty: 750, value: 18750, status: 'Open', delivery: '2025-03-10' },
+          { po: '4500012349', vendor: 'V-10004', vendorName: 'Packaging Pro', material: 'MAT-8005', qty: 5000, value: 2500, status: 'Overdue', delivery: '2025-02-10' }
+        ],
+        inventory: [
+          { material: 'MAT-8001', plant: '1000', storageLoc: '0001', unrestricted: 1200, blocked: 50, inTransit: 500, reorderPoint: 800 },
+          { material: 'MAT-8002', plant: '1000', storageLoc: '0001', unrestricted: 340, blocked: 0, inTransit: 1200, reorderPoint: 500 },
+          { material: 'MAT-8003', plant: '1000', storageLoc: '0002', unrestricted: 890, blocked: 10, inTransit: 0, reorderPoint: 400 },
+          { material: 'MAT-8004', plant: '2000', storageLoc: '0001', unrestricted: 220, blocked: 30, inTransit: 750, reorderPoint: 300 },
+          { material: 'MAT-8005', plant: '1000', storageLoc: '0001', unrestricted: 12000, blocked: 0, inTransit: 0, reorderPoint: 8000 }
+        ],
+        manufacturing: [
+          { order: '1000001', material: 'FG-9001', plant: '1000', qty: 1000, status: 'Released', start: '2025-02-18', end: '2025-02-22' },
+          { order: '1000002', material: 'FG-9002', plant: '1000', qty: 500, status: 'Confirmed', start: '2025-02-20', end: '2025-02-25' },
+          { order: '1000003', material: 'FG-9001', plant: '2000', qty: 750, status: 'Completed', start: '2025-02-10', end: '2025-02-15' },
+          { order: '1000004', material: 'FG-9003', plant: '1000', qty: 2000, status: 'Released', start: '2025-02-19', end: '2025-02-28' }
+        ],
+        logistics: [
+          { delivery: '8000001234', shipTo: 'CUST-A100', material: 'FG-9001', qty: 200, status: 'In Transit', planned: '2025-02-20', carrier: 'DHL' },
+          { delivery: '8000001235', shipTo: 'CUST-B200', material: 'FG-9002', qty: 150, status: 'Delivered', planned: '2025-02-18', carrier: 'FedEx' },
+          { delivery: '8000001236', shipTo: 'CUST-C300', material: 'MAT-8001', qty: 500, status: 'Pending', planned: '2025-02-25', carrier: 'UPS' },
+          { delivery: '8000001237', shipTo: 'CUST-A100', material: 'FG-9003', qty: 100, status: 'In Transit', planned: '2025-02-21', carrier: 'DHL' }
+        ],
+        demand: [
+          { order: '100001', customer: 'CUST-A100', material: 'FG-9001', qty: 200, requestDate: '2025-02-25', status: 'Confirmed', forecastQty: 220 },
+          { order: '100002', customer: 'CUST-B200', material: 'FG-9002', qty: 150, requestDate: '2025-02-20', status: 'Delivered', forecastQty: 160 },
+          { order: '100003', customer: 'CUST-C300', material: 'FG-9001', qty: 300, requestDate: '2025-03-05', status: 'Open', forecastQty: 280 },
+          { order: '100004', customer: 'CUST-D400', material: 'FG-9003', qty: 500, requestDate: '2025-03-15', status: 'Open', forecastQty: 480 }
+        ]
+      };
+
+      function renderProcurement() {
+        var tbody = document.getElementById('procurement-tbody');
+        var rows = SAP.procurement.map(function(r) {
+          var tariffPct = (r.tariffRatePct != null) ? r.tariffRatePct : (r.country ? 5 : 0);
+          var tariffAmt = (r.tariffAmount != null) ? r.tariffAmount : (r.value * (tariffPct / 100));
+          var totalCost = (r.totalCost != null) ? r.totalCost : (r.value + tariffAmt);
+          return '<tr><td>' + r.po + '</td><td>' + (r.vendorName || r.vendor) + '</td><td>' + (r.country || '') + '</td><td>' + r.material + '</td><td>' + r.qty + '</td><td>' + formatCurrency(r.value) + '</td><td>' + (Number(tariffPct).toFixed(1)) + '%</td><td>' + formatCurrency(tariffAmt) + '</td><td>' + formatCurrency(totalCost) + '</td><td><span class="status ' + r.status.toLowerCase() + '">' + r.status + '</span></td><td>' + r.delivery + '</td></tr>';
+        }).join('');
+        tbody.innerHTML = rows;
+        document.getElementById('procurement-loading').style.display = 'none';
+        document.getElementById('procurement-table').style.display = 'table';
+        var openCount = SAP.procurement.filter(function(r) { return r.status === 'Open'; }).length;
+        var totalBase = SAP.procurement.reduce(function(a, r) { return a + (r.value || 0); }, 0);
+        var totalTariff = SAP.procurement.reduce(function(a, r) { return a + (r.tariffAmount != null ? r.tariffAmount : (r.value || 0) * ((r.tariffRatePct != null ? r.tariffRatePct : (r.country ? 5 : 0)) / 100)); }, 0);
+        var totalCOGS = SAP.procurement.reduce(function(a, r) { return a + (r.totalCost != null ? r.totalCost : (r.value || 0) + (r.tariffAmount != null ? r.tariffAmount : 0)); }, 0);
+        document.getElementById('kpi-procurement').innerHTML = '<div class="kpi"><span class="label">Open POs</span><div class="value">' + openCount + '</div></div><div class="kpi"><span class="label">Total base value</span><div class="value">' + formatCurrency(totalBase) + '</div></div><div class="kpi"><span class="label">Total tariff</span><div class="value">' + formatCurrency(totalTariff) + '</div></div><div class="kpi"><span class="label">Total COGS (with tariff)</span><div class="value">' + formatCurrency(totalCOGS) + '</div></div>';
+      }
+      function renderInventory() {
+        var tbody = document.getElementById('inventory-tbody');
+        var rows = SAP.inventory.map(function(r) {
+          return '<tr><td>' + r.material + '</td><td>' + r.plant + '</td><td>' + r.storageLoc + '</td><td>' + r.unrestricted + '</td><td>' + r.blocked + '</td><td>' + r.inTransit + '</td><td>' + r.reorderPoint + '</td></tr>';
+        }).join('');
+        tbody.innerHTML = rows;
+        document.getElementById('inventory-loading').style.display = 'none';
+        document.getElementById('inventory-table').style.display = 'table';
+        var lowStock = SAP.inventory.filter(function(r) { return r.unrestricted < r.reorderPoint; }).length;
+        var totalStock = SAP.inventory.reduce(function(a, r) { return a + r.unrestricted + r.inTransit; }, 0);
+        document.getElementById('kpi-inventory').innerHTML = '<div class="kpi"><span class="label">Materials below reorder</span><div class="value">' + lowStock + '</div></div><div class="kpi"><span class="label">Total units (unrestricted + transit)</span><div class="value">' + totalStock.toLocaleString() + '</div></div>';
+      }
+      function renderManufacturing() {
+        var tbody = document.getElementById('manufacturing-tbody');
+        var rows = SAP.manufacturing.map(function(r) {
+          return '<tr><td>' + r.order + '</td><td>' + r.material + '</td><td>' + r.plant + '</td><td>' + r.qty + '</td><td><span class="status ' + r.status.toLowerCase() + '">' + r.status + '</span></td><td>' + r.start + '</td><td>' + r.end + '</td></tr>';
+        }).join('');
+        tbody.innerHTML = rows;
+        document.getElementById('manufacturing-loading').style.display = 'none';
+        document.getElementById('manufacturing-table').style.display = 'table';
+        var released = SAP.manufacturing.filter(function(r) { return r.status === 'Released' || r.status === 'Confirmed'; }).length;
+        var totalQty = SAP.manufacturing.filter(function(r) { return r.status !== 'Completed'; }).reduce(function(a, r) { return a + r.qty; }, 0);
+        document.getElementById('kpi-manufacturing').innerHTML = '<div class="kpi"><span class="label">Active orders</span><div class="value">' + released + '</div></div><div class="kpi"><span class="label">Total quantity in progress</span><div class="value">' + totalQty.toLocaleString() + '</div></div>';
+      }
+      function getOutstandingProductionOrders() {
+        return SAP.manufacturing.filter(function(r) { return (r.status || '').toLowerCase() !== 'completed'; });
+      }
+      function getFilteredProductionOrders() {
+        var statusVal = (document.getElementById('filter-po-status') && document.getElementById('filter-po-status').value) || '';
+        var plantVal = (document.getElementById('filter-po-plant') && document.getElementById('filter-po-plant').value) || '';
+        var materialVal = (document.getElementById('filter-po-material') && document.getElementById('filter-po-material').value) || '';
+        return SAP.manufacturing.filter(function(r) {
+          if (statusVal && (r.status || '') !== statusVal) return false;
+          if (plantVal && (r.plant || '').toLowerCase().indexOf(plantVal.toLowerCase()) === -1) return false;
+          if (materialVal && (r.material || '').toLowerCase().indexOf(materialVal.toLowerCase()) === -1) return false;
+          return true;
+        });
+      }
+      function renderProductionAll() {
+        var statusSelect = document.getElementById('filter-po-status');
+        if (statusSelect) {
+          var currentVal = statusSelect.value;
+          statusSelect.innerHTML = '<option value="">All</option>';
+          var statuses = [];
+          SAP.manufacturing.forEach(function(r) {
+            var s = (r.status || '').trim();
+            if (s && statuses.indexOf(s) === -1) statuses.push(s);
+          });
+          statuses.sort();
+          statuses.forEach(function(s) {
+            var opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = s;
+            statusSelect.appendChild(opt);
+          });
+          if (currentVal && statuses.indexOf(currentVal) !== -1) statusSelect.value = currentVal;
+        }
+        var filtered = getFilteredProductionOrders();
+        var tbody = document.getElementById('production-all-tbody');
+        var loadingEl = document.getElementById('production-all-loading');
+        var tableEl = document.getElementById('production-all-table');
+        var emptyEl = document.getElementById('production-all-empty');
+        var summaryEl = document.getElementById('filter-po-summary');
+        if (!tbody) return;
+        loadingEl.style.display = 'none';
+        if (filtered.length === 0) {
+          tableEl.style.display = 'none';
+          emptyEl.style.display = 'block';
+          tbody.innerHTML = '';
+        } else {
+          emptyEl.style.display = 'none';
+          tableEl.style.display = 'table';
+          tbody.innerHTML = filtered.map(function(r) {
+            return '<tr><td>' + r.order + '</td><td>' + r.material + '</td><td>' + r.plant + '</td><td>' + r.qty + '</td><td><span class="status ' + (r.status || '').toLowerCase() + '">' + r.status + '</span></td><td>' + (r.start || '') + '</td><td>' + (r.end || '') + '</td></tr>';
+          }).join('');
+        }
+        if (summaryEl) summaryEl.textContent = 'Showing ' + filtered.length + ' of ' + SAP.manufacturing.length + ' orders';
+      }
+      function renderProductionOrders() {
+        var outstanding = getOutstandingProductionOrders();
+        var tbody = document.getElementById('production-orders-tbody');
+        var loadingEl = document.getElementById('production-orders-loading');
+        var tableEl = document.getElementById('production-orders-table');
+        var emptyEl = document.getElementById('production-orders-empty');
+        loadingEl.style.display = 'none';
+        if (outstanding.length === 0) {
+          tableEl.style.display = 'none';
+          emptyEl.style.display = 'block';
+          tbody.innerHTML = '';
+        } else {
+          emptyEl.style.display = 'none';
+          tableEl.style.display = 'table';
+          var rows = outstanding.map(function(r) {
+            return '<tr><td>' + r.order + '</td><td>' + r.material + '</td><td>' + r.plant + '</td><td>' + r.qty + '</td><td><span class="status ' + (r.status || '').toLowerCase() + '">' + r.status + '</span></td><td>' + (r.start || '') + '</td><td>' + (r.end || '') + '</td></tr>';
+          }).join('');
+          tbody.innerHTML = rows;
+        }
+        var totalQty = outstanding.reduce(function(a, r) { return a + (r.qty || 0); }, 0);
+        document.getElementById('kpi-production-orders').innerHTML = '<div class="kpi"><span class="label">Outstanding orders</span><div class="value">' + outstanding.length + '</div></div><div class="kpi"><span class="label">Total quantity</span><div class="value">' + totalQty.toLocaleString() + '</div></div>';
+      }
+      function renderLogistics() {
+        var tbody = document.getElementById('logistics-tbody');
+        var rows = SAP.logistics.map(function(r) {
+          return '<tr><td>' + r.delivery + '</td><td>' + r.shipTo + '</td><td>' + r.material + '</td><td>' + r.qty + '</td><td><span class="status ' + r.status.toLowerCase().replace(' ', '') + '">' + r.status + '</span></td><td>' + r.planned + '</td><td>' + r.carrier + '</td></tr>';
+        }).join('');
+        tbody.innerHTML = rows;
+        document.getElementById('logistics-loading').style.display = 'none';
+        document.getElementById('logistics-table').style.display = 'table';
+        var inTransit = SAP.logistics.filter(function(r) { return r.status === 'In Transit'; }).length;
+        document.getElementById('kpi-logistics').innerHTML = '<div class="kpi"><span class="label">In transit</span><div class="value">' + inTransit + '</div></div><div class="kpi"><span class="label">Total deliveries</span><div class="value">' + SAP.logistics.length + '</div></div>';
+      }
+      function renderDemand() {
+        var tbody = document.getElementById('demand-tbody');
+        var rows = SAP.demand.map(function(r) {
+          return '<tr><td>' + r.order + '</td><td>' + r.customer + '</td><td>' + r.material + '</td><td>' + r.qty + '</td><td>' + r.requestDate + '</td><td><span class="status ' + r.status.toLowerCase() + '">' + r.status + '</span></td><td>' + r.forecastQty + '</td></tr>';
+        }).join('');
+        tbody.innerHTML = rows;
+        document.getElementById('demand-loading').style.display = 'none';
+        document.getElementById('demand-table').style.display = 'table';
+        var openOrders = SAP.demand.filter(function(r) { return r.status === 'Open'; }).length;
+        var totalDemand = SAP.demand.reduce(function(a, r) { return a + r.qty; }, 0);
+        document.getElementById('kpi-demand').innerHTML = '<div class="kpi"><span class="label">Open sales orders</span><div class="value">' + openOrders + '</div></div><div class="kpi"><span class="label">Total demand (units)</span><div class="value">' + totalDemand.toLocaleString() + '</div></div>';
+      }
+      function formatCurrency(n) { return '$' + Number(n).toLocaleString(); }
+      function setRefreshTime() { document.getElementById('lastRefresh').textContent = 'Last refresh: ' + new Date().toLocaleString(); }
+
+      // Tab switching
+      document.querySelectorAll('.tab').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var tab = this.getAttribute('data-tab');
+          document.querySelectorAll('.tab').forEach(function(b) { b.classList.remove('active'); });
+          document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+          this.classList.add('active');
+          var panel = document.getElementById('panel-' + tab);
+          if (panel) panel.classList.add('active');
+        });
+      });
+
+      // Disruption simulator (shared list; page-specific cards add to same list)
+      var disruptionList = [];
+      var simTypeLabels = { supplier_delay: 'Supplier delay', plant_outage: 'Plant outage', logistics_delay: 'Logistics delay', demand_spike: 'Demand spike', inventory_shortage: 'Inventory shortage' };
+      function addDisruption(type, severity, scope) {
+        disruptionList.push({ type: type, severity: severity || 'medium', scope: scope || null });
+        renderSimList();
+        document.getElementById('sim-message').textContent = '';
+      }
+      function clearAllSimMessages() {
+        document.getElementById('sim-message').textContent = '';
+        ['sim-msg-procurement', 'sim-msg-inventory', 'sim-msg-manufacturing', 'sim-msg-production-orders', 'sim-msg-logistics', 'sim-msg-demand'].forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) { el.textContent = ''; el.classList.remove('error', 'success'); }
+        });
+      }
+      function runSimulation(msgElementId) {
+        var msgEl = document.getElementById(msgElementId || 'sim-message');
+        clearAllSimMessages();
+        if (disruptionList.length === 0) {
+          if (msgEl) { msgEl.textContent = 'Add at least one disruption first.'; msgEl.classList.add('error'); }
+          return;
+        }
+        if (msgEl) msgEl.textContent = 'Running simulation…';
+        fetch('/api/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ disruptions: disruptionList, seed: 42 })
+        }).then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+          .then(function(r) {
+            if (r.ok && r.data.sap) {
+              window.loadSAPData(r.data.sap);
+              if (msgEl) { msgEl.textContent = 'Simulation applied. View data on this and other tabs.'; msgEl.classList.add('success'); }
+            } else {
+              if (msgEl) { msgEl.textContent = r.data.error || 'Simulation failed.'; msgEl.classList.add('error'); }
+            }
+          }).catch(function(err) {
+            if (msgEl) { msgEl.textContent = 'Request failed: ' + (err.message || 'network error'); msgEl.classList.add('error'); }
+          });
+      }
+      function renderSimList() {
+        var ul = document.getElementById('sim-list');
+        ul.innerHTML = disruptionList.map(function(d, i) {
+          var scope = d.scope ? ' (' + d.scope + ')' : '';
+          return '<li><span>' + (simTypeLabels[d.type] || d.type) + ' — ' + d.severity + scope + '</span><button type="button" class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.8rem;" data-index="' + i + '">Remove</button></li>';
+        }).join('');
+        ul.querySelectorAll('button').forEach(function(b) {
+          b.addEventListener('click', function() {
+            var i = parseInt(this.getAttribute('data-index'), 10);
+            disruptionList.splice(i, 1);
+            renderSimList();
+          });
+        });
+      }
+      document.getElementById('sim-add').addEventListener('click', function() {
+        var type = document.getElementById('sim-type').value;
+        var severity = document.getElementById('sim-severity').value;
+        var scope = (document.getElementById('sim-scope').value || '').trim() || null;
+        disruptionList.push({ type: type, severity: severity, scope: scope });
+        renderSimList();
+        document.getElementById('sim-message').textContent = '';
+      });
+      document.getElementById('sim-run').addEventListener('click', function() { runSimulation('sim-message'); });
+      document.getElementById('sim-reset').addEventListener('click', function() { window.location.reload(); });
+      // Page-specific simulation cards: Add disruption (uses same disruptionList)
+      document.querySelectorAll('[data-page-add]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var type = this.getAttribute('data-page-add');
+          var severityEl = document.getElementById(this.getAttribute('data-page-severity'));
+          var scopeEl = document.getElementById(this.getAttribute('data-page-scope'));
+          var severity = severityEl ? severityEl.value : 'medium';
+          var scope = (scopeEl && scopeEl.value) ? scopeEl.value.trim() : null;
+          addDisruption(type, severity, scope);
+          var msgId = this.closest('.sim-card') && this.closest('.sim-card').querySelector('[id^="sim-msg-"]');
+          if (msgId && msgId.id) { document.getElementById(msgId.id).textContent = ''; document.getElementById(msgId.id).classList.remove('error', 'success'); }
+        });
+      });
+      document.querySelectorAll('.btn-page-run').forEach(function(btn) {
+        btn.addEventListener('click', function() { runSimulation(this.getAttribute('data-page-msg')); });
+      });
+      document.querySelectorAll('.btn-page-reset').forEach(function(btn) {
+        btn.addEventListener('click', function() { window.location.reload(); });
+      });
+      // All production orders filters
+      function attachProductionAllFilters() {
+        var statusEl = document.getElementById('filter-po-status');
+        var plantEl = document.getElementById('filter-po-plant');
+        var materialEl = document.getElementById('filter-po-material');
+        var clearBtn = document.getElementById('filter-po-clear');
+        if (statusEl) statusEl.addEventListener('change', renderProductionAll);
+        if (plantEl) plantEl.addEventListener('input', renderProductionAll);
+        if (materialEl) materialEl.addEventListener('input', renderProductionAll);
+        if (clearBtn) clearBtn.addEventListener('click', function() {
+          if (plantEl) plantEl.value = '';
+          if (materialEl) materialEl.value = '';
+          if (statusEl) statusEl.value = '';
+          renderProductionAll();
+        });
+      }
+      attachProductionAllFilters();
+
+      // Initial load
+      renderProcurement();
+      renderInventory();
+      renderManufacturing();
+      renderProductionOrders();
+      renderProductionAll();
+      renderLogistics();
+      renderDemand();
+      setRefreshTime();
+
+      // Optional: hook for Databricks — replace SAP with data from notebook
+      window.loadSAPData = function(data) {
+        if (data && typeof data === 'object') {
+          if (data.procurement) SAP.procurement = data.procurement;
+          if (data.inventory) SAP.inventory = data.inventory;
+          if (data.manufacturing) SAP.manufacturing = data.manufacturing;
+          if (data.logistics) SAP.logistics = data.logistics;
+          if (data.demand) SAP.demand = data.demand;
+          renderProcurement(); renderInventory(); renderManufacturing(); renderProductionOrders(); renderProductionAll(); renderLogistics(); renderDemand();
+          setRefreshTime();
+        }
+      };
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,601 @@
+{% extends "dashboard_base.html" %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+  .weather-delays-page .map-container { height: 70vh; min-height: 400px; background: var(--color-card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .weather-delays-page .legend { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin: 1rem 0; padding: 0.75rem 1rem; background: var(--color-card); border-radius: var(--radius); }
+  .weather-delays-page .legend span { display: flex; align-items: center; gap: 0.35rem; font-size: 0.875rem; color: var(--color-text-muted); }
+  .weather-delays-page .map-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-bottom: 1rem; padding: 0.75rem 1rem; background: var(--color-card); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .weather-delays-page .map-filters label { font-size: 0.875rem; font-weight: 500; color: var(--color-text); }
+  .weather-delays-page .map-filters select, .weather-delays-page .map-filters input[type="text"] { padding: 0.35rem 0.5rem; font-size: 0.875rem; border-radius: 4px; border: 1px solid var(--color-border); min-width: 140px; font-family: var(--font-sans); }
+  .weather-delays-page .map-filters .filter-group { display: flex; align-items: center; gap: 0.5rem; }
+  .weather-delays-page .map-filters .filter-group input[type="checkbox"] { margin: 0; }
+  .weather-delays-page .legend .legend-sep { margin: 0 0.25rem; color: var(--color-border); }
+  .weather-delays-page .legend .swatch { width: 1rem; height: 1rem; border-radius: 3px; }
+  .weather-delays-page .meta { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 0.5rem; }
+  .weather-delays-page .loading { padding: 2rem; text-align: center; color: var(--color-text-muted); }
+  .weather-delays-page .error { padding: 1rem; background: #fef2f2; color: #991b1b; border-radius: var(--radius); margin: 1rem 0; }
+  .weather-delays-page .orders-toggle { margin: 1rem 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+  .weather-delays-page .orders-panel { margin-top: 1rem; background: var(--color-card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .weather-delays-page .orders-grid-wrap { max-height: 400px; overflow: auto; }
+  .weather-delays-page .alerts-table-panel { margin-top: 1rem; background: var(--color-card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .weather-delays-page .alerts-table-panel .alerts-table-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--color-border); font-weight: 600; }
+  .weather-delays-page .alerts-table-panel .alerts-table-wrap { max-height: 55vh; overflow: auto; }
+  .weather-delays-page .alerts-table-panel .alerts-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .weather-delays-page .alerts-table-panel .alerts-table th { text-align: left; padding: 0.6rem 0.75rem; background: var(--color-border); font-weight: 600; position: sticky; top: 0; z-index: 1; }
+  .weather-delays-page .alerts-table-panel .alerts-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--color-border); }
+  .weather-delays-page .alerts-table-panel .alerts-table tbody tr { background: #fef2f2; }
+  .weather-delays-page .alerts-table-panel .alerts-table tbody tr td { border-bottom-color: #fecaca; }
+  .weather-delays-page .alerts-table-panel .util-high { color: #b91c1c; font-weight: 600; }
+  .weather-delays-page .alerts-table-panel .util-ok { color: var(--color-text-muted); }
+  .weather-delays-page .orders-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .weather-delays-page .orders-table th { text-align: left; padding: 0.6rem 0.75rem; background: var(--color-border); font-weight: 600; }
+  .weather-delays-page .orders-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--color-border); }
+  .weather-delays-page .orders-table tr.weather-risk { background: #fef2f2; }
+  .weather-delays-page .orders-table tr.weather-risk td { border-bottom-color: #fecaca; }
+  .weather-delays-page .badge-risk { background: #dc2626; color: white; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.75rem; }
+  .weather-delays-page .orders-filters { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem; background: var(--color-border); }
+  .weather-delays-page .orders-filters label { font-size: 0.875rem; }
+  .weather-delays-page .orders-filters select { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+  .weather-delays-page .drill-panel { margin-top: 1rem; background: var(--color-card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; border: 2px solid var(--color-primary); }
+  .weather-delays-page .drill-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--color-border); font-weight: 600; }
+  .weather-delays-page .drill-panel-close { padding: 0.25rem 0.5rem; font-size: 0.875rem; cursor: pointer; }
+  .weather-delays-page .drill-panel-wrap { max-height: 50vh; overflow: auto; }
+  .weather-delays-page .drill-panel table { font-size: 0.875rem; }
+  #map-container .leaflet-interactive { cursor: pointer; }
+  .weather-alerts-corner { position: fixed; bottom: 1rem; right: 1rem; max-width: 320px; max-height: 40vh; background: var(--color-card); border: 1px solid var(--color-border); border-radius: var(--radius); box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; overflow: hidden; font-size: 0.875rem; }
+  .weather-alerts-corner .alerts-corner-header { padding: 0.5rem 0.75rem; background: #7f1d1d; color: white; font-weight: 600; }
+  .weather-alerts-corner .alerts-corner-list { max-height: calc(40vh - 2.5rem); overflow: auto; padding: 0.5rem; }
+  .weather-alerts-corner .alerts-corner-item { padding: 0.35rem 0; border-bottom: 1px solid var(--color-border); color: var(--color-text); }
+  .weather-alerts-corner .alerts-corner-item:last-child { border-bottom: none; }
+  .weather-alerts-corner .alerts-corner-item strong { display: block; }
+  .weather-alerts-corner .alerts-corner-item .driver { font-size: 0.8rem; color: var(--color-text-muted); }
+  .weather-alerts-corner .alerts-corner-item[role="button"] { cursor: pointer; }
+  .weather-alerts-corner .alerts-corner-item[role="button"]:hover { background: var(--color-border); }
+  .weather-alerts-corner .alerts-corner-empty { padding: 0.75rem; color: var(--color-text-muted); font-size: 0.8rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="panel active">
+  <div class="panel-content weather-delays-page">
+    <div class="map-filters" id="map-filters" aria-label="Map filters">
+      <div class="filter-group">
+        <label for="filter-customer">Customer</label>
+        <input type="text" id="filter-customer" list="filter-customer-list" placeholder="All customers" aria-label="Filter by customer (type to search)">
+        <datalist id="filter-customer-list"></datalist>
+      </div>
+      <div class="filter-group">
+        <label for="filter-state">Delivery state</label>
+        <select id="filter-state" aria-label="Filter by delivery state">
+          <option value="">All states</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-origin">Origin</label>
+        <select id="filter-origin" aria-label="Filter by origin plant">
+          <option value="">All origins</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-risk">Show</label>
+        <select id="filter-risk" aria-label="Filter by risk">
+          <option value="all">All orders</option>
+          <option value="at-risk">At risk only</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <input type="checkbox" id="filter-show-routes" checked aria-label="Show origin-destination lines">
+        <label for="filter-show-routes">Show origin–destination lines</label>
+      </div>
+      <button type="button" class="btn btn-secondary" id="weather-map-refresh" style="margin-left: auto;">Refresh</button>
+    </div>
+    <div class="legend">
+      <strong>Estimated delay (days)</strong>
+      <span><span class="swatch" style="background:#22c55e;"></span> 0</span>
+      <span><span class="swatch" style="background:#eab308;"></span> 1</span>
+      <span><span class="swatch" style="background:#f97316;"></span> 2</span>
+      <span><span class="swatch" style="background:#dc2626;"></span> 3+</span>
+      <span class="legend-sep">|</span>
+      <span><span class="swatch" style="background:#2563eb; border-radius:50%;"></span> Delivery</span>
+      <span><span class="swatch" style="background:#dc2626; border-radius:50%;"></span> At risk</span>
+      <span class="legend-sep">|</span>
+      <span>Lines: origin → destination (thickness = order count)</span>
+    </div>
+    <div id="map-container" class="map-container"></div>
+    <p class="meta">Shading: weather delay by state. Points: delivery locations (size = order count). Click a state or a point to see orders. Forecast: next 7 days from Open-Meteo (NOAA GFS).</p>
+
+    <div id="drill-panel" class="drill-panel" style="display: none;">
+      <div class="drill-panel-header">
+        <span id="drill-panel-title">State — Orders due</span>
+        <button type="button" class="drill-panel-close" id="drill-panel-close" aria-label="Close">Close</button>
+      </div>
+      <div class="drill-panel-wrap">
+        <table class="orders-table" id="drill-orders-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Origin</th>
+              <th>Destination</th>
+              <th>Due date</th>
+              <th>Status</th>
+              <th>Weather risk</th>
+            </tr>
+          </thead>
+          <tbody id="drill-orders-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="orders-toggle">
+      <button type="button" class="btn btn-action" id="orders-grid-toggle" aria-pressed="false">Show orders grid</button>
+      <button type="button" class="btn btn-action" id="weather-alerts-table-toggle" aria-pressed="false">Show weather alerts table</button>
+    </div>
+    <div id="weather-alerts-table-panel" class="alerts-table-panel" style="display: none;">
+      <div class="alerts-table-header">
+        <span id="weather-alerts-table-title">Weather alerts</span>
+        <button type="button" class="drill-panel-close" id="weather-alerts-table-close" aria-label="Close">Close</button>
+      </div>
+      <div class="alerts-table-wrap">
+        <table class="alerts-table" id="weather-alerts-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Origin</th>
+              <th>Destination</th>
+              <th>Due date</th>
+              <th>Origin delay</th>
+              <th>Dest delay</th>
+              <th>Reroute to</th>
+              <th>Plant impact</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody id="weather-alerts-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="orders-panel" class="orders-panel" style="display: none;">
+      <div class="orders-filters">
+        <label for="orders-filter">Show</label>
+        <select id="orders-filter" aria-label="Filter orders">
+          <option value="all">All orders</option>
+          <option value="at-risk">At risk only (weather incident on route)</option>
+        </select>
+        <span id="orders-count" class="meta"></span>
+      </div>
+      <div class="orders-grid-wrap">
+        <table class="orders-table" id="orders-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Origin</th>
+              <th>Destination</th>
+              <th>Due date</th>
+              <th>Origin delay</th>
+              <th>Dest delay</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="weather-alerts-corner" class="weather-alerts-corner" style="display: none;">
+      <div class="alerts-corner-header">Extreme weather conditions</div>
+      <div id="weather-alerts-corner-list" class="alerts-corner-list"></div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+(function () {
+  const delayColors = ['#22c55e', '#eab308', '#f97316', '#dc2626'];
+  function delayToColor(days) {
+    const i = Math.min(Math.max(0, days), 3);
+    return delayColors[i];
+  }
+  const container = document.getElementById('map-container');
+  if (!container) return;
+  container.innerHTML = '<div class="loading">Loading forecast and map…</div>';
+
+  Promise.all([
+    fetch('/api/weather-delays').then(r => r.json()),
+    fetch('https://raw.githubusercontent.com/shawnbot/topogram/master/data/us-states.geojson').then(r => r.json()),
+    fetch('/api/orders-by-state').then(r => r.json()),
+    fetch('/api/delivery-locations').then(r => r.json()),
+    fetch('/api/origin-destination-routes').then(r => r.json())
+  ]).then(([delays, geojson, ordersByState, deliveryLocations, routes]) => {
+    const delayByAbbr = {};
+    (delays || []).forEach(function(d) { delayByAbbr[d.state_abbr] = d; });
+
+    if (!geojson || !geojson.features) {
+      container.innerHTML = '<div class="error">Map data could not be loaded.</div>';
+      return;
+    }
+
+    var customerInput = document.getElementById('filter-customer');
+    var customerDatalist = document.getElementById('filter-customer-list');
+    var stateSelect = document.getElementById('filter-state');
+    var originSelect = document.getElementById('filter-origin');
+    var customers = [];
+    (deliveryLocations || []).forEach(function(loc) {
+      (loc.orders || []).forEach(function(o) {
+        var c = (o.customer_name || '').trim();
+        if (c && customers.indexOf(c) === -1) customers.push(c);
+      });
+    });
+    customers.sort();
+    if (customerDatalist) {
+      customers.forEach(function(c) {
+        var opt = document.createElement('option');
+        opt.value = c;
+        customerDatalist.appendChild(opt);
+      });
+    }
+    var states = Object.keys(ordersByState || {}).sort();
+    states.forEach(function(abbr) {
+      var d = delayByAbbr[abbr];
+      var label = d && d.state_name ? d.state_name + ' (' + abbr + ')' : abbr;
+      var opt = document.createElement('option');
+      opt.value = abbr;
+      opt.textContent = label;
+      if (stateSelect) stateSelect.appendChild(opt);
+    });
+    var originMap = {};
+    (routes || []).forEach(function(r) {
+      if (r.origin_site_id && !originMap[r.origin_site_id]) {
+        originMap[r.origin_site_id] = r.origin_name || r.origin_site_id;
+      }
+    });
+    Object.keys(originMap).sort().forEach(function(siteId) {
+      var opt = document.createElement('option');
+      opt.value = siteId;
+      opt.textContent = originMap[siteId];
+      if (originSelect) originSelect.appendChild(opt);
+    });
+
+    container.innerHTML = '';
+    const map = L.map('map-container').setView([39.5, -98.35], 4);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(map);
+
+    const drillPanel = document.getElementById('drill-panel');
+    const drillTitle = document.getElementById('drill-panel-title');
+    const drillTbody = document.getElementById('drill-orders-tbody');
+    document.getElementById('drill-panel-close').addEventListener('click', function() {
+      drillPanel.style.display = 'none';
+    });
+
+    function showDrill(stateAbbr, stateName, delayDays, driver, orders) {
+      const list = orders || [];
+      drillTitle.textContent = (stateName || stateAbbr) + ' — Est. delay: ' + delayDays + ' day(s) — ' + list.length + ' order(s) due';
+      drillTbody.innerHTML = list.length === 0
+        ? '<tr><td colspan="7" class="meta">No orders due in this state in the dataset.</td></tr>'
+        : list.map(function(o) {
+            var risk = o.is_weather_risk ? '<span class="badge-risk">Yes</span>' : '—';
+            return '<tr' + (o.is_weather_risk ? ' class="weather-risk"' : '') + '>' +
+              '<td>' + (o.order_id || '') + '</td>' +
+              '<td>' + (o.customer_name || '') + '</td>' +
+              '<td>' + (o.origin_name || '') + ', ' + (o.origin_state || '') + '</td>' +
+              '<td>' + (o.delivery_city || '') + ', ' + (o.delivery_state || '') + '</td>' +
+              '<td>' + (o.delivery_due_date || '') + '</td>' +
+              '<td>' + (o.status || '') + '</td>' +
+              '<td>' + risk + '</td></tr>';
+          }).join('');
+      drillPanel.style.display = 'block';
+    }
+
+    function customerMatches(order, customerVal) {
+      if (!customerVal) return true;
+      return ((order.customer_name || '').toLowerCase()).indexOf(customerVal.toLowerCase()) !== -1;
+    }
+    function getOrdersForState(stateAbbr) {
+      var customerVal = customerInput ? customerInput.value.trim() : '';
+      var list = ordersByState[stateAbbr] || [];
+      if (customerVal) list = list.filter(function(o) { return customerMatches(o, customerVal); });
+      return list;
+    }
+
+    var extreme = (delays || []).filter(function(d) { return d.delay_days >= 1; }).sort(function(a, b) { return b.delay_days - a.delay_days; });
+    var cornerPanel = document.getElementById('weather-alerts-corner');
+    var cornerList = document.getElementById('weather-alerts-corner-list');
+    function attachCornerClickHandlers() {
+      if (!cornerList) return;
+      cornerList.querySelectorAll('.alerts-corner-item[data-state-abbr]').forEach(function(el) {
+        el.onclick = function() {
+          var abbr = this.getAttribute('data-state-abbr');
+          var d = delayByAbbr[abbr];
+          if (d) showDrill(abbr, d.state_name, d.delay_days, d.driver, getOrdersForState(abbr));
+        };
+        el.onkeydown = function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); } };
+      });
+    }
+    function updateCornerList() {
+      var customerVal = customerInput ? customerInput.value.trim() : '';
+      if (extreme.length > 0 && cornerList) {
+        cornerList.innerHTML = extreme.map(function(d) {
+          var list = (ordersByState[d.state_abbr] || []);
+          if (customerVal) list = list.filter(function(o) { return customerMatches(o, customerVal); });
+          var orderCount = list.length;
+          return '<div class="alerts-corner-item" data-state-abbr="' + d.state_abbr + '" role="button" tabindex="0">' +
+            '<strong>' + (d.state_name || d.state_abbr) + ': ' + d.delay_days + ' day(s) delay</strong>' +
+            '<span class="driver">' + (d.driver === 'clear' ? '—' : d.driver) + ' · ' + orderCount + ' order(s) due</span>' +
+            '</div>';
+        }).join('');
+        attachCornerClickHandlers();
+      } else if (cornerList) {
+        cornerList.innerHTML = '<div class="alerts-corner-empty">No extreme weather in forecast.</div>';
+      }
+    }
+    if (cornerPanel) {
+      cornerPanel.style.display = 'block';
+      if (extreme.length > 0) updateCornerList();
+      else if (cornerList) cornerList.innerHTML = '<div class="alerts-corner-empty">No extreme weather in forecast.</div>';
+    }
+
+    function style(feature) {
+      var props = feature.properties || {};
+      var abbr = props.postal || props.name_alt || props.abbrev;
+      var d = delayByAbbr[abbr] || delayByAbbr[props.name];
+      var delayDays = d ? d.delay_days : 0;
+      return { fillColor: delayToColor(delayDays), weight: 1, opacity: 1, color: '#374151', fillOpacity: 0.7 };
+    }
+    function onEach(feature, layer) {
+      var props = feature.properties || {};
+      var abbr = props.postal || props.name_alt || props.abbrev;
+      var d = delayByAbbr[abbr] || delayByAbbr[props.name];
+      var delayDays = d ? d.delay_days : 0;
+      var name = props.name || abbr || 'Unknown';
+      var driver = d ? d.driver : '—';
+      var orderCount = (ordersByState[abbr] || []).length;
+      layer.bindTooltip(
+        '<strong>' + name + '</strong><br/>Est. delay: ' + delayDays + ' day(s)<br/>Driver: ' + driver + '<br/>Orders due: ' + orderCount,
+        { permanent: false, direction: 'top', className: 'leaflet-tooltip-weather' }
+      );
+      layer.on('click', function() {
+        showDrill(abbr, name, delayDays, driver, getOrdersForState(abbr));
+      });
+    }
+    L.geoJSON(geojson, { style: style, onEachFeature: onEach }).addTo(map);
+
+    var deliveryLayer = L.layerGroup().addTo(map);
+    var routesLayer = L.layerGroup();
+
+    function filterLocations(locs, stateVal, originVal, riskVal, customerVal) {
+      return (locs || []).map(function(loc) {
+        var orders = loc.orders || [];
+        if (customerVal) orders = orders.filter(function(o) { return customerMatches(o, customerVal); });
+        if (stateVal && loc.delivery_state !== stateVal) return null;
+        if (originVal && !orders.some(function(o) { return o.origin_site_id === originVal; })) return null;
+        if (riskVal === 'at-risk' && !orders.some(function(o) { return o.is_weather_risk; })) return null;
+        if (orders.length === 0) return null;
+        return { delivery_city: loc.delivery_city, delivery_state: loc.delivery_state, lat: loc.lat, lon: loc.lon, order_count: orders.length, orders: orders };
+      }).filter(Boolean);
+    }
+    function filterRoutes(routesList, stateVal, originVal, riskVal, customerVal) {
+      var routeKeysForCustomer = null;
+      if (customerVal) {
+        routeKeysForCustomer = {};
+        (deliveryLocations || []).forEach(function(loc) {
+          (loc.orders || []).forEach(function(o) {
+            if (!customerMatches(o, customerVal)) return;
+            var k = (o.origin_site_id || '') + '|' + (o.delivery_city || '') + '|' + (o.delivery_state || '');
+            routeKeysForCustomer[k] = true;
+          });
+        });
+      }
+      return (routesList || []).filter(function(r) {
+        if (stateVal && r.delivery_state !== stateVal) return false;
+        if (originVal && r.origin_site_id !== originVal) return false;
+        if (riskVal === 'at-risk' && (r.at_risk_count || 0) === 0) return false;
+        if (routeKeysForCustomer) {
+          var k = (r.origin_site_id || '') + '|' + (r.delivery_city || '') + '|' + (r.delivery_state || '');
+          if (!routeKeysForCustomer[k]) return false;
+        }
+        return true;
+      });
+    }
+
+    function redrawLayers() {
+      var customerVal = customerInput ? customerInput.value.trim() : '';
+      var stateVal = stateSelect ? stateSelect.value : '';
+      var originVal = originSelect ? originSelect.value : '';
+      var riskVal = document.getElementById('filter-risk') ? document.getElementById('filter-risk').value : 'all';
+      var showRoutes = document.getElementById('filter-show-routes') ? document.getElementById('filter-show-routes').checked : true;
+
+      var locs = filterLocations(deliveryLocations, stateVal, originVal, riskVal, customerVal);
+      var routeList = filterRoutes(routes, stateVal, originVal, riskVal, customerVal);
+      updateCornerList();
+
+      deliveryLayer.clearLayers();
+      locs.forEach(function(loc) {
+        var n = loc.order_count || 0;
+        var radius = Math.max(6, Math.min(18, 6 + Math.sqrt(n)));
+        var stateDelay = delayByAbbr[loc.delivery_state];
+        var delayDays = stateDelay ? stateDelay.delay_days : 0;
+        var driver = stateDelay ? stateDelay.driver : '—';
+        var atRisk = (loc.orders || []).some(function(o) { return o.is_weather_risk; });
+        var marker = L.circleMarker([loc.lat, loc.lon], {
+          radius: radius,
+          fillColor: atRisk ? '#dc2626' : '#2563eb',
+          color: '#1f2937',
+          weight: 1.5,
+          opacity: 1,
+          fillOpacity: 0.75
+        });
+        marker.bindTooltip(
+          '<strong>' + (loc.delivery_city || '') + ', ' + (loc.delivery_state || '') + '</strong><br/>' + n + ' order(s) due' + (delayDays > 0 ? ' · Est. delay: ' + delayDays + ' day(s)' : ''),
+          { permanent: false, direction: 'top', className: 'leaflet-tooltip-weather' }
+        );
+        marker.on('click', function() {
+          showDrill(loc.delivery_state, (loc.delivery_city || '') + ', ' + (loc.delivery_state || ''), delayDays, driver, loc.orders || []);
+        });
+        deliveryLayer.addLayer(marker);
+      });
+
+      routesLayer.clearLayers();
+      if (showRoutes) {
+        routeList.forEach(function(r) {
+          var weight = Math.max(1.5, Math.min(6, 1.5 + (r.order_count || 0) / 50));
+          var hasRisk = (r.at_risk_count || 0) > 0;
+          var line = L.polyline([[r.origin_lat, r.origin_lon], [r.delivery_lat, r.delivery_lon]], {
+            color: hasRisk ? '#dc2626' : '#64748b',
+            weight: weight,
+            opacity: 0.85
+          });
+          line.bindTooltip(
+            (r.origin_name || '') + ' → ' + (r.delivery_city || '') + ', ' + (r.delivery_state || '') + ': ' + (r.order_count || 0) + ' order(s)' + (hasRisk ? ' (' + (r.at_risk_count || 0) + ' at risk)' : ''),
+            { permanent: false, direction: 'top', className: 'leaflet-tooltip-weather' }
+          );
+          routesLayer.addLayer(line);
+        });
+        if (!map.hasLayer(routesLayer)) routesLayer.addTo(map);
+      } else {
+        if (map.hasLayer(routesLayer)) map.removeLayer(routesLayer);
+      }
+    }
+
+    redrawLayers();
+    if (customerInput) {
+      customerInput.addEventListener('input', redrawLayers);
+      customerInput.addEventListener('change', redrawLayers);
+    }
+    if (stateSelect) stateSelect.addEventListener('change', redrawLayers);
+    if (originSelect) originSelect.addEventListener('change', redrawLayers);
+    document.getElementById('filter-risk') && document.getElementById('filter-risk').addEventListener('change', redrawLayers);
+    document.getElementById('filter-show-routes') && document.getElementById('filter-show-routes').addEventListener('change', redrawLayers);
+    document.getElementById('weather-map-refresh') && document.getElementById('weather-map-refresh').addEventListener('click', function () { location.reload(); });
+
+    var allOrders = [];
+    var ordersPanel = document.getElementById('orders-panel');
+    var ordersToggle = document.getElementById('orders-grid-toggle');
+    var ordersFilter = document.getElementById('orders-filter');
+    var ordersTbody = document.getElementById('orders-tbody');
+    var ordersCount = document.getElementById('orders-count');
+
+    function renderOrders() {
+      if (!ordersTbody) return;
+      var filter = ordersFilter ? ordersFilter.value : 'all';
+      var list = filter === 'at-risk' ? allOrders.filter(function(o) { return o.is_weather_risk; }) : allOrders;
+      if (ordersCount) ordersCount.textContent = list.length + ' order(s)' + (filter === 'at-risk' ? ' at risk' : '');
+      ordersTbody.innerHTML = list.map(function(o) {
+        var riskClass = o.is_weather_risk ? ' class="weather-risk"' : '';
+        var riskBadge = o.is_weather_risk ? '<span class="badge-risk">May be late</span>' : '—';
+        return '<tr' + riskClass + '>' +
+          '<td>' + (o.order_id || '') + '</td>' +
+          '<td>' + (o.customer_name || '') + '</td>' +
+          '<td>' + (o.origin_name || '') + ', ' + (o.origin_state || '') + '</td>' +
+          '<td>' + (o.delivery_city || '') + ', ' + (o.delivery_state || '') + '</td>' +
+          '<td>' + (o.delivery_due_date || '') + '</td>' +
+          '<td>' + (o.origin_delay_days > 0 ? o.origin_delay_days + ' day(s)' : '0') + '</td>' +
+          '<td>' + (o.destination_delay_days > 0 ? o.destination_delay_days + ' day(s)' : '0') + '</td>' +
+          '<td>' + riskBadge + '</td></tr>';
+      }).join('');
+    }
+
+    if (ordersToggle) {
+      ordersToggle.addEventListener('click', function() {
+        var show = ordersPanel && ordersPanel.style.display !== 'none';
+        if (ordersPanel) ordersPanel.style.display = show ? 'none' : 'block';
+        ordersToggle.setAttribute('aria-pressed', show ? 'false' : 'true');
+        ordersToggle.textContent = show ? 'Show orders grid' : 'Hide orders grid';
+        if (!show && allOrders.length === 0) {
+          fetch('/api/orders-with-weather')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              allOrders = data || [];
+              renderOrders();
+            })
+            .catch(function() { if (ordersCount) ordersCount.textContent = 'Failed to load orders'; });
+        }
+      });
+    }
+    if (ordersFilter) ordersFilter.addEventListener('change', renderOrders);
+
+    var alertsTablePanel = document.getElementById('weather-alerts-table-panel');
+    var alertsTableToggle = document.getElementById('weather-alerts-table-toggle');
+    var alertsTableClose = document.getElementById('weather-alerts-table-close');
+    var alertsTableTitle = document.getElementById('weather-alerts-table-title');
+    var alertsTbody = document.getElementById('weather-alerts-tbody');
+
+    function renderWeatherAlertsTable(orders) {
+      if (!alertsTbody) return;
+      if (!orders || orders.length === 0) {
+        alertsTbody.innerHTML = '<tr><td colspan="10" class="meta">No weather alerts. No orders currently at risk due to weather.</td></tr>';
+        if (alertsTableTitle) alertsTableTitle.textContent = 'Weather alerts (0)';
+        return;
+      }
+      if (alertsTableTitle) alertsTableTitle.textContent = 'Weather alerts (' + orders.length + ')';
+      alertsTbody.innerHTML = orders.map(function(o) {
+        var reroute = o.reroute_site_name ? (o.reroute_site_name + (o.reroute_distance_miles != null ? ' (' + o.reroute_distance_miles + ' mi)' : '')) : (o.reroute_reason || '—');
+        var impact = '—';
+        if (o.reroute_plant_new_load != null && o.reroute_plant_capacity != null && o.reroute_plant_utilization_pct != null) {
+          impact = o.reroute_plant_new_load + ' / ' + o.reroute_plant_capacity + ' (' + o.reroute_plant_utilization_pct + '%)';
+          impact = '<span class="' + (o.reroute_plant_utilization_pct >= 90 ? 'util-high' : 'util-ok') + '">' + impact + '</span>';
+        }
+        return '<tr>' +
+          '<td>' + (o.order_id || '') + '</td>' +
+          '<td>' + (o.customer_name || '') + '</td>' +
+          '<td>' + (o.origin_name || '') + ', ' + (o.origin_state || '') + '</td>' +
+          '<td>' + (o.delivery_city || '') + ', ' + (o.delivery_state || '') + '</td>' +
+          '<td>' + (o.delivery_due_date || '') + '</td>' +
+          '<td>' + (o.origin_delay_days > 0 ? o.origin_delay_days + ' day(s)' : '0') + '</td>' +
+          '<td>' + (o.destination_delay_days > 0 ? o.destination_delay_days + ' day(s)' : '0') + '</td>' +
+          '<td>' + reroute + '</td>' +
+          '<td>' + impact + '</td>' +
+          '<td>' + (o.weather_risk_reason || '') + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    if (alertsTableToggle) {
+      alertsTableToggle.addEventListener('click', function() {
+        var isShowing = alertsTablePanel && alertsTablePanel.style.display !== 'none';
+        if (isShowing) {
+          if (alertsTablePanel) alertsTablePanel.style.display = 'none';
+          alertsTableToggle.setAttribute('aria-pressed', 'false');
+          alertsTableToggle.textContent = 'Show weather alerts table';
+        } else {
+          if (alertsTablePanel) alertsTablePanel.style.display = 'block';
+          alertsTableToggle.setAttribute('aria-pressed', 'true');
+          alertsTableToggle.textContent = 'Hide weather alerts table';
+          if (alertsTableTitle) alertsTableTitle.textContent = 'Weather alerts (loading…)';
+          if (alertsTbody) alertsTbody.innerHTML = '<tr><td colspan="10" class="meta">Loading…</td></tr>';
+          fetch('/api/orders-weather-alerts')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              renderWeatherAlertsTable(Array.isArray(data) ? data : []);
+            })
+            .catch(function() {
+              renderWeatherAlertsTable([]);
+              if (alertsTableTitle) alertsTableTitle.textContent = 'Weather alerts (load failed)';
+            });
+        }
+      });
+    }
+    if (alertsTableClose) {
+      alertsTableClose.addEventListener('click', function() {
+        if (alertsTablePanel) alertsTablePanel.style.display = 'none';
+        if (alertsTableToggle) {
+          alertsTableToggle.setAttribute('aria-pressed', 'false');
+          alertsTableToggle.textContent = 'Show weather alerts table';
+        }
+      });
+    }
+  }).catch(function(err) {
+    container.innerHTML = '<div class="error">Failed to load data: ' + (err.message || 'Unknown error') + '</div>';
+  });
+})();
+</script>
+{% endblock %}

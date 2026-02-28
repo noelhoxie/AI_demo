@@ -1,0 +1,221 @@
+/* ── Reset & Variables ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --color-bg:         #f4f5f7;
+  --color-surface:    #ffffff;
+  --color-border:     #d1d5db;
+  --color-primary:    #e05a1e;   /* Databricks orange */
+  --color-primary-dk: #c24a10;
+  --color-text:       #111827;
+  --color-text-muted: #6b7280;
+  --color-error:      #dc2626;
+  --color-warn:       #d97706;
+  --color-success:    #16a34a;
+  --radius:           6px;
+  --shadow:           0 1px 3px rgba(0,0,0,.1);
+  font-size: 14px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.app-header {
+  background: var(--color-primary);
+  color: #fff;
+  padding: 14px 24px;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  box-shadow: var(--shadow);
+}
+.app-header h1 { font-size: 1.25rem; font-weight: 700; }
+.subtitle { font-size: 0.85rem; opacity: .8; }
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+  padding: 16px;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+/* ── Panel ───────────────────────────────────────────────────────────────── */
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+.panel h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+}
+
+/* ── Form Elements ───────────────────────────────────────────────────────── */
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+label { font-size: 0.8rem; font-weight: 500; color: var(--color-text-muted); }
+
+input[type="text"], select, textarea {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: var(--color-surface);
+  color: var(--color-text);
+  transition: border-color .15s;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(224,90,30,.2);
+}
+select:disabled { opacity: .5; cursor: not-allowed; }
+
+textarea {
+  font-family: "SF Mono", "Fira Code", Consolas, monospace;
+  font-size: 0.85rem;
+  resize: vertical;
+  min-height: 120px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 14px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, opacity .15s;
+}
+.btn-primary            { background: var(--color-primary); color: #fff; margin-top: 4px; }
+.btn-primary:hover      { background: var(--color-primary-dk); }
+.btn-secondary          { background: #e5e7eb; color: var(--color-text); margin-top: 4px; }
+.btn-secondary:hover    { background: #d1d5db; }
+.btn-ghost              { background: transparent; color: var(--color-text-muted); }
+.btn-ghost:hover        { background: #f3f4f6; }
+button:disabled         { opacity: .5; cursor: not-allowed; }
+
+/* ── Query Controls ──────────────────────────────────────────────────────── */
+.query-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.query-controls select { width: auto; }
+
+/* ── Status Bar ──────────────────────────────────────────────────────────── */
+.status-bar {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+}
+.hidden         { display: none !important; }
+.status-info    { background: #eff6ff; color: #1d4ed8; }
+.status-error   { background: #fef2f2; color: var(--color-error); }
+.status-warn    { background: #fffbeb; color: var(--color-warn); }
+.status-success { background: #f0fdf4; color: var(--color-success); }
+
+/* ── Table List (sidebar) ────────────────────────────────────────────────── */
+.table-list { margin-top: 8px; max-height: 400px; overflow-y: auto; }
+.table-list ul { list-style: none; }
+.table-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  gap: 8px;
+}
+.table-item:hover { background: #f9fafb; }
+.table-name {
+  font-family: "SF Mono", Consolas, monospace;
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+.table-name:hover { text-decoration: underline; }
+
+.table-type-badge, .badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.badge-warn { background: #fef3c7; color: var(--color-warn); }
+.empty-state { font-size: 0.85rem; color: var(--color-text-muted); padding: 8px; }
+
+/* ── Results ─────────────────────────────────────────────────────────────── */
+.results-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.results-header h2 { margin-bottom: 0; }
+
+.table-scroll { overflow-x: auto; }
+
+#results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+#results-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 2px solid var(--color-border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+}
+#results-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  font-family: "SF Mono", Consolas, monospace;
+  font-size: 0.8rem;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#results-table tr:hover td { background: #f9fafb; }
+.null-cell { color: var(--color-text-muted); font-style: italic; }

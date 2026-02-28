@@ -1,0 +1,25 @@
+command:
+  - gunicorn
+  - --bind
+  - "0.0.0.0:$DATABRICKS_APP_PORT"
+  - --workers
+  - "2"
+  - --timeout
+  - "120"
+  - app:app
+
+env:
+  - name: DATABRICKS_WAREHOUSE_ID
+    value: "<your-warehouse-id>"   # Replace with your HTTP SQL Warehouse ID
+  - name: DEFAULT_CATALOG
+    value: "main"
+  - name: DEFAULT_SCHEMA
+    value: "default"
+  - name: QUERY_ROW_LIMIT
+    value: "500"
+
+resources:
+  - name: sql-warehouse
+    description: SQL Warehouse for dashboard queries
+    sql_warehouse:
+      permission: CAN_USE

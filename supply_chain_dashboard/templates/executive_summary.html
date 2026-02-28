@@ -1,0 +1,167 @@
+{% extends "dashboard_base.html" %}
+
+{% block content %}
+<section class="panel active executive-summary-page">
+  <div class="panel-content" id="exec-summary-panel">
+    <div class="filters-bar">
+      <button type="button" class="btn btn-secondary" id="es-refresh" aria-label="Refresh report">Refresh</button>
+      <button type="button" class="btn btn-secondary" id="es-print" aria-label="Print report">Print report</button>
+    </div>
+    <header class="report-header">
+      <h2>Executive Summary Report</h2>
+      <p class="report-meta">Supply chain overview — Procurement, Production OEE, Weather risk</p>
+      <p class="report-date" id="report-date"></p>
+    </header>
+
+    <div class="report-section" id="es-section-procurement">
+      <div class="report-section-header" aria-expanded="true" tabindex="0" role="button">
+        <h3>Procurement</h3>
+        <button type="button" class="toggle-section btn btn-secondary" aria-label="Collapse section">Collapse</button>
+      </div>
+      <div class="report-section-body">
+      <div class="kpi-row report-kpis">
+        <div class="kpi-card"><div class="label">Total POs</div><div class="value" id="es-po-total">—</div><div class="target" id="es-po-total-target"></div></div>
+        <div class="kpi-card"><div class="label">PO Value</div><div class="value money" id="es-po-value">—</div><div class="target" id="es-po-value-target"></div></div>
+        <div class="kpi-card"><div class="label">Avg PO Value</div><div class="value money" id="es-po-avg">—</div><div class="target" id="es-po-avg-target"></div></div>
+        <div class="kpi-card"><div class="label">Unique Suppliers</div><div class="value" id="es-po-suppliers">—</div><div class="target" id="es-po-suppliers-target"></div></div>
+      </div>
+      <div class="chart-card report-chart">
+        <h4>PO Value by Vendor</h4>
+        <div class="chart-container" style="height: 220px;"><canvas id="es-chart-po-vendor"></canvas></div>
+      </div>
+      </div>
+    </div>
+
+    <div class="report-section" id="es-section-production">
+      <div class="report-section-header" aria-expanded="true" tabindex="0" role="button">
+        <h3>Production OEE</h3>
+        <button type="button" class="toggle-section btn btn-secondary" aria-label="Collapse section">Collapse</button>
+      </div>
+      <div class="report-section-body">
+      <div class="kpi-row report-kpis">
+        <div class="kpi-card"><div class="label">Availability %</div><div class="value percent" id="es-oee-avail">—</div><div class="target" id="es-oee-avail-target"></div></div>
+        <div class="kpi-card"><div class="label">Performance %</div><div class="value percent" id="es-oee-perf">—</div><div class="target" id="es-oee-perf-target"></div></div>
+        <div class="kpi-card"><div class="label">Quality %</div><div class="value percent" id="es-oee-qual">—</div><div class="target" id="es-oee-qual-target"></div></div>
+        <div class="kpi-card"><div class="label">OEE %</div><div class="value percent" id="es-oee-total">—</div><div class="target" id="es-oee-total-target"></div></div>
+      </div>
+      <div class="chart-card report-chart">
+        <h4>OEE by Machine Center</h4>
+        <div class="chart-container" style="height: 260px;"><canvas id="es-chart-oee"></canvas></div>
+      </div>
+      </div>
+    </div>
+
+    <div class="report-section" id="es-section-weather">
+      <div class="report-section-header" aria-expanded="true" tabindex="0" role="button">
+        <h3>Weather &amp; Risk</h3>
+        <button type="button" class="toggle-section btn btn-secondary" aria-label="Collapse section">Collapse</button>
+      </div>
+      <div class="report-section-body">
+      <div class="report-weather-card">
+        <p class="report-weather-summary"><strong id="es-weather-count">—</strong> order(s) at risk due to weather (origin or destination delay).</p>
+        <a href="{{ url_for('alerts_page') }}" class="btn btn-primary">View Weather alerts</a>
+      </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  const BAR_COLORS = ['#002855', '#0072CE', '#00A3E0', '#4DA6FF', '#5A6C7D', '#00854D', '#C9A227'];
+  function formatNum(x) { return Number(x).toLocaleString(); }
+  function formatMoney(x) { return '$' + formatNum(Math.round(x)); }
+  const charts = [];
+
+  function destroyCharts() {
+    charts.forEach(function(c) { if (c && typeof c.destroy === 'function') c.destroy(); });
+    charts.length = 0;
+  }
+
+  function setReportDate() {
+    const el = document.getElementById('report-date');
+    if (el) el.textContent = 'As of ' + new Date().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  function loadData() {
+    setReportDate();
+    const panel = document.getElementById('exec-summary-panel');
+    if (panel) panel.classList.add('is-loading');
+    fetch('/api/executive-summary')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        destroyCharts();
+        const p = d.procurement || {};
+        const pk = p.kpis || {};
+        document.getElementById('es-po-total').textContent = formatNum(pk.total_pos ?? '—');
+        document.getElementById('es-po-value').textContent = pk.total_po_value != null ? formatMoney(pk.total_po_value) : '—';
+        document.getElementById('es-po-avg').textContent = pk.avg_po_value != null ? formatMoney(pk.avg_po_value) : '—';
+        document.getElementById('es-po-suppliers').textContent = formatNum(pk.unique_suppliers ?? '—');
+        var esPoTotalTarget = document.getElementById('es-po-total-target'); if (esPoTotalTarget) esPoTotalTarget.textContent = pk.total_pos_target != null ? 'Target: ' + formatNum(pk.total_pos_target) : '';
+        var esPoValueTarget = document.getElementById('es-po-value-target'); if (esPoValueTarget) esPoValueTarget.textContent = pk.total_po_value_target != null ? 'Target: ' + formatMoney(pk.total_po_value_target) : '';
+        var esPoAvgTarget = document.getElementById('es-po-avg-target'); if (esPoAvgTarget) esPoAvgTarget.textContent = pk.avg_po_value_target != null ? 'Target: ' + formatMoney(pk.avg_po_value_target) : '';
+        var esPoSuppliersTarget = document.getElementById('es-po-suppliers-target'); if (esPoSuppliersTarget) esPoSuppliersTarget.textContent = pk.unique_suppliers_target != null ? 'Target: ' + formatNum(pk.unique_suppliers_target) : '';
+        const vendorData = p.po_value_by_vendor || [];
+        const canvasPo = document.getElementById('es-chart-po-vendor');
+        if (canvasPo && vendorData.length) {
+          charts.push(new Chart(canvasPo.getContext('2d'), {
+            type: 'bar',
+            data: { labels: vendorData.map(function(x) { return x.vendor; }), datasets: [{ label: 'Value', data: vendorData.map(function(x) { return x.value; }), backgroundColor: BAR_COLORS }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+          }));
+        }
+
+        const prod = d.production || {};
+        const prodk = prod.kpis || {};
+        document.getElementById('es-oee-avail').textContent = (prodk.availability_pct != null ? prodk.availability_pct : '—') + (prodk.availability_pct != null ? '%' : '');
+        document.getElementById('es-oee-perf').textContent = (prodk.performance_pct != null ? prodk.performance_pct : '—') + (prodk.performance_pct != null ? '%' : '');
+        document.getElementById('es-oee-qual').textContent = (prodk.quality_pct != null ? prodk.quality_pct : '—') + (prodk.quality_pct != null ? '%' : '');
+        document.getElementById('es-oee-total').textContent = (prodk.oee_pct != null ? prodk.oee_pct : '—') + (prodk.oee_pct != null ? '%' : '');
+        var esOeeAvailTarget = document.getElementById('es-oee-avail-target'); if (esOeeAvailTarget) esOeeAvailTarget.textContent = prodk.availability_pct_target != null ? 'Target: ' + prodk.availability_pct_target + '%' : '';
+        var esOeePerfTarget = document.getElementById('es-oee-perf-target'); if (esOeePerfTarget) esOeePerfTarget.textContent = prodk.performance_pct_target != null ? 'Target: ' + prodk.performance_pct_target + '%' : '';
+        var esOeeQualTarget = document.getElementById('es-oee-qual-target'); if (esOeeQualTarget) esOeeQualTarget.textContent = prodk.quality_pct_target != null ? 'Target: ' + prodk.quality_pct_target + '%' : '';
+        var esOeeTotalTarget = document.getElementById('es-oee-total-target'); if (esOeeTotalTarget) esOeeTotalTarget.textContent = prodk.oee_pct_target != null ? 'Target: ' + prodk.oee_pct_target + '%' : '';
+        const oeeRows = prod.oee_by_machine_center || [];
+        const canvasOee = document.getElementById('es-chart-oee');
+        if (canvasOee && oeeRows.length) {
+          charts.push(new Chart(canvasOee.getContext('2d'), {
+            type: 'bar',
+            data: { labels: oeeRows.map(function(x) { return x.facility + ' — ' + x.machine_center; }), datasets: [{ label: 'OEE %', data: oeeRows.map(function(x) { return x.oee_pct; }), backgroundColor: BAR_COLORS }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+          }));
+        }
+
+        const alertCount = d.weather_alerts_count != null ? d.weather_alerts_count : 0;
+        document.getElementById('es-weather-count').textContent = alertCount;
+      })
+      .catch(function() {
+        document.getElementById('es-weather-count').textContent = '?';
+      })
+      .finally(function() { if (panel) panel.classList.remove('is-loading'); });
+  }
+
+  setReportDate();
+  loadData();
+
+  document.getElementById('es-refresh')?.addEventListener('click', loadData);
+  document.getElementById('es-print')?.addEventListener('click', function() { window.print(); });
+
+  document.querySelectorAll('.report-section').forEach(function(section) {
+    const header = section.querySelector('.report-section-header');
+    const btn = section.querySelector('.toggle-section');
+    function toggle() {
+      const collapsed = section.classList.toggle('collapsed');
+      if (btn) btn.textContent = collapsed ? 'Expand' : 'Collapse';
+      if (header) header.setAttribute('aria-expanded', !collapsed);
+    }
+    if (header) {
+      header.addEventListener('click', function(e) { if (!btn || !btn.contains(e.target)) toggle(); });
+      header.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    }
+    if (btn) btn.addEventListener('click', function(e) { e.stopPropagation(); toggle(); });
+  });
+})();
+</script>
+{% endblock %}

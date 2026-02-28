@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Actions | {{ company.name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>:root { --color-primary: {{ company.primary_color }}; }</style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-brand">
+      <h1>{{ company.name }}</h1>
+      <div class="header-subtitle">Supply Chain Control Tower</div>
+      <div class="header-powered-by">Powered by Databricks</div>
+    </div>
+    <div class="header-right">
+      <a href="/" class="badge badge-link">Back to dashboard</a>
+      <span class="header-user-btn">
+        <select id="persona-select" class="header-persona-select header-persona-in-pill" aria-label="Select your role">
+          <option value="VP Supply Chain">VP Supply Chain</option>
+          <option value="Logistics Manager">Logistics Manager</option>
+          <option value="Supply Chain Planner">Supply Chain Planner</option>
+        </select>
+      </span>
+    </div>
+  </header>
+
+  <main class="main actions-page">
+
+    <h2 class="actions-title">Available actions</h2>
+    <div id="actions-list" class="actions-list"></div>
+  </main>
+
+  <footer class="app-footer">
+    Actions vary by role: VP Supply Chain, Logistics Manager, or Supply Chain Planner.
+  </footer>
+
+  <script>
+    const PERSONA_KEY = 'dashboard_persona';
+    const ACTIONS = [
+      { id: 'add-comment', title: 'Add comment', description: 'Add a comment with your name; the date is recorded automatically.', personas: ['VP Supply Chain','Logistics Manager','Supply Chain Planner'], type: 'link', href: '/#add-comment' },
+      { id: 'refresh', title: 'Refresh data', description: 'Reload the dashboard to fetch the latest data.', personas: ['Logistics Manager','Supply Chain Planner'], type: 'link', href: '/' },
+      { id: 'executive-report', title: 'Executive summary report', description: 'Generate a high-level summary for leadership.', personas: ['VP Supply Chain'], type: 'button', action: 'executive-report' },
+      { id: 'approve-shipments', title: 'Approve shipments', description: 'Review and approve pending shipments and deliveries.', personas: ['Logistics Manager'], type: 'button', action: 'approve-shipments' },
+      { id: 'carrier-performance', title: 'Carrier performance', description: 'View or export carrier and delivery performance metrics.', personas: ['Logistics Manager'], type: 'button', action: 'carrier-performance' },
+      { id: 'save-view', title: 'Save current view', description: 'Save filter and tab state for quick access.', personas: ['Supply Chain Planner'], type: 'button', action: 'save-view' },
+      { id: 'request-report', title: 'Request report', description: 'Submit a request for a custom planning report.', personas: ['Supply Chain Planner'], type: 'button', action: 'request-report' },
+      { id: 'run-forecast', title: 'Run demand forecast', description: 'Trigger or refresh demand forecast for planning.', personas: ['Supply Chain Planner'], type: 'button', action: 'run-forecast' },
+      { id: 'simulator', title: 'Disruption simulator', description: 'Run what-if scenarios: supplier delay, plant outage, logistics delay, demand spike, inventory shortage.', personas: ['VP Supply Chain', 'Logistics Manager', 'Supply Chain Planner'], type: 'link', href: '/simulator' },
+      { id: 'production-targets', title: 'Enter production targets', description: 'Set target OEE % and planned downtime per machine center; downtime reduces the OEE shown on the Production page.', personas: ['VP Supply Chain', 'Logistics Manager', 'Supply Chain Planner'], type: 'link', href: '/production-targets' }
+    ];
+
+    const VALID_PERSONAS = ['VP Supply Chain', 'Logistics Manager', 'Supply Chain Planner'];
+    function getPersona() {
+      const stored = sessionStorage.getItem(PERSONA_KEY);
+      return (stored && VALID_PERSONAS.includes(stored)) ? stored : 'VP Supply Chain';
+    }
+    function setPersona(p) {
+      sessionStorage.setItem(PERSONA_KEY, p);
+    }
+
+    function renderActions() {
+      const persona = getPersona();
+      document.getElementById('persona-select').value = persona;
+      const allowed = ACTIONS.filter(a => a.personas.includes(persona));
+      const listEl = document.getElementById('actions-list');
+      if (!allowed.length) {
+        listEl.innerHTML = '<p class="empty-state">No actions available for this role.</p>';
+        return;
+      }
+      listEl.innerHTML = allowed.map(a => {
+        if (a.type === 'link') {
+          return '<div class="action-card"><h3 class="action-card-title">' + escapeHtml(a.title) + '</h3><p class="action-card-desc">' + escapeHtml(a.description) + '</p><a href="' + escapeHtml(a.href) + '" class="btn btn-primary">Open</a></div>';
+        }
+        return '<div class="action-card"><h3 class="action-card-title">' + escapeHtml(a.title) + '</h3><p class="action-card-desc">' + escapeHtml(a.description) + '</p><button type="button" class="btn btn-primary" data-action="' + escapeHtml(a.action) + '">Run</button></div>';
+      }).join('');
+
+      listEl.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const action = btn.dataset.action;
+          window.alert('Action "' + action + '" is not yet implemented. Configure in the application.');
+        });
+      });
+    }
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    document.getElementById('persona-select').addEventListener('change', function() {
+      setPersona(this.value);
+      renderActions();
+    });
+
+    renderActions();
+  </script>
+</body>
+</html>

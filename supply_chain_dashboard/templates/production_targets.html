@@ -1,0 +1,118 @@
+{% extends "dashboard_base.html" %}
+
+{% block content %}
+<section class="panel active">
+  <div class="panel-content">
+    <h2 class="actions-title">Production targets &amp; downtime</h2>
+    <p class="sim-intro">Set a target OEE % and planned downtime (hours per week) for each machine center. Downtime reduces the effective OEE shown on the Production page.</p>
+    <div class="chart-card">
+      <h3>Machine centers</h3>
+      <div id="production-targets-loading" class="loading">Loading machine centers…</div>
+      <div id="production-targets-wrap" style="display: none;">
+        <div class="table-wrap" style="max-height: 60vh; overflow: auto;">
+          <table class="data-table" id="production-targets-table">
+            <thead>
+              <tr>
+                <th>Facility</th>
+                <th>Machine center</th>
+                <th>Current OEE %</th>
+                <th>Target OEE %</th>
+                <th>Downtime (hours/week)</th>
+              </tr>
+            </thead>
+            <tbody id="production-targets-tbody"></tbody>
+          </table>
+        </div>
+        <p class="meta" style="margin-top: 0.75rem;">Effective OEE on the Production page = Current OEE − (Downtime ÷ 168 × 100), minimum 0. Target is for reference.</p>
+        <div style="margin-top: 1rem;">
+          <button type="button" class="btn btn-primary" id="production-targets-save">Save targets</button>
+          <span id="production-targets-msg" class="sim-message" style="margin-left: 0.75rem;"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  const STORAGE_KEY = 'production_targets';
+
+  function getStored() {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+
+  function loadCenters() {
+    fetch('/api/production').then(r => r.json()).then(function(d) {
+      const rows = d.oee_by_machine_center || [];
+      const tbody = document.getElementById('production-targets-tbody');
+      const wrap = document.getElementById('production-targets-wrap');
+      const loading = document.getElementById('production-targets-loading');
+      if (!tbody || !wrap || !loading) return;
+      loading.style.display = 'none';
+      if (!rows.length) {
+        wrap.style.display = 'block';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No machine centers in production data.</td></tr>';
+        return;
+      }
+      const stored = getStored();
+      tbody.innerHTML = rows.map(function(r) {
+        const key = (r.facility || '') + '|' + (r.machine_center || '');
+        const s = stored[key] || {};
+        const target = s.target_oee_pct != null ? s.target_oee_pct : '';
+        const downtime = s.downtime_hours != null ? s.downtime_hours : '';
+        const current = r.oee_pct != null ? r.oee_pct : '—';
+        return '<tr data-key="' + escapeHtml(key) + '">' +
+          '<td>' + escapeHtml(r.facility || '') + '</td>' +
+          '<td>' + escapeHtml(r.machine_center || '') + '</td>' +
+          '<td>' + escapeHtml(String(current)) + '</td>' +
+          '<td><input type="number" min="0" max="100" step="0.1" class="input-target" data-key="' + escapeHtml(key) + '" placeholder="—" value="' + escapeHtml(String(target)) + '" aria-label="Target OEE %"></td>' +
+          '<td><input type="number" min="0" step="0.5" class="input-downtime" data-key="' + escapeHtml(key) + '" placeholder="0" value="' + escapeHtml(String(downtime)) + '" aria-label="Downtime hours per week"></td>' +
+          '</tr>';
+      }).join('');
+      wrap.style.display = 'block';
+    }).catch(function() {
+      const loading = document.getElementById('production-targets-loading');
+      if (loading) loading.textContent = 'Failed to load production data.';
+    });
+  }
+
+  function escapeHtml(s) {
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  document.getElementById('production-targets-save').addEventListener('click', function() {
+    const stored = {};
+    document.querySelectorAll('#production-targets-tbody tr').forEach(function(tr) {
+      const key = tr.getAttribute('data-key');
+      if (!key) return;
+      const targetEl = tr.querySelector('.input-target');
+      const downtimeEl = tr.querySelector('.input-downtime');
+      const target = targetEl && targetEl.value.trim() !== '' ? parseFloat(targetEl.value) : null;
+      const downtime = downtimeEl && downtimeEl.value.trim() !== '' ? parseFloat(downtimeEl.value) : null;
+      if (target != null || downtime != null) {
+        stored[key] = {};
+        if (target != null && !isNaN(target)) stored[key].target_oee_pct = target;
+        if (downtime != null && !isNaN(downtime)) stored[key].downtime_hours = downtime;
+      }
+    });
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+      var msg = document.getElementById('production-targets-msg');
+      if (msg) { msg.textContent = 'Saved. Production page will use these values.'; msg.className = 'sim-message success'; }
+    } catch (e) {
+      var msg = document.getElementById('production-targets-msg');
+      if (msg) { msg.textContent = 'Save failed.'; msg.className = 'sim-message error'; }
+    }
+  });
+
+  loadCenters();
+})();
+</script>
+{% endblock %}

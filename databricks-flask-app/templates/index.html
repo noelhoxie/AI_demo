@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Databricks Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="app-header">
+    <h1>Databricks Dashboard</h1>
+    <span class="subtitle">Unity Catalog Explorer &amp; Query Runner</span>
+  </header>
+
+  <main class="layout">
+
+    <!-- Sidebar: catalog / schema / table browser -->
+    <aside class="sidebar">
+      <section class="panel">
+        <h2>Catalog Browser</h2>
+
+        <div class="form-row">
+          <label for="catalog-input">Catalog</label>
+          <input id="catalog-input" type="text"
+                 value="{{ default_catalog }}" placeholder="main">
+          <button id="load-schemas-btn" class="btn-primary">Load Schemas</button>
+        </div>
+
+        <div class="form-row">
+          <label for="schema-select">Schema</label>
+          <select id="schema-select" disabled>
+            <option value="">— select schema —</option>
+          </select>
+          <button id="load-tables-btn" class="btn-secondary" disabled>Load Tables</button>
+        </div>
+
+        <div id="tables-list" class="table-list"></div>
+      </section>
+    </aside>
+
+    <!-- Main: SQL editor + results -->
+    <section class="content">
+      <div class="panel">
+        <h2>SQL Query</h2>
+        <textarea id="sql-input" rows="6"
+                  placeholder="SELECT * FROM main.default.my_table LIMIT 100"
+                  spellcheck="false"></textarea>
+        <div class="query-controls">
+          <select id="catalog-select-query" title="Catalog for query context">
+            <option value="{{ default_catalog }}">{{ default_catalog }}</option>
+          </select>
+          <select id="schema-select-query" title="Schema for query context">
+            <option value="{{ default_schema }}">{{ default_schema }}</option>
+          </select>
+          <button id="run-query-btn" class="btn-primary">Run Query</button>
+          <button id="clear-btn" class="btn-ghost">Clear</button>
+        </div>
+        <div id="query-status" class="status-bar hidden"></div>
+      </div>
+
+      <div class="panel" id="results-panel" style="display:none">
+        <div class="results-header">
+          <h2>Results</h2>
+          <span id="row-count-label" class="badge"></span>
+          <span id="truncated-warning" class="badge badge-warn hidden">
+            Results truncated — increase QUERY_ROW_LIMIT to see more
+          </span>
+        </div>
+        <div class="table-scroll">
+          <table id="results-table">
+            <thead id="results-thead"></thead>
+            <tbody id="results-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+  // ── Utilities ─────────────────────────────────────────────────────────────
+
+  function showStatus(msg, type = "info") {
+    const el = document.getElementById("query-status");
+    el.textContent = msg;
+    el.className = `status-bar status-${type}`;
+    el.classList.remove("hidden");
+  }
+
+  function hideStatus() {
+    document.getElementById("query-status").classList.add("hidden");
+  }
+
+  async function apiFetch(url, opts = {}) {
+    const res = await fetch(url, {
+      headers: { "Content-Type": "application/json" },
+      ...opts,
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) throw new Error(json.error || `HTTP ${res.status}`);
+    return json;
+  }
+
+  // ── Schema loader ──────────────────────────────────────────────────────────
+
+  document.getElementById("load-schemas-btn").addEventListener("click", async () => {
+    const catalog = document.getElementById("catalog-input").value.trim();
+    if (!catalog) return;
+    showStatus("Loading schemas…");
+    try {
+      const data = await apiFetch(`/api/schemas?catalog=${encodeURIComponent(catalog)}`);
+      const select = document.getElementById("schema-select");
+      select.innerHTML = '<option value="">— select schema —</option>';
+      data.schemas.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s;
+        opt.textContent = s;
+        select.appendChild(opt);
+      });
+      select.disabled = false;
+      document.getElementById("load-tables-btn").disabled = false;
+      document.getElementById("catalog-select-query").innerHTML =
+        `<option value="${catalog}">${catalog}</option>`;
+      hideStatus();
+    } catch (err) {
+      showStatus(`Error loading schemas: ${err.message}`, "error");
+    }
+  });
+
+  // ── Table loader ───────────────────────────────────────────────────────────
+
+  document.getElementById("load-tables-btn").addEventListener("click", async () => {
+    const catalog = document.getElementById("catalog-input").value.trim();
+    const schema  = document.getElementById("schema-select").value;
+    if (!schema) return;
+    showStatus("Loading tables…");
+    try {
+      const data = await apiFetch(
+        `/api/tables?catalog=${encodeURIComponent(catalog)}&schema=${encodeURIComponent(schema)}`
+      );
+      const container = document.getElementById("tables-list");
+      container.innerHTML = "";
+
+      if (data.tables.length === 0) {
+        container.innerHTML = '<p class="empty-state">No tables found.</p>';
+      } else {
+        const ul = document.createElement("ul");
+        data.tables.forEach(t => {
+          const li = document.createElement("li");
+          li.className = "table-item";
+          li.innerHTML = `
+            <span class="table-name" title="${t.full_name}">${t.name}</span>
+            <span class="table-type-badge">${t.table_type}</span>
+          `;
+          li.querySelector(".table-name").addEventListener("click", () => {
+            document.getElementById("sql-input").value =
+              `SELECT *\nFROM ${t.full_name}\nLIMIT 50`;
+          });
+          ul.appendChild(li);
+        });
+        container.appendChild(ul);
+      }
+
+      document.getElementById("schema-select-query").innerHTML =
+        `<option value="${schema}">${schema}</option>`;
+      hideStatus();
+    } catch (err) {
+      showStatus(`Error loading tables: ${err.message}`, "error");
+    }
+  });
+
+  // ── Query runner ───────────────────────────────────────────────────────────
+
+  document.getElementById("run-query-btn").addEventListener("click", runQuery);
+
+  document.getElementById("sql-input").addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      runQuery();
+    }
+  });
+
+  document.getElementById("clear-btn").addEventListener("click", () => {
+    document.getElementById("sql-input").value = "";
+    document.getElementById("results-panel").style.display = "none";
+    hideStatus();
+  });
+
+  async function runQuery() {
+    const sql     = document.getElementById("sql-input").value.trim();
+    const catalog = document.getElementById("catalog-select-query").value;
+    const schema  = document.getElementById("schema-select-query").value;
+    if (!sql) { showStatus("Please enter a SQL statement.", "warn"); return; }
+
+    const btn = document.getElementById("run-query-btn");
+    btn.disabled = true;
+    btn.textContent = "Running…";
+    showStatus("Executing query…");
+
+    try {
+      const data = await apiFetch("/api/query", {
+        method: "POST",
+        body: JSON.stringify({ sql, catalog, schema }),
+      });
+      renderResults(data);
+      hideStatus();
+    } catch (err) {
+      showStatus(`Query failed: ${err.message}`, "error");
+      document.getElementById("results-panel").style.display = "none";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Run Query";
+    }
+  }
+
+  function renderResults(data) {
+    const thead   = document.getElementById("results-thead");
+    const tbody   = document.getElementById("results-tbody");
+    const countEl = document.getElementById("row-count-label");
+    const truncEl = document.getElementById("truncated-warning");
+
+    const headerRow = document.createElement("tr");
+    data.columns.forEach(col => {
+      const th = document.createElement("th");
+      th.textContent = col;
+      headerRow.appendChild(th);
+    });
+    thead.innerHTML = "";
+    thead.appendChild(headerRow);
+
+    tbody.innerHTML = "";
+    data.rows.forEach(row => {
+      const tr = document.createElement("tr");
+      row.forEach(cell => {
+        const td = document.createElement("td");
+        td.textContent = cell === null ? "NULL" : cell;
+        if (cell === null) td.classList.add("null-cell");
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+
+    countEl.textContent = `${data.row_count} row${data.row_count !== 1 ? "s" : ""}`;
+    truncEl.classList.toggle("hidden", !data.truncated);
+    document.getElementById("results-panel").style.display = "block";
+  }
+  </script>
+</body>
+</html>

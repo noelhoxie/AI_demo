@@ -1,0 +1,203 @@
+/* Novelis-branded Supply Chain & Production Dashboard */
+:root {
+  /* Novelis-inspired palette: dark blue primary, medium blue, light gray bg */
+  --novelis-navy: #002855;
+  --novelis-blue: #0072CE;
+  --novelis-blue-light: #00A3E0;
+  --novelis-bg: #F5F7FA;
+  --novelis-card: #FFFFFF;
+  --novelis-border: #E2E8F0;
+  --novelis-text: #002855;
+  --novelis-text-muted: #5A6C7D;
+  --novelis-accent: #E31837;
+  --novelis-success: #00854D;
+  --novelis-warning: #FFB81C;
+  --font-sans: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --shadow: 0 1px 3px rgba(0, 40, 85, 0.08);
+  --shadow-hover: 0 4px 12px rgba(0, 40, 85, 0.12);
+  --radius: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--novelis-bg);
+  color: var(--novelis-text);
+  min-height: 100vh;
+}
+
+/* Header — Novelis style */
+.app-header {
+  background: var(--novelis-navy);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
+}
+.app-header h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.app-header .subtitle {
+  opacity: 0.9;
+  font-size: 0.875rem;
+  margin-top: 0.15rem;
+}
+.app-header .catalog-badge {
+  background: rgba(255,255,255,0.15);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  background: var(--novelis-card);
+  padding: 0 1rem;
+  border-bottom: 2px solid var(--novelis-border);
+  overflow-x: auto;
+}
+.tab {
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--novelis-text-muted);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab:hover {
+  color: var(--novelis-blue);
+}
+.tab.active {
+  color: var(--novelis-blue);
+  border-bottom-color: var(--novelis-blue);
+}
+
+/* Main content */
+.main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+.panel {
+  display: none;
+}
+.panel.active {
+  display: block;
+}
+
+/* KPI cards */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.kpi-card {
+  background: var(--novelis-card);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--novelis-border);
+  transition: box-shadow 0.2s;
+}
+.kpi-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+.kpi-card .label {
+  font-size: 0.8rem;
+  color: var(--novelis-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.35rem;
+}
+.kpi-card .value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--novelis-navy);
+  line-height: 1.2;
+}
+.kpi-card .value.percent { color: var(--novelis-blue); }
+.kpi-card .value.money { color: var(--novelis-success); }
+
+/* Chart containers */
+.charts-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+.chart-card {
+  background: var(--novelis-card);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--novelis-border);
+}
+.chart-card h3 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--novelis-navy);
+}
+.chart-container {
+  position: relative;
+  height: 280px;
+}
+
+/* OEE-specific layout */
+.oee-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 900px) {
+  .oee-kpis { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 500px) {
+  .oee-kpis { grid-template-columns: 1fr; }
+}
+
+/* Loading state */
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--novelis-text-muted);
+}
+.loading::after {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--novelis-border);
+  border-top-color: var(--novelis-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+  margin-left: 0.5rem;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Footer */
+.app-footer {
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.8rem;
+  color: var(--novelis-text-muted);
+  border-top: 1px solid var(--novelis-border);
+  margin-top: 2rem;
+}

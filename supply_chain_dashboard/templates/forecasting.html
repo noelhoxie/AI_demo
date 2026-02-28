@@ -1,0 +1,184 @@
+{% extends "dashboard_base.html" %}
+
+{% block content %}
+<section class="panel active">
+  <div class="panel-content" id="forecast-panel">
+    <p class="sim-intro">Build a forecast from economic indicators (FRED series). Select one or more series, set the date range and method, then run the forecast.</p>
+    <div class="chart-card">
+      <h3>Build forecast model</h3>
+      <div class="forecast-form">
+        <div class="field">
+          <label for="forecast-start">Start date</label>
+          <input type="text" id="forecast-start" placeholder="YYYY-MM-DD" value="2025-01-01" />
+        </div>
+        <div class="field">
+          <label for="forecast-end">End date</label>
+          <input type="text" id="forecast-end" placeholder="YYYY-MM-DD" value="2026-01-01" />
+        </div>
+        <div class="field">
+          <label for="forecast-method">Method</label>
+          <select id="forecast-method">
+            <option value="linear">Linear trend</option>
+            <option value="last">Last value (flat)</option>
+            <option value="exponential_smoothing">Exponential smoothing (Holt)</option>
+            <option value="arima">ARIMA (1,1,1)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="forecast-periods">Forecast periods</label>
+          <input type="number" id="forecast-periods" min="1" max="60" value="12" />
+        </div>
+        <button type="button" class="btn btn-primary" id="forecast-run-btn">Run forecast</button>
+      </div>
+      <div class="field">
+        <div class="filters-bar" style="margin-bottom: 0.5rem;">
+          <label style="margin: 0;">Economic indicators (select one or more)</label>
+          <button type="button" class="btn btn-secondary" id="forecast-select-all" style="padding: 0.35rem 0.6rem; font-size: 0.85rem;">Select all</button>
+          <button type="button" class="btn btn-secondary" id="forecast-clear-all" style="padding: 0.35rem 0.6rem; font-size: 0.85rem;">Clear all</button>
+        </div>
+        <div class="forecast-indicators" id="forecast-indicators">
+          <label><input type="checkbox" name="forecast-series" value="GDP" /> GDP (Gross Domestic Product)</label>
+          <label><input type="checkbox" name="forecast-series" value="GDPC1" /> Real GDP</label>
+          <label><input type="checkbox" name="forecast-series" value="UNRATE" /> Unemployment Rate</label>
+          <label><input type="checkbox" name="forecast-series" value="CPIAUCSL" /> CPI (Consumer Price Index)</label>
+          <label><input type="checkbox" name="forecast-series" value="INDPRO" /> Industrial Production Index</label>
+          <label><input type="checkbox" name="forecast-series" value="FEDFUNDS" /> Federal Funds Rate</label>
+          <label><input type="checkbox" name="forecast-series" value="T10Y2Y" /> 10Y-2Y Treasury Spread</label>
+          <label><input type="checkbox" name="forecast-series" value="M2SL" /> M2 Money Supply</label>
+          <label><input type="checkbox" name="forecast-series" value="RSXFS" /> Retail Sales</label>
+          <label><input type="checkbox" name="forecast-series" value="HOUST" /> Housing Starts</label>
+          <label><input type="checkbox" name="forecast-series" value="PAYEMS" /> Total Nonfarm Payrolls</label>
+          <label><input type="checkbox" name="forecast-series" value="PCEPI" /> PCE Price Index</label>
+        </div>
+      </div>
+      <p id="forecast-hint" class="meta">Set FRED_API_KEY to enable. Methods: linear trend, last value, exponential smoothing (Holt), or ARIMA.</p>
+      <div id="forecast-message" class="sim-message" style="display: none;"></div>
+    </div>
+    <div class="chart-card" id="forecast-chart-card" style="display: none;">
+      <h3>Forecast result</h3>
+      <div class="chart-container" style="height: 400px;">
+        <canvas id="forecast-chart"></canvas>
+      </div>
+      <p class="meta" id="forecast-chart-meta"></p>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  const BAR_COLORS = ['#002855', '#0072CE', '#00A3E0', '#4DA6FF', '#5A6C7D', '#00854D', '#C9A227'];
+  const runBtn = document.getElementById('forecast-run-btn');
+  const messageEl = document.getElementById('forecast-message');
+  const chartCard = document.getElementById('forecast-chart-card');
+  const chartMeta = document.getElementById('forecast-chart-meta');
+  let forecastChart = null;
+
+  function getSelectedSeries() {
+    const boxes = document.querySelectorAll('input[name="forecast-series"]:checked');
+    return Array.from(boxes).map(function(b) { return b.value; });
+  }
+
+  function runForecast() {
+    const seriesIds = getSelectedSeries();
+    if (!seriesIds.length) {
+      if (messageEl) { messageEl.textContent = 'Select at least one economic indicator.'; messageEl.className = 'sim-message error'; messageEl.style.display = 'block'; }
+      return;
+    }
+    const start = document.getElementById('forecast-start').value.trim() || null;
+    const end = document.getElementById('forecast-end').value.trim() || null;
+    const method = document.getElementById('forecast-method').value || 'linear';
+    const periods = parseInt(document.getElementById('forecast-periods').value, 10) || 12;
+    if (messageEl) { messageEl.textContent = 'Running forecast…'; messageEl.className = 'sim-message'; messageEl.style.display = 'block'; }
+    if (forecastChart) { forecastChart.destroy(); forecastChart = null; }
+    chartCard.style.display = 'none';
+    const panel = document.getElementById('forecast-panel');
+    if (panel) panel.classList.add('is-loading');
+    if (runBtn) runBtn.disabled = true;
+
+    fetch('/api/forecast', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        series_ids: seriesIds,
+        observation_start: start,
+        observation_end: end,
+        method: method,
+        forecast_periods: periods
+      })
+    })
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+      .then(function(res) {
+        const d = res.data;
+        if (d.error && !res.ok) {
+          if (messageEl) { messageEl.textContent = d.error; messageEl.className = 'sim-message error'; messageEl.style.display = 'block'; }
+          return;
+        }
+        const series = d.series || {};
+        const errors = Object.keys(series).filter(function(sid) { return series[sid].error; });
+        if (errors.length) {
+          if (messageEl) { messageEl.textContent = 'Some series failed: ' + errors.join(', '); messageEl.className = 'sim-message error'; messageEl.style.display = 'block'; }
+        } else if (messageEl) {
+          messageEl.style.display = 'none';
+        }
+        const successIds = Object.keys(series).filter(function(sid) { return !series[sid].error && (series[sid].historical || []).length; });
+        if (!successIds.length) return;
+        chartCard.style.display = 'block';
+        var methodLabel = { linear: 'Linear trend', last: 'Last value', exponential_smoothing: 'Exponential smoothing (Holt)', arima: 'ARIMA (1,1,1)' }[d.method] || d.method || 'linear';
+        chartMeta.textContent = 'Method: ' + methodLabel + '. ' + successIds.length + ' series.';
+        const first = series[successIds[0]];
+        const labels = (first.historical || []).map(function(o) { return o.date; }).concat((first.forecast || []).map(function(o) { return o.date; }));
+        const datasets = successIds.map(function(sid, idx) {
+          const h = series[sid].historical || [];
+          const f = series[sid].forecast || [];
+          const histValues = h.map(function(o) { return o.value; });
+          const foreValues = f.map(function(o) { return o.value; });
+          const color = BAR_COLORS[idx % BAR_COLORS.length];
+          const data = histValues.concat(foreValues);
+          return {
+            label: sid,
+            data: data,
+            borderColor: color,
+            backgroundColor: color + '20',
+            fill: false,
+            tension: 0.2
+          };
+        });
+        const ctx = document.getElementById('forecast-chart');
+        if (!ctx) return;
+        forecastChart = new Chart(ctx.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: { x: { maxTicksLimit: 14 }, y: { beginAtZero: false } }
+          }
+        });
+      })
+      .catch(function(e) {
+        if (messageEl) { messageEl.textContent = 'Forecast failed: ' + (e.message || 'network error'); messageEl.className = 'sim-message error'; messageEl.style.display = 'block'; }
+      })
+      .finally(function() {
+        if (panel) panel.classList.remove('is-loading');
+        if (runBtn) runBtn.disabled = false;
+      });
+  }
+
+  if (runBtn) runBtn.addEventListener('click', runForecast);
+
+  var indicatorsWrap = document.getElementById('forecast-indicators');
+  document.getElementById('forecast-select-all')?.addEventListener('click', function() {
+    if (indicatorsWrap) indicatorsWrap.querySelectorAll('input[name="forecast-series"]').forEach(function(cb) { cb.checked = true; });
+  });
+  document.getElementById('forecast-clear-all')?.addEventListener('click', function() {
+    if (indicatorsWrap) indicatorsWrap.querySelectorAll('input[name="forecast-series"]').forEach(function(cb) { cb.checked = false; });
+  });
+})();
+</script>
+{% endblock %}

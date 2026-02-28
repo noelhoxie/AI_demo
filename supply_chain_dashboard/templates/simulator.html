@@ -1,0 +1,151 @@
+{% extends "dashboard_base.html" %}
+
+{% block content %}
+<section class="panel active">
+  <div class="panel-content">
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label for="sim-preset">Preset scenario</label>
+        <select id="sim-preset" aria-label="Load a preset scenario">
+          <option value="">— Choose preset —</option>
+          <option value="supplier_only">Supplier delay only</option>
+          <option value="plant_only">Plant outage only</option>
+          <option value="demand_only">Demand spike only</option>
+          <option value="combined">Combined risk (supplier + plant)</option>
+        </select>
+      </div>
+      <button type="button" class="btn btn-secondary" id="sim-clear-all" aria-label="Clear all disruptions">Clear all</button>
+    </div>
+    <p class="sim-intro">Add one or more disruptions and run the simulation. View Procurement or Production pages to see the simulated KPIs and charts. Reset to return to live data.</p>
+    <div class="chart-card">
+      <h3>Add disruption</h3>
+      <p class="sim-hint">Hover over Type, Severity, Scope, or an item in Active disruptions to see what each what-if scenario does.</p>
+      <div class="sim-form" id="sim-form">
+        <div class="field sim-field-type">
+          <label for="sim-type">Type</label>
+          <select id="sim-type" title="What-if scenario: choose which part of the supply chain is disrupted">
+            <option value="supplier_delay" title="Simulates late or reduced supplier deliveries: PO values and counts drop; use Scope to limit to one vendor (e.g. V001).">Supplier delay</option>
+            <option value="plant_outage" title="Simulates a plant shutdown or capacity loss: OEE drops at the plant; use Scope for plant code (e.g. 1000).">Plant outage</option>
+            <option value="demand_spike" title="Simulates a sudden increase in customer demand: orders, order value, and quantities rise.">Demand spike</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sim-severity">Severity</label>
+          <select id="sim-severity" title="Strength of the disruption: low = mild impact, high = strong impact">
+            <option value="low" title="Mild impact: small change to KPIs and charts.">Low</option>
+            <option value="medium" selected title="Moderate impact: noticeable change to KPIs and charts.">Medium</option>
+            <option value="high" title="Strong impact: large change to KPIs and charts.">High</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sim-scope">Scope (optional)</label>
+          <input type="text" id="sim-scope" placeholder="Vendor, plant, or carrier" title="Limit the disruption to one entity: vendor ID (e.g. V001), plant code (e.g. 1000), or carrier (e.g. 01). Leave blank to apply to all." />
+        </div>
+        <button type="button" class="btn btn-primary" id="sim-add">Add</button>
+      </div>
+      <div>
+        <label class="field" style="margin-bottom:0.5rem;"><span style="font-size:0.75rem; color: var(--color-text-muted); text-transform: uppercase;" title="Each row shows one what-if scenario you added. Hover a row to see what it does.">Active disruptions</span></label>
+        <ul class="sim-list" id="sim-list"></ul>
+      </div>
+      <div class="sim-actions">
+        <button type="button" class="btn btn-primary" id="sim-run" title="Apply the active disruptions; then view Orders, Procurement, etc. to see the impact.">Run simulation</button>
+        <button type="button" class="btn btn-secondary" id="sim-reset" title="Clear simulation and reload live data on all pages.">Reset to live data</button>
+      </div>
+      <div id="sim-message" class="sim-message"></div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  let disruptionList = [];
+  const simTypeLabels = { supplier_delay: 'Supplier delay', plant_outage: 'Plant outage', demand_spike: 'Demand spike' };
+  const simTypeHover = {
+    supplier_delay: 'What-if: supplier deliveries are late or reduced; PO value and counts drop. Scope = vendor ID.',
+    plant_outage: 'What-if: a plant is down or capacity is lost; OEE drops at that plant. Scope = plant code.',
+    demand_spike: 'What-if: sudden rise in customer demand; orders, value, and quantities increase.'
+  };
+  const simSeverityHover = { low: 'Mild impact.', medium: 'Moderate impact.', high: 'Strong impact.' };
+  function renderSimList() {
+    const ul = document.getElementById('sim-list');
+    if (!ul) return;
+    ul.innerHTML = disruptionList.map((d, i) => {
+      const scope = d.scope ? ' (' + d.scope + ')' : '';
+      const hover = (simTypeHover[d.type] || '') + ' Severity: ' + (simSeverityHover[d.severity] || d.severity) + (d.scope ? '. Scope: ' + d.scope : '');
+      return '<li title="' + (hover.replace(/"/g, '&quot;')) + '"><span class="sim-list-label">' + (simTypeLabels[d.type] || d.type) + ' — ' + d.severity + scope + '</span><button type="button" class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.8rem;" data-index="' + i + '">Remove</button></li>';
+    }).join('');
+    ul.querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', () => {
+        const i = parseInt(b.getAttribute('data-index'), 10);
+        disruptionList.splice(i, 1);
+        renderSimList();
+      });
+    });
+  }
+  const presets = {
+    supplier_only: [{ type: 'supplier_delay', severity: 'medium', scope: null }],
+    plant_only: [{ type: 'plant_outage', severity: 'medium', scope: null }],
+    demand_only: [{ type: 'demand_spike', severity: 'medium', scope: null }],
+    combined: [
+      { type: 'supplier_delay', severity: 'medium', scope: null },
+      { type: 'plant_outage', severity: 'medium', scope: null }
+    ]
+  };
+  document.getElementById('sim-preset')?.addEventListener('change', function() {
+    const val = this.value;
+    if (!val || !presets[val]) return;
+    disruptionList = presets[val].map(d => ({ ...d }));
+    renderSimList();
+    this.value = '';
+    const msg = document.getElementById('sim-message');
+    if (msg) { msg.textContent = ''; msg.classList.remove('error', 'success'); }
+  });
+  document.getElementById('sim-clear-all')?.addEventListener('click', function() {
+    disruptionList = [];
+    renderSimList();
+    const msg = document.getElementById('sim-message');
+    if (msg) { msg.textContent = 'All disruptions cleared.'; msg.classList.remove('error'); msg.classList.add('success'); }
+  });
+  document.getElementById('sim-add')?.addEventListener('click', () => {
+    const type = document.getElementById('sim-type')?.value || 'supplier_delay';
+    const severity = document.getElementById('sim-severity')?.value || 'medium';
+    const scope = (document.getElementById('sim-scope')?.value || '').trim() || null;
+    disruptionList.push({ type, severity, scope });
+    renderSimList();
+    const msg = document.getElementById('sim-message');
+    if (msg) { msg.textContent = ''; msg.classList.remove('error', 'success'); }
+  });
+  document.getElementById('sim-run')?.addEventListener('click', () => {
+    const msg = document.getElementById('sim-message');
+    if (msg) { msg.textContent = ''; msg.classList.remove('error', 'success'); }
+    if (disruptionList.length === 0) {
+      if (msg) { msg.textContent = 'Add at least one disruption.'; msg.classList.add('error'); }
+      return;
+    }
+    if (msg) msg.textContent = 'Running simulation…';
+    fetch('/api/simulate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ disruptions: disruptionList })
+    }).then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if (ok && !data.error && (data.orders || data.procurement)) {
+          try { sessionStorage.setItem('simulatedPayload', JSON.stringify(data)); } catch (e) {}
+          if (msg) { msg.textContent = 'Simulation applied. View Orders, Procurement, Inventory & Delivery, or Production to see the impact.'; msg.classList.add('success'); }
+        } else {
+          if (msg) { msg.textContent = data.error || 'Simulation failed.'; msg.classList.add('error'); }
+        }
+      })
+      .catch(err => {
+        if (msg) { msg.textContent = 'Request failed: ' + (err.message || 'network error'); msg.classList.add('error'); }
+      });
+  });
+  document.getElementById('sim-reset')?.addEventListener('click', () => {
+    try { sessionStorage.removeItem('simulatedPayload'); } catch (e) {}
+    window.location.href = '/orders';
+  });
+})();
+</script>
+{% endblock %}

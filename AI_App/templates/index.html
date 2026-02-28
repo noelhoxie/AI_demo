@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ company.name }} | {{ company.page_title_suffix }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>:root { --color-primary: {{ company.primary_color }}; }</style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>{{ company.name }}</h1>
+    </div>
+    <div class="header-right">
+      <label for="header-persona" class="header-persona-label">User</label>
+      <select id="header-persona" class="header-persona-select" aria-label="Change user">
+        <option value="VP Supply Chain">VP Supply Chain</option>
+        <option value="Logistics Manager">Logistics Manager</option>
+        <option value="Supply Chain Planner">Supply Chain Planner</option>
+      </select>
+      <span class="badge">{{ catalog }} / {{ schema }}{% if databricks_connected %} Live{% endif %}{% if postgres_connected %} | Comments{% endif %}</span>
+    </div>
+  </header>
+
+  <div class="action-bar">
+    <div class="actions-dropdown-wrap">
+      <button type="button" class="btn btn-action" id="actions-menu-btn" aria-haspopup="true" aria-expanded="false">Actions</button>
+      <div class="actions-dropdown" id="actions-dropdown" role="menu" aria-label="Actions menu"></div>
+    </div>
+    <button type="button" class="btn btn-action" data-action="comments" aria-pressed="true">Comments</button>
+    <div class="command-bar-sep" aria-hidden="true"></div>
+    <div id="command-bar-actions" class="command-bar-actions"></div>
+  </div>
+
+  <nav class="tabs">
+    <button type="button" class="tab active" data-tab="orders">Orders</button>
+    <button type="button" class="tab" data-tab="procurement">Procurement</button>
+    <button type="button" class="tab" data-tab="inventory-delivery">Inventory & Delivery</button>
+    <button type="button" class="tab" data-tab="production">Production OEE</button>
+  </nav>
+
+  <main class="main comments-open">
+    <!-- Orders -->
+    <section id="panel-orders" class="panel active">
+      <div class="panel-content">
+        <div class="kpi-row" id="orders-kpis">
+          <div class="kpi-card"><div class="label">Total Orders</div><div class="value" id="kpi-orders-total">—</div></div>
+          <div class="kpi-card"><div class="label">Order Value</div><div class="value money" id="kpi-orders-value">—</div></div>
+          <div class="kpi-card"><div class="label">Avg Order Value</div><div class="value money" id="kpi-orders-avg">—</div></div>
+          <div class="kpi-card"><div class="label">Total Quantity</div><div class="value" id="kpi-orders-qty">—</div></div>
+          <div class="kpi-card"><div class="label">Unique Customers</div><div class="value" id="kpi-orders-customers">—</div></div>
+        </div>
+        <div class="charts-row">
+          <div class="chart-card"><h3>Orders by Status</h3><div class="chart-container"><canvas id="chart-orders-status"></canvas></div></div>
+        </div>
+      </div>
+      <div class="comments-section" data-tab="orders">
+        <h3>Comments</h3>
+        <div class="comments-list" id="comments-orders"></div>
+        <div class="comment-form">
+          <label for="comment-text-orders">Add comment</label>
+          <textarea id="comment-text-orders" placeholder="Enter a comment..."></textarea>
+          <div class="actions"><button type="button" class="btn btn-primary" data-tab="orders">Save</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Procurement -->
+    <section id="panel-procurement" class="panel">
+      <div class="panel-content">
+        <div class="kpi-row" id="procurement-kpis">
+          <div class="kpi-card"><div class="label">Total POs</div><div class="value" id="kpi-po-total">—</div></div>
+          <div class="kpi-card"><div class="label">PO Value</div><div class="value money" id="kpi-po-value">—</div></div>
+          <div class="kpi-card"><div class="label">Avg PO Value</div><div class="value money" id="kpi-po-avg">—</div></div>
+          <div class="kpi-card"><div class="label">Unique Suppliers</div><div class="value" id="kpi-po-suppliers">—</div></div>
+        </div>
+        <div class="charts-row">
+          <div class="chart-card"><h3>PO Value by Vendor</h3><div class="chart-container"><canvas id="chart-po-vendor"></canvas></div></div>
+        </div>
+      </div>
+      <div class="comments-section" data-tab="procurement">
+        <h3>Comments</h3>
+        <div class="comments-list" id="comments-procurement"></div>
+        <div class="comment-form">
+          <label for="comment-text-procurement">Add comment</label>
+          <textarea id="comment-text-procurement" placeholder="Enter a comment..."></textarea>
+          <div class="actions"><button type="button" class="btn btn-primary" data-tab="procurement">Save</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Inventory & Delivery -->
+    <section id="panel-inventory-delivery" class="panel">
+      <div class="panel-content">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="label">Total SKUs</div><div class="value" id="kpi-inv-skus">—</div></div>
+          <div class="kpi-card"><div class="label">Unrestricted Qty</div><div class="value" id="kpi-inv-unrestricted">—</div></div>
+          <div class="kpi-card"><div class="label">Available Qty</div><div class="value" id="kpi-inv-available">—</div></div>
+          <div class="kpi-card"><div class="label">Total Deliveries</div><div class="value" id="kpi-del-total">—</div></div>
+          <div class="kpi-card"><div class="label">Delivered Qty</div><div class="value" id="kpi-del-qty">—</div></div>
+        </div>
+        <div class="charts-row">
+          <div class="chart-card"><h3>Inventory by Plant</h3><div class="chart-container"><canvas id="chart-inv-plant"></canvas></div></div>
+          <div class="chart-card"><h3>Deliveries by Carrier</h3><div class="chart-container"><canvas id="chart-del-carrier"></canvas></div></div>
+        </div>
+      </div>
+      <div class="comments-section" data-tab="inventory-delivery">
+        <h3>Comments</h3>
+        <div class="comments-list" id="comments-inventory-delivery"></div>
+        <div class="comment-form">
+          <label for="comment-text-inventory-delivery">Add comment</label>
+          <textarea id="comment-text-inventory-delivery" placeholder="Enter a comment..."></textarea>
+          <div class="actions"><button type="button" class="btn btn-primary" data-tab="inventory-delivery">Save</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Production OEE -->
+    <section id="panel-production" class="panel">
+      <div class="panel-content">
+        <div class="kpi-row" id="production-kpis">
+          <div class="kpi-card"><div class="label">Availability %</div><div class="value percent" id="kpi-oee-avail">—</div></div>
+          <div class="kpi-card"><div class="label">Performance %</div><div class="value percent" id="kpi-oee-perf">—</div></div>
+          <div class="kpi-card"><div class="label">Quality %</div><div class="value percent" id="kpi-oee-qual">—</div></div>
+          <div class="kpi-card"><div class="label">OEE %</div><div class="value percent" id="kpi-oee-total">—</div></div>
+        </div>
+        <div class="chart-card">
+          <h3>OEE by Machine Center</h3>
+          <div class="chart-container" style="height: 320px;"><canvas id="chart-oee"></canvas></div>
+        </div>
+      </div>
+      <div class="comments-section" data-tab="production">
+        <h3>Comments</h3>
+        <div class="comments-list" id="comments-production"></div>
+        <div class="comment-form">
+          <label for="comment-text-production">Add comment</label>
+          <textarea id="comment-text-production" placeholder="Enter a comment..."></textarea>
+          <div class="actions"><button type="button" class="btn btn-primary" data-tab="production">Save</button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    {{ company.footer }}
+  </footer>
+
+  <script>
+    const BAR_COLORS = ['#002855', '#0072CE', '#00A3E0', '#4DA6FF', '#5A6C7D', '#00854D', '#C9A227'];
+
+    function formatNum(x) { return Number(x).toLocaleString(); }
+    function formatMoney(x) { return '$' + formatNum(Math.round(x)); }
+
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Persona and actions (shared with /actions page)
+    const PERSONA_KEY = 'dashboard_persona';
+    const ACTIONS = [
+      { id: 'open-comments', title: 'Open comments', personas: ['VP Supply Chain','Logistics Manager','Supply Chain Planner'], type: 'link', href: '/#comments-open' },
+      { id: 'view-dashboard', title: 'View dashboard', personas: ['VP Supply Chain','Logistics Manager','Supply Chain Planner'], type: 'link', href: '/' },
+      { id: 'refresh', title: 'Refresh data', personas: ['Logistics Manager','Supply Chain Planner'], type: 'link', href: '/', inCommandBar: true },
+      { id: 'executive-report', title: 'Executive summary report', personas: ['VP Supply Chain'], type: 'button', action: 'executive-report', inCommandBar: true },
+      { id: 'approve-shipments', title: 'Approve shipments', personas: ['Logistics Manager'], type: 'button', action: 'approve-shipments', inCommandBar: true },
+      { id: 'carrier-performance', title: 'Carrier performance', personas: ['Logistics Manager'], type: 'button', action: 'carrier-performance', inCommandBar: true },
+      { id: 'save-view', title: 'Save current view', personas: ['Supply Chain Planner'], type: 'button', action: 'save-view', inCommandBar: true },
+      { id: 'request-report', title: 'Request report', personas: ['Supply Chain Planner'], type: 'button', action: 'request-report', inCommandBar: true },
+      { id: 'run-forecast', title: 'Run demand forecast', personas: ['Supply Chain Planner'], type: 'button', action: 'run-forecast', inCommandBar: true },
+      { id: 'actions-page', title: 'Open actions page', personas: ['VP Supply Chain','Logistics Manager','Supply Chain Planner'], type: 'link', href: '/actions' }
+    ];
+    const VALID_PERSONAS = ['VP Supply Chain', 'Logistics Manager', 'Supply Chain Planner'];
+    function getPersona() {
+      const stored = sessionStorage.getItem(PERSONA_KEY);
+      return (stored && VALID_PERSONAS.includes(stored)) ? stored : 'VP Supply Chain';
+    }
+    function setPersona(p) {
+      sessionStorage.setItem(PERSONA_KEY, p);
+    }
+
+    const headerPersona = document.getElementById('header-persona');
+    if (headerPersona) {
+      headerPersona.value = getPersona();
+      headerPersona.addEventListener('change', function() {
+        setPersona(this.value);
+        renderActionsMenu();
+        renderCommandBarActions();
+        closeActionsDropdown();
+      });
+    }
+
+    function renderCommandBarActions() {
+      const persona = getPersona();
+      const barActions = ACTIONS.filter(a => a.personas.includes(persona) && a.inCommandBar);
+      const container = document.getElementById('command-bar-actions');
+      if (!container) return;
+      container.innerHTML = barActions.map(a => {
+        if (a.id === 'refresh') return '<button type="button" class="btn btn-action" data-do="refresh">Refresh</button>';
+        if (a.type === 'button' || a.action) return '<button type="button" class="btn btn-action" data-action="' + (a.action || a.id) + '">' + a.title + '</button>';
+        return '';
+      }).filter(Boolean).join('');
+
+      container.querySelectorAll('[data-do="refresh"]').forEach(btn => btn.addEventListener('click', () => window.location.reload()));
+      container.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', () => window.alert('Action "' + btn.dataset.action + '" is not yet implemented.'));
+      });
+    }
+
+    function renderActionsMenu() {
+      const persona = getPersona();
+      const allowed = ACTIONS.filter(a => a.personas.includes(persona));
+      const menu = document.getElementById('actions-dropdown');
+      if (!menu) return;
+      if (!allowed.length) {
+        menu.innerHTML = '<div class="actions-dropdown-item disabled">No actions for this role</div>';
+        return;
+      }
+      menu.innerHTML = allowed.map(a => {
+        if (a.type === 'link') {
+          if (a.id === 'open-comments') return '<button type="button" class="actions-dropdown-item" data-do="open-comments">' + a.title + '</button>';
+          if (a.id === 'refresh') return '<button type="button" class="actions-dropdown-item" data-do="refresh">' + a.title + '</button>';
+          return '<a href="' + a.href + '" class="actions-dropdown-item">' + a.title + '</a>';
+        }
+        if (a.id === 'actions-page') {
+          return '<a href="' + a.href + '" class="actions-dropdown-item">' + a.title + '</a>';
+        }
+        return '<button type="button" class="actions-dropdown-item" data-action="' + a.action + '">' + a.title + '</button>';
+      }).join('');
+
+      menu.querySelectorAll('[data-do="open-comments"]').forEach(btn => {
+        btn.addEventListener('click', () => { main.classList.add('comments-open'); if (commentsBtn) commentsBtn.setAttribute('aria-pressed', 'true'); closeActionsDropdown(); });
+      });
+      menu.querySelectorAll('[data-do="refresh"]').forEach(btn => {
+        btn.addEventListener('click', () => { window.location.reload(); });
+      });
+      menu.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', () => { window.alert('Action "' + btn.dataset.action + '" is not yet implemented.'); closeActionsDropdown(); });
+      });
+    }
+
+    const main = document.querySelector('.main');
+    const commentsBtn = document.querySelector('[data-action="comments"]');
+    if (window.location.hash === '#comments-open') {
+      main.classList.add('comments-open');
+      if (commentsBtn) commentsBtn.setAttribute('aria-pressed', 'true');
+    }
+    commentsBtn.addEventListener('click', () => {
+      const open = main.classList.toggle('comments-open');
+      commentsBtn.setAttribute('aria-pressed', open);
+    });
+
+    const actionsMenuBtn = document.getElementById('actions-menu-btn');
+    const actionsDropdown = document.getElementById('actions-dropdown');
+    function openActionsDropdown() {
+      if (actionsDropdown) actionsDropdown.classList.add('open');
+      if (actionsMenuBtn) actionsMenuBtn.setAttribute('aria-expanded', 'true');
+    }
+    function closeActionsDropdown() {
+      if (actionsDropdown) actionsDropdown.classList.remove('open');
+      if (actionsMenuBtn) actionsMenuBtn.setAttribute('aria-expanded', 'false');
+    }
+    actionsMenuBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (actionsDropdown && actionsDropdown.classList.contains('open')) closeActionsDropdown();
+      else { renderActionsMenu(); openActionsDropdown(); }
+    });
+    if (actionsDropdown) actionsDropdown.addEventListener('click', e => e.stopPropagation());
+    document.addEventListener('click', () => closeActionsDropdown());
+    renderActionsMenu();
+    renderCommandBarActions();
+
+    // Orders
+    fetch('/api/orders').then(r => r.json()).then(d => {
+      const k = d.kpis || {};
+      document.getElementById('kpi-orders-total').textContent = formatNum(k.total_orders ?? '—');
+      document.getElementById('kpi-orders-value').textContent = k.total_order_value != null ? formatMoney(k.total_order_value) : '—';
+      document.getElementById('kpi-orders-avg').textContent = k.avg_order_value != null ? formatMoney(k.avg_order_value) : '—';
+      document.getElementById('kpi-orders-qty').textContent = formatNum(k.total_order_qty ?? '—');
+      document.getElementById('kpi-orders-customers').textContent = formatNum(k.unique_customers ?? '—');
+      const statusData = d.orders_by_status || [];
+      const canvas = document.getElementById('chart-orders-status');
+      if (canvas && statusData.length) {
+        new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: statusData.map(x => x.status),
+            datasets: [{ label: 'Orders', data: statusData.map(x => x.count), backgroundColor: BAR_COLORS }]
+          },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+        });
+      }
+    });
+
+    // Procurement
+    fetch('/api/procurement').then(r => r.json()).then(d => {
+      const k = d.kpis || {};
+      document.getElementById('kpi-po-total').textContent = formatNum(k.total_pos ?? '—');
+      document.getElementById('kpi-po-value').textContent = k.total_po_value != null ? formatMoney(k.total_po_value) : '—';
+      document.getElementById('kpi-po-avg').textContent = k.avg_po_value != null ? formatMoney(k.avg_po_value) : '—';
+      document.getElementById('kpi-po-suppliers').textContent = formatNum(k.unique_suppliers ?? '—');
+      const vendorData = d.po_value_by_vendor || [];
+      const canvas = document.getElementById('chart-po-vendor');
+      if (canvas && vendorData.length) {
+        new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: vendorData.map(x => x.vendor),
+            datasets: [{ label: 'Value', data: vendorData.map(x => x.value), backgroundColor: BAR_COLORS }]
+          },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+        });
+      }
+    });
+
+    // Inventory & Delivery
+    fetch('/api/inventory-delivery').then(r => r.json()).then(d => {
+      const ik = d.inventory_kpis || {};
+      const dk = d.delivery_kpis || {};
+      document.getElementById('kpi-inv-skus').textContent = formatNum(ik.total_skus ?? '—');
+      document.getElementById('kpi-inv-unrestricted').textContent = formatNum(ik.total_unrestricted_qty ?? '—');
+      document.getElementById('kpi-inv-available').textContent = formatNum(ik.total_available_qty ?? '—');
+      document.getElementById('kpi-del-total').textContent = formatNum(dk.total_deliveries ?? '—');
+      document.getElementById('kpi-del-qty').textContent = formatNum(dk.total_delivered_qty ?? '—');
+      const invData = d.inventory_by_plant || [];
+      const delData = d.deliveries_by_carrier || [];
+      const canvasInv = document.getElementById('chart-inv-plant');
+      const canvasDel = document.getElementById('chart-del-carrier');
+      if (canvasInv && invData.length) {
+        new Chart(canvasInv.getContext('2d'), {
+          type: 'bar',
+          data: { labels: invData.map(x => x.plant), datasets: [{ label: 'Quantity', data: invData.map(x => x.quantity), backgroundColor: BAR_COLORS }] },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+        });
+      }
+      if (canvasDel && delData.length) {
+        new Chart(canvasDel.getContext('2d'), {
+          type: 'bar',
+          data: { labels: delData.map(x => x.carrier), datasets: [{ label: 'Deliveries', data: delData.map(x => x.deliveries), backgroundColor: BAR_COLORS }] },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+        });
+      }
+    });
+
+    // Production OEE
+    fetch('/api/production').then(r => r.json()).then(d => {
+      const k = d.kpis || {};
+      document.getElementById('kpi-oee-avail').textContent = (k.availability_pct != null ? k.availability_pct : '—') + (k.availability_pct != null ? '%' : '');
+      document.getElementById('kpi-oee-perf').textContent = (k.performance_pct != null ? k.performance_pct : '—') + (k.performance_pct != null ? '%' : '');
+      document.getElementById('kpi-oee-qual').textContent = (k.quality_pct != null ? k.quality_pct : '—') + (k.quality_pct != null ? '%' : '');
+      document.getElementById('kpi-oee-total').textContent = (k.oee_pct != null ? k.oee_pct : '—') + (k.oee_pct != null ? '%' : '');
+      const rows = d.oee_by_machine_center || [];
+      const canvas = document.getElementById('chart-oee');
+      if (canvas && rows.length) {
+        new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: rows.map(x => x.facility + ' — ' + x.machine_center),
+            datasets: [{ label: 'OEE %', data: rows.map(x => x.oee_pct), backgroundColor: BAR_COLORS }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+      }
+    });
+
+    function renderComments(tab, list) {
+      const el = document.getElementById('comments-' + tab);
+      if (!el) return;
+      if (!list.length) { el.innerHTML = '<p class="empty-state">No comments yet.</p>'; return; }
+      el.innerHTML = list.map(c => '<div class="comment-item"><div>' + escapeHtml(c.content) + '</div><div class="meta">' + (c.created_at || '') + '</div></div>').join('');
+    }
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+    function loadComments(tab) {
+      fetch('/api/comments?tab=' + encodeURIComponent(tab)).then(r => r.json()).then(list => renderComments(tab, list));
+    }
+    ['orders', 'procurement', 'inventory-delivery', 'production'].forEach(t => loadComments(t));
+
+    document.querySelectorAll('.comment-form .btn-primary').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        const textarea = document.getElementById('comment-text-' + tab);
+        const content = (textarea && textarea.value || '').trim();
+        if (!content) return;
+        btn.disabled = true;
+        fetch('/api/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tab: tab, content: content })
+        }).then(r => {
+          btn.disabled = false;
+          if (r.ok) {
+            textarea.value = '';
+            loadComments(tab);
+          }
+        }).catch(() => { btn.disabled = false; });
+      });
+    });
+  </script>
+</body>
+</html>

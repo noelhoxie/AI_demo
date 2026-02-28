@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supply Chain & Production | Novelis-style Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>Supply Chain & Production Dashboard</h1>
+      <div class="subtitle">KPIs and analytics from gold tables</div>
+    </div>
+    <span class="catalog-badge">{{ catalog }} / {{ schema }}{% if databricks_connected %} ● Live{% endif %}</span>
+  </header>
+
+  <nav class="tabs">
+    <button type="button" class="tab active" data-tab="overview">Overview</button>
+    <button type="button" class="tab" data-tab="supply-chain">Supply Chain</button>
+    <button type="button" class="tab" data-tab="production">Production OEE</button>
+    <button type="button" class="tab" data-tab="inventory">Inventory & Logistics</button>
+  </nav>
+
+  <main class="main">
+    <!-- Overview -->
+    <section id="panel-overview" class="panel active">
+      <div class="kpi-row" id="overview-kpis">
+        <div class="kpi-card"><div class="label">Total Orders</div><div class="value" id="kpi-orders">—</div></div>
+        <div class="kpi-card"><div class="label">Total Quantity</div><div class="value" id="kpi-quantity">—</div></div>
+        <div class="kpi-card"><div class="label">Avg OEE %</div><div class="value percent" id="kpi-oee">—</div></div>
+        <div class="kpi-card"><div class="label">PO Value</div><div class="value money" id="kpi-po">—</div></div>
+        <div class="kpi-card"><div class="label">Total Inventory</div><div class="value" id="kpi-inv">—</div></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card"><h3>Orders by Status</h3><div class="chart-container"><canvas id="chart-overview-orders"></canvas></div></div>
+        <div class="chart-card"><h3>PO Value by Vendor (Top 5)</h3><div class="chart-container"><canvas id="chart-overview-vendors"></canvas></div></div>
+      </div>
+    </section>
+
+    <!-- Supply Chain -->
+    <section id="panel-supply-chain" class="panel">
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="label">Order Statuses</div><div class="value" id="sc-kpi">—</div></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card"><h3>Orders by Status</h3><div class="chart-container"><canvas id="chart-sc-orders"></canvas></div></div>
+        <div class="chart-card"><h3>PO Value by Vendor</h3><div class="chart-container"><canvas id="chart-sc-vendors"></canvas></div></div>
+      </div>
+    </section>
+
+    <!-- Production OEE -->
+    <section id="panel-production" class="panel">
+      <div class="oee-kpis" id="oee-kpis">
+        <div class="kpi-card"><div class="label">Availability %</div><div class="value percent" id="oee-avail">—</div></div>
+        <div class="kpi-card"><div class="label">Performance %</div><div class="value percent" id="oee-perf">—</div></div>
+        <div class="kpi-card"><div class="label">Quality %</div><div class="value percent" id="oee-qual">—</div></div>
+        <div class="kpi-card"><div class="label">OEE %</div><div class="value percent" id="oee-total">—</div></div>
+      </div>
+      <div class="chart-card">
+        <h3>OEE by Machine Center (5 centers, 3 facilities)</h3>
+        <div class="chart-container" style="height: 320px;"><canvas id="chart-oee"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Inventory & Logistics -->
+    <section id="panel-inventory" class="panel">
+      <div class="charts-row">
+        <div class="chart-card"><h3>Inventory by Plant</h3><div class="chart-container"><canvas id="chart-inv-plant"></canvas></div></div>
+        <div class="chart-card"><h3>Deliveries by Carrier</h3><div class="chart-container"><canvas id="chart-carrier"></canvas></div></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    Novelis-style branding — Data from Unity Catalog gold tables
+  </footer>
+
+  <script>
+    const NAVY = '#002855';
+    const BLUE = '#0072CE';
+    const BLUE_LIGHT = '#00A3E0';
+    const MUTED = '#5A6C7D';
+    const BAR_COLORS = [BLUE, BLUE_LIGHT, '#00A3E0', '#4DA6FF', '#99CCFF'];
+
+    function formatNum(x) { return Number(x).toLocaleString(); }
+    function formatMoney(x) { return '$' + formatNum(Math.round(x)); }
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Overview
+    fetch('/api/overview').then(r => r.json()).then(d => {
+      document.getElementById('kpi-orders').textContent = formatNum(d.total_orders);
+      document.getElementById('kpi-quantity').textContent = formatNum(d.total_quantity);
+      document.getElementById('kpi-oee').textContent = d.avg_oee_pct + '%';
+      document.getElementById('kpi-po').textContent = formatMoney(d.total_po_value);
+      document.getElementById('kpi-inv').textContent = formatNum(d.total_inventory);
+    });
+
+    // Supply chain + overview charts
+    fetch('/api/supply-chain').then(r => r.json()).then(d => {
+      const statusData = d.orders_by_status || [];
+      const vendorData = (d.po_value_by_vendor || []).slice(0, 5);
+      document.getElementById('sc-kpi').textContent = statusData.length + ' statuses';
+
+      [['chart-overview-orders','chart-sc-orders'], ['chart-overview-vendors','chart-sc-vendors']].forEach(([idOverview, idSc]) => {
+        const isOrders = idOverview.includes('orders');
+        const labels = isOrders ? statusData.map(x => x.status) : vendorData.map(x => x.vendor);
+        const values = isOrders ? statusData.map(x => x.count) : vendorData.map(x => x.value);
+        const chartId = document.getElementById(idOverview);
+        if (chartId && labels.length) {
+          new Chart(chartId.getContext('2d'), {
+            type: 'bar',
+            data: { labels, datasets: [{ label: isOrders ? 'Orders' : 'Value', data: values, backgroundColor: BAR_COLORS }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+          });
+        }
+        const chartSc = document.getElementById(idSc);
+        if (chartSc && labels.length) {
+          new Chart(chartSc.getContext('2d'), {
+            type: 'bar',
+            data: { labels, datasets: [{ label: isOrders ? 'Orders' : 'Value', data: values, backgroundColor: BAR_COLORS }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+          });
+        }
+      });
+    });
+
+    // Production OEE
+    fetch('/api/production-oee').then(r => r.json()).then(d => {
+      const k = d.kpis || {};
+      document.getElementById('oee-avail').textContent = (k.availability_pct != null ? k.availability_pct : '—') + (k.availability_pct != null ? '%' : '');
+      document.getElementById('oee-perf').textContent = (k.performance_pct != null ? k.performance_pct : '—') + (k.performance_pct != null ? '%' : '');
+      document.getElementById('oee-qual').textContent = (k.quality_pct != null ? k.quality_pct : '—') + (k.quality_pct != null ? '%' : '');
+      document.getElementById('oee-total').textContent = (k.oee_pct != null ? k.oee_pct : '—') + (k.oee_pct != null ? '%' : '');
+
+      const rows = d.oee_by_machine_center || [];
+      const labels = rows.map(x => x.facility + ' — ' + x.machine_center);
+      const oeeValues = rows.map(x => x.oee_pct);
+      const canvas = document.getElementById('chart-oee');
+      if (canvas && labels.length) {
+        new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{ label: 'OEE %', data: oeeValues, backgroundColor: BAR_COLORS }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+      }
+    });
+
+    // Inventory & Logistics
+    fetch('/api/inventory-logistics').then(r => r.json()).then(d => {
+      const inv = d.inventory_by_plant || [];
+      const carr = d.deliveries_by_carrier || [];
+      const canvasInv = document.getElementById('chart-inv-plant');
+      const canvasCarrier = document.getElementById('chart-carrier');
+      if (canvasInv && inv.length) {
+        new Chart(canvasInv.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: inv.map(x => x.plant),
+            datasets: [{ label: 'Quantity', data: inv.map(x => x.quantity), backgroundColor: BAR_COLORS }]
+          },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+        });
+      }
+      if (canvasCarrier && carr.length) {
+        new Chart(canvasCarrier.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: carr.map(x => x.carrier),
+            datasets: [{ label: 'Deliveries', data: carr.map(x => x.deliveries), backgroundColor: BAR_COLORS }]
+          },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

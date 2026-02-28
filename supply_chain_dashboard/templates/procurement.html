@@ -1,0 +1,1021 @@
+{% extends "dashboard_base.html" %}
+
+{% block head_extra %}
+<style>
+  .scorecard-row { cursor: pointer; }
+  .scorecard-row:hover { background: var(--color-border); }
+  .supplier-detail-report { padding: 0.5rem 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section id="procurement-section">
+  <div class="panel active" id="panel-procurement">
+  <div class="panel-content" id="procurement-panel">
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label for="procurement-top">Show</label>
+        <select id="procurement-top" aria-label="Number of vendors to show">
+          <option value="5">Top 5</option>
+          <option value="10" selected>Top 10</option>
+          <option value="20">Top 20</option>
+          <option value="999">All</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="procurement-sort">Sort by</label>
+        <select id="procurement-sort" aria-label="Sort vendors">
+          <option value="value-desc">Value (high to low)</option>
+          <option value="value-asc">Value (low to high)</option>
+          <option value="vendor-asc">Vendor A–Z</option>
+          <option value="vendor-desc">Vendor Z–A</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="procurement-view">View</label>
+        <select id="procurement-view" aria-label="Chart or table view">
+          <option value="chart">Chart</option>
+          <option value="table">Table</option>
+        </select>
+      </div>
+      <span class="filter-count" id="procurement-filter-count"></span>
+      <button type="button" class="btn btn-secondary btn-refresh" id="procurement-refresh" aria-label="Refresh data">Refresh</button>
+      <button type="button" class="btn btn-primary" id="procurement-new-po" aria-label="Create new purchase order">New purchase order</button>
+      <button type="button" class="btn btn-primary" id="procurement-upload-po" aria-label="Upload purchase orders from CSV">Upload purchase orders</button>
+    </div>
+    <div class="kpi-row" id="procurement-kpis">
+      <div class="kpi-card"><div class="label">Total POs</div><div class="value" id="kpi-po-total">—</div><div class="target" id="kpi-po-total-target"></div></div>
+      <div class="kpi-card"><div class="label">PO Value</div><div class="value money" id="kpi-po-value">—</div><div class="target" id="kpi-po-value-target"></div></div>
+      <div class="kpi-card"><div class="label">Avg PO Value</div><div class="value money" id="kpi-po-avg">—</div><div class="target" id="kpi-po-avg-target"></div></div>
+      <div class="kpi-card"><div class="label">Unique Suppliers</div><div class="value" id="kpi-po-suppliers">—</div><div class="target" id="kpi-po-suppliers-target"></div></div>
+    </div>
+    <div class="charts-row" id="procurement-chart-row">
+      <div class="chart-card" id="procurement-chart-card"><h3>PO Value by Vendor</h3><div class="chart-container"><canvas id="chart-po-vendor"></canvas></div></div>
+    </div>
+    <div class="chart-card" id="procurement-table-card" style="display: none;">
+      <h3>PO Value by Vendor</h3>
+      <div class="chart-container" style="height: auto; min-height: 200px;">
+        <div class="tariffs-table-wrap"><table class="data-table" id="procurement-table"><thead><tr><th>Vendor</th><th>Value</th></tr></thead><tbody id="procurement-table-body"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <div class="comments-section" id="comments-section" data-tab="procurement">
+    <h3>Comments</h3>
+    <div class="comments-list" id="comments-procurement"></div>
+    <div class="comment-form">
+      <label for="comment-text-procurement">Add comment</label>
+      <textarea id="comment-text-procurement" placeholder="Enter a comment..."></textarea>
+      <div class="actions"><button type="button" class="btn btn-primary" data-tab="procurement">Save</button></div>
+    </div>
+  </div>
+
+  <div id="new-po-modal" class="modal-overlay" role="dialog" aria-labelledby="new-po-title" aria-modal="true">
+    <div class="modal-dialog modal-dialog-wide" onclick="event.stopPropagation()">
+      <h3 id="new-po-title">New purchase order</h3>
+      <div class="form-group">
+        <label for="new-po-vendor">Vendor <span class="required">*</span></label>
+        <input type="text" id="new-po-vendor" placeholder="Vendor ID or name" required aria-required="true">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="new-po-order-date">Order date <span class="required">*</span></label>
+          <input type="date" id="new-po-order-date" required aria-required="true">
+        </div>
+        <div class="form-group">
+          <label for="new-po-delivery-date">Delivery date</label>
+          <input type="date" id="new-po-delivery-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Line items <span class="required">*</span></label>
+        <div class="table-wrap" style="max-height: 200px; overflow: auto;">
+          <table class="data-table" id="new-po-lines">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Unit price</th>
+                <th style="width: 2rem;"></th>
+              </tr>
+            </thead>
+            <tbody id="new-po-lines-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn btn-secondary" id="new-po-add-line" style="margin-top: 0.5rem;">Add line</button>
+      </div>
+      <div class="form-group">
+        <label for="new-po-notes">Notes</label>
+        <textarea id="new-po-notes" placeholder="Optional notes" rows="2"></textarea>
+      </div>
+      <p class="modal-note" id="new-po-total-label">Total: $0</p>
+      <div id="new-po-message" class="modal-message" role="status" aria-live="polite"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="new-po-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="new-po-submit">Create purchase order</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="upload-po-modal" class="modal-overlay" role="dialog" aria-labelledby="upload-po-title" aria-modal="true">
+    <div class="modal-dialog modal-dialog-wide" onclick="event.stopPropagation()">
+      <h3 id="upload-po-title">Upload purchase orders</h3>
+      <p class="modal-note">Upload a CSV file. Each row creates one purchase order (single line item). First row must be a header.</p>
+      <div class="form-group">
+        <label for="upload-po-file">CSV file <span class="required">*</span></label>
+        <input type="file" id="upload-po-file" accept=".csv" aria-label="Select CSV file">
+      </div>
+      <p class="modal-note" style="margin-top: 0.5rem;">
+        <strong>Required columns:</strong> vendor, order_date, quantity, unit_price<br>
+        <strong>Optional columns:</strong> delivery_date, description, notes
+      </p>
+      <div id="upload-po-message" class="modal-message" role="status" aria-live="polite"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="upload-po-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="upload-po-submit" disabled>Upload</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div class="panel" id="panel-tariffs">
+    <div class="panel-content" id="tariffs-panel">
+      <div class="filters-bar">
+        <div class="filter-group">
+          <label for="tariffs-search">Search</label>
+          <input type="text" id="tariffs-search" placeholder="HTS or description…" aria-label="Filter by HTS or description" />
+        </div>
+        <div class="filter-group">
+          <label for="tariffs-limit">Show rows</label>
+          <select id="tariffs-limit" aria-label="Number of rows to show">
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="200">200</option>
+            <option value="999999">All</option>
+          </select>
+        </div>
+        <span class="filter-count" id="tariffs-filter-count"></span>
+        <button type="button" class="btn btn-secondary btn-refresh" id="tariffs-refresh" aria-label="Refresh data">Refresh</button>
+      </div>
+      <p class="tariffs-total" id="tariffs-total">Total tariff rates: —</p>
+      <p class="sim-intro" id="tariffs-source">Loading tariff data from Data.gov…</p>
+      <div id="tariffs-connection-note" class="tariffs-connection-note" role="alert" aria-live="polite" style="display: none;"></div>
+      <div class="chart-card">
+        <h3>US tariff rates by product (HTS)</h3>
+        <div class="tariffs-table-wrap">
+          <table class="data-table" id="tariffs-table">
+            <thead>
+              <tr>
+                <th data-sort data-sort-key="hts_number">HTS Number<span class="sort-indicator"></span></th>
+                <th data-sort data-sort-key="description">Description<span class="sort-indicator"></span></th>
+                <th data-sort data-sort-key="general_rate">General rate<span class="sort-indicator"></span></th>
+                <th data-sort data-sort-key="special_rate">Special rate<span class="sort-indicator"></span></th>
+                <th data-sort data-sort-key="column2_rate">Column 2<span class="sort-indicator"></span></th>
+              </tr>
+            </thead>
+            <tbody id="tariffs-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>6-month tariff forecast (average rate %)</h3>
+        <div class="chart-container" style="height: 280px;"><canvas id="chart-tariff-forecast"></canvas></div>
+        <p class="meta">Forecast based on current HTS average general rate with a simple monthly trend.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-purchase-orders">
+    <div class="panel-content" id="po-panel">
+      <h2 class="actions-title">Outstanding purchase orders</h2>
+      <p class="sim-intro">All outstanding purchase orders. Data from procurement gold tables.</p>
+      <div class="filters-bar">
+        <div class="filter-group">
+          <label for="po-filter-vendor">Vendor</label>
+          <select id="po-filter-vendor" aria-label="Filter by vendor">
+            <option value="">All vendors</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="po-filter-status">Status</label>
+          <select id="po-filter-status" aria-label="Filter by status">
+            <option value="">All statuses</option>
+            <option value="Open">Open</option>
+            <option value="Partial">Partial</option>
+            <option value="Sent">Sent</option>
+            <option value="Pending">Pending</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="po-search">Search</label>
+          <input type="text" id="po-search" placeholder="PO number…" aria-label="Search by PO number" />
+        </div>
+        <div class="filter-group">
+          <label for="po-limit">Show</label>
+          <select id="po-limit" aria-label="Rows to show">
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="9999">All</option>
+          </select>
+        </div>
+        <span class="filter-count" id="po-filter-count"></span>
+        <button type="button" class="btn btn-secondary btn-refresh" id="po-refresh" aria-label="Refresh">Refresh</button>
+      </div>
+      <div class="chart-card">
+        <div class="table-wrap" style="max-height: 65vh; overflow: auto;">
+          <table class="data-table" id="po-table">
+            <thead>
+              <tr>
+                <th data-sort data-sort-key="po_number">PO number<span class="sort-indicator"></span></th>
+                <th data-sort data-sort-key="vendor">Vendor<span class="sort-indicator"></span></th>
+                <th data-sort data-sort-key="value">Value<span class="sort-indicator"></span></th>
+                <th data-sort data-sort-key="order_date">Order date<span class="sort-indicator"></span></th>
+                <th data-sort data-sort-key="status">Status<span class="sort-indicator"></span></th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="po-tbody"></tbody>
+          </table>
+        </div>
+        <p class="meta" id="po-meta" style="margin-top: 0.75rem;"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-supplier-scorecard">
+    <div class="panel-content" id="supplier-scorecard-panel">
+      <h2 class="actions-title">Supplier scorecard</h2>
+      <p class="sim-intro">Performance metrics by supplier. Click a row to view full metrics and download a PDF report to email.</p>
+      <div class="filters-bar">
+        <span class="filter-count" id="scorecard-filter-count"></span>
+        <button type="button" class="btn btn-secondary btn-refresh" id="scorecard-refresh" aria-label="Refresh">Refresh</button>
+      </div>
+      <div class="chart-card">
+        <div class="table-wrap" style="max-height: 60vh; overflow: auto;">
+          <table class="data-table" id="scorecard-table">
+            <thead>
+              <tr>
+                <th>Supplier</th>
+                <th>Score</th>
+                <th>Tier</th>
+                <th>On-time %</th>
+                <th>Quality %</th>
+                <th>Lead time (days)</th>
+                <th>Total spend</th>
+                <th>PO count</th>
+              </tr>
+            </thead>
+            <tbody id="scorecard-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="supplier-detail-modal" class="modal-overlay" role="dialog" aria-labelledby="supplier-detail-title" aria-modal="true" style="display: none;">
+    <div class="modal-dialog modal-dialog-wide" onclick="event.stopPropagation()">
+      <h3 id="supplier-detail-title">Supplier scorecard</h3>
+      <div id="supplier-detail-content" class="supplier-detail-report">
+        <!-- Populated by JS; also used for PDF export -->
+      </div>
+      <div class="modal-actions" style="margin-top: 1rem;">
+        <button type="button" class="btn btn-secondary" id="supplier-detail-close">Close</button>
+        <button type="button" class="btn btn-primary" id="supplier-detail-download-pdf">Download as PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="po-edit-modal" class="modal-overlay" role="dialog" aria-labelledby="po-edit-title" aria-modal="true" style="display: none;">
+    <div class="modal-dialog" onclick="event.stopPropagation()">
+      <h3 id="po-edit-title">Edit purchase order</h3>
+      <input type="hidden" id="po-edit-number" />
+      <div class="form-group">
+        <label for="po-edit-vendor">Vendor</label>
+        <input type="text" id="po-edit-vendor" />
+      </div>
+      <div class="form-group">
+        <label for="po-edit-value">Value</label>
+        <input type="number" id="po-edit-value" step="0.01" min="0" />
+      </div>
+      <div class="form-group">
+        <label for="po-edit-order-date">Order date</label>
+        <input type="text" id="po-edit-order-date" placeholder="YYYY-MM-DD" />
+      </div>
+      <div class="form-group">
+        <label for="po-edit-delivery-date">Delivery date (optional)</label>
+        <input type="text" id="po-edit-delivery-date" placeholder="YYYY-MM-DD" />
+      </div>
+      <div class="form-group">
+        <label for="po-edit-status">Status</label>
+        <select id="po-edit-status">
+          <option value="Open">Open</option>
+          <option value="Partial">Partial</option>
+          <option value="Sent">Sent</option>
+          <option value="Pending">Pending</option>
+        </select>
+      </div>
+      <div id="po-edit-message" class="modal-message" role="status"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="po-edit-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="po-edit-save">Save</button>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  function getProcurementPanelFromHash() {
+    var h = (window.location.hash || '').replace(/^#/, '').trim();
+    if (h === 'tariffs' || h === 'purchase-orders' || h === 'supplier-scorecard') return h;
+    return 'procurement';
+  }
+  function showProcurementPanel(panelId) {
+    document.querySelectorAll('#procurement-section .panel').forEach(function(p) {
+      p.classList.toggle('active', p.id === 'panel-' + panelId);
+    });
+    document.querySelectorAll('.nav-sub-link[data-panel]').forEach(function(a) {
+      a.classList.toggle('active', a.getAttribute('data-panel') === panelId);
+    });
+  }
+  function onProcurementHashChange() {
+    showProcurementPanel(getProcurementPanelFromHash());
+  }
+  window.addEventListener('hashchange', onProcurementHashChange);
+  onProcurementHashChange();
+})();
+</script>
+<script>
+(function() {
+  let lastKpis = null;
+  let lastVendorData = [];
+  let poChart = null;
+
+  function applyFilters() {
+    const topN = parseInt(document.getElementById('procurement-top')?.value || '10', 10);
+    const sortVal = document.getElementById('procurement-sort')?.value || 'value-desc';
+    let list = lastVendorData.slice();
+    if (sortVal === 'value-desc') list.sort((a, b) => (b.value || 0) - (a.value || 0));
+    else if (sortVal === 'value-asc') list.sort((a, b) => (a.value || 0) - (b.value || 0));
+    else if (sortVal === 'vendor-asc') list.sort((a, b) => String(a.vendor || '').localeCompare(b.vendor || ''));
+    else if (sortVal === 'vendor-desc') list.sort((a, b) => String(b.vendor || '').localeCompare(a.vendor || ''));
+    list = list.slice(0, topN);
+    const countEl = document.getElementById('procurement-filter-count');
+    if (countEl) countEl.textContent = 'Showing ' + list.length + (lastVendorData.length > list.length ? ' of ' + lastVendorData.length : '') + ' vendors';
+    return list;
+  }
+
+  function renderVendorChart(data) {
+    const canvas = document.getElementById('chart-po-vendor');
+    if (poChart) { poChart.destroy(); poChart = null; }
+    if (canvas && data.length && typeof Chart !== 'undefined') {
+      poChart = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: { labels: data.map(x => x.vendor), datasets: [{ label: 'Value', data: data.map(x => x.value), backgroundColor: BAR_COLORS }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+      });
+    }
+  }
+
+  function renderVendorTable(data) {
+    const tbody = document.getElementById('procurement-table-body');
+    if (!tbody) return;
+    tbody.innerHTML = data.map(r => '<tr><td>' + escapeHtml(r.vendor) + '</td><td class="money">' + (r.value != null ? formatMoney(r.value) : '—') + '</td></tr>').join('');
+  }
+
+  function updateVendorView() {
+    const filtered = applyFilters();
+    const view = document.getElementById('procurement-view')?.value || 'chart';
+    const chartRow = document.getElementById('procurement-chart-row');
+    const chartCard = document.getElementById('procurement-chart-card');
+    const tableCard = document.getElementById('procurement-table-card');
+    if (view === 'table') {
+      if (chartRow) chartRow.style.display = 'none';
+      if (chartCard) chartCard.style.display = 'none';
+      if (tableCard) tableCard.style.display = 'block';
+      renderVendorTable(filtered);
+    } else {
+      if (chartRow) chartRow.style.display = '';
+      if (chartCard) chartCard.style.display = '';
+      if (tableCard) tableCard.style.display = 'none';
+      renderVendorChart(filtered);
+    }
+  }
+
+  function setKpis(k) {
+    const el = id => document.getElementById(id);
+    if (el('kpi-po-total')) el('kpi-po-total').textContent = formatNum(k.total_pos ?? '—');
+    if (el('kpi-po-value')) el('kpi-po-value').textContent = k.total_po_value != null ? formatMoney(k.total_po_value) : '—';
+    if (el('kpi-po-avg')) el('kpi-po-avg').textContent = k.avg_po_value != null ? formatMoney(k.avg_po_value) : '—';
+    if (el('kpi-po-suppliers')) el('kpi-po-suppliers').textContent = formatNum(k.unique_suppliers ?? '—');
+    if (el('kpi-po-total-target')) el('kpi-po-total-target').textContent = k.total_pos_target != null ? 'Target: ' + formatNum(k.total_pos_target) : '';
+    if (el('kpi-po-value-target')) el('kpi-po-value-target').textContent = k.total_po_value_target != null ? 'Target: ' + formatMoney(k.total_po_value_target) : '';
+    if (el('kpi-po-avg-target')) el('kpi-po-avg-target').textContent = k.avg_po_value_target != null ? 'Target: ' + formatMoney(k.avg_po_value_target) : '';
+    if (el('kpi-po-suppliers-target')) el('kpi-po-suppliers-target').textContent = k.unique_suppliers_target != null ? 'Target: ' + formatNum(k.unique_suppliers_target) : '';
+  }
+
+  function loadData() {
+    const panel = document.getElementById('procurement-panel');
+    const payload = window.__simulatedPayload;
+    if (payload && payload.procurement) {
+      const p = payload.procurement;
+      lastKpis = p.kpis || {};
+      lastVendorData = p.po_value_by_vendor || [];
+      setKpis(lastKpis);
+      updateVendorView();
+      return;
+    }
+    if (panel) panel.classList.add('is-loading');
+    fetch('/api/procurement').then(r => r.json()).then(d => {
+      lastKpis = d.kpis || {};
+      lastVendorData = d.po_value_by_vendor || [];
+      setKpis(lastKpis);
+      updateVendorView();
+    }).catch(() => {}).finally(() => { if (panel) panel.classList.remove('is-loading'); });
+  }
+
+  try { var sim = sessionStorage.getItem('simulatedPayload'); if (sim) window.__simulatedPayload = JSON.parse(sim); } catch (e) {}
+  loadData();
+
+  ['procurement-top', 'procurement-sort', 'procurement-view'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', updateVendorView);
+  });
+  document.getElementById('procurement-refresh')?.addEventListener('click', () => loadData());
+
+  (function newPOModal() {
+    const modal = document.getElementById('new-po-modal');
+    const tbody = document.getElementById('new-po-lines-tbody');
+    const totalEl = document.getElementById('new-po-total-label');
+    const msgEl = document.getElementById('new-po-message');
+
+    function addLineRow() {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td><input type="text" class="new-po-desc" placeholder="Description" aria-label="Line description"></td>' +
+        '<td><input type="number" class="new-po-qty" min="0.01" step="any" placeholder="0" aria-label="Quantity"></td>' +
+        '<td><input type="number" class="new-po-price" min="0" step="0.01" placeholder="0" aria-label="Unit price"></td>' +
+        '<td><button type="button" class="btn btn-secondary" style="padding: 0.2rem 0.4rem; font-size: 0.8rem;" aria-label="Remove line">Remove</button></td>';
+      const qtyInput = tr.querySelector('.new-po-qty');
+      const priceInput = tr.querySelector('.new-po-price');
+      function onChange() { updateTotal(); }
+      qtyInput.addEventListener('input', onChange);
+      priceInput.addEventListener('input', onChange);
+      tr.querySelector('button').addEventListener('click', () => { tr.remove(); updateTotal(); });
+      tbody.appendChild(tr);
+      updateTotal();
+    }
+
+    function updateTotal() {
+      let total = 0;
+      tbody.querySelectorAll('tr').forEach(tr => {
+        const q = parseFloat(tr.querySelector('.new-po-qty')?.value) || 0;
+        const p = parseFloat(tr.querySelector('.new-po-price')?.value) || 0;
+        total += q * p;
+      });
+      if (totalEl) totalEl.textContent = 'Total: ' + formatMoney(total);
+    }
+
+    function openModal() {
+      document.getElementById('new-po-vendor').value = '';
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById('new-po-order-date').value = today;
+      document.getElementById('new-po-delivery-date').value = '';
+      document.getElementById('new-po-notes').value = '';
+      tbody.innerHTML = '';
+      addLineRow();
+      if (msgEl) { msgEl.textContent = ''; msgEl.className = 'modal-message'; }
+      modal.classList.add('open');
+    }
+
+    function closeModal() {
+      modal.classList.remove('open');
+    }
+
+    document.getElementById('procurement-new-po')?.addEventListener('click', openModal);
+    document.getElementById('new-po-add-line')?.addEventListener('click', addLineRow);
+    modal?.addEventListener('click', closeModal);
+    document.getElementById('new-po-cancel')?.addEventListener('click', closeModal);
+    document.getElementById('new-po-submit')?.addEventListener('click', function() {
+      const vendor = (document.getElementById('new-po-vendor')?.value || '').trim();
+      const orderDate = (document.getElementById('new-po-order-date')?.value || '').trim();
+      const deliveryDate = (document.getElementById('new-po-delivery-date')?.value || '').trim() || undefined;
+      const notes = (document.getElementById('new-po-notes')?.value || '').trim() || undefined;
+      if (!vendor) { msgEl.textContent = 'Vendor is required.'; msgEl.className = 'modal-message error'; return; }
+      if (!orderDate) { msgEl.textContent = 'Order date is required.'; msgEl.className = 'modal-message error'; return; }
+      const lineItems = [];
+      tbody.querySelectorAll('tr').forEach(tr => {
+        const q = parseFloat(tr.querySelector('.new-po-qty')?.value);
+        const p = parseFloat(tr.querySelector('.new-po-price')?.value);
+        if (q > 0 && p >= 0) {
+          lineItems.push({
+            description: (tr.querySelector('.new-po-desc')?.value || '').trim() || undefined,
+            quantity: q,
+            unit_price: p
+          });
+        }
+      });
+      if (!lineItems.length) { msgEl.textContent = 'Add at least one line item with quantity and unit price.'; msgEl.className = 'modal-message error'; return; }
+      const btn = document.getElementById('new-po-submit');
+      btn.disabled = true;
+      fetch('/api/purchase-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendor, order_date: orderDate, delivery_date: deliveryDate, line_items: lineItems, notes })
+      }).then(function(r) {
+        btn.disabled = false;
+        if (r.ok) {
+          msgEl.textContent = 'Purchase order created.';
+          msgEl.className = 'modal-message success';
+          loadData();
+          setTimeout(closeModal, 1200);
+        } else {
+          r.json().then(function(d) { msgEl.textContent = d.error || 'Failed to create PO'; msgEl.className = 'modal-message error'; }).catch(function() { msgEl.textContent = 'Failed to create purchase order'; msgEl.className = 'modal-message error'; });
+        }
+      }).catch(function() { btn.disabled = false; msgEl.textContent = 'Network error.'; msgEl.className = 'modal-message error'; });
+    });
+  })();
+
+  (function uploadPOModal() {
+    const modal = document.getElementById('upload-po-modal');
+    const fileInput = document.getElementById('upload-po-file');
+    const submitBtn = document.getElementById('upload-po-submit');
+    const msgEl = document.getElementById('upload-po-message');
+
+    function openUploadModal() {
+      if (fileInput) fileInput.value = '';
+      if (submitBtn) submitBtn.disabled = true;
+      if (msgEl) { msgEl.textContent = ''; msgEl.className = 'modal-message'; }
+      modal.classList.add('open');
+    }
+    function closeUploadModal() {
+      modal.classList.remove('open');
+    }
+
+    fileInput?.addEventListener('change', function() {
+      submitBtn.disabled = !(this.files && this.files.length);
+    });
+    document.getElementById('procurement-upload-po')?.addEventListener('click', openUploadModal);
+    modal?.addEventListener('click', closeUploadModal);
+    document.getElementById('upload-po-cancel')?.addEventListener('click', closeUploadModal);
+    document.getElementById('upload-po-submit')?.addEventListener('click', function() {
+      if (!fileInput?.files?.length) return;
+      const fd = new FormData();
+      fd.append('file', fileInput.files[0]);
+      submitBtn.disabled = true;
+      fetch('/api/purchase-orders/upload', { method: 'POST', body: fd })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+          const d = res.data;
+          if (res.ok) {
+            const errStr = (d.errors && d.errors.length) ? ' ' + d.errors.length + ' row(s) had errors.' : '';
+            msgEl.textContent = (d.created || 0) + ' purchase order(s) created.' + errStr;
+            msgEl.className = 'modal-message success';
+            if (d.errors && d.errors.length) {
+              msgEl.textContent += ' Row errors: ' + d.errors.slice(0, 5).map(function(e) { return 'Row ' + e.row + ': ' + e.message; }).join('; ');
+              if (d.errors.length > 5) msgEl.textContent += ' …';
+            }
+            loadData();
+            setTimeout(closeUploadModal, 3000);
+          } else {
+            msgEl.textContent = d.error || 'Upload failed';
+            msgEl.className = 'modal-message error';
+            submitBtn.disabled = false;
+          }
+        })
+        .catch(function() {
+          msgEl.textContent = 'Network error.';
+          msgEl.className = 'modal-message error';
+          submitBtn.disabled = false;
+        });
+    });
+  })();
+
+  function renderComments(list) {
+    const el = document.getElementById('comments-procurement');
+    if (!el) return;
+    if (!list.length) { el.innerHTML = '<p class="empty-state">No comments yet.</p>'; return; }
+    el.innerHTML = list.map(c => {
+      const meta = (c.author_name ? escapeHtml(c.author_name) + ' — ' : '') + (c.created_at || '');
+      return '<div class="comment-item"><div>' + escapeHtml(c.content) + '</div><div class="meta">' + meta + '</div></div>';
+    }).join('');
+  }
+  fetch('/api/comments?tab=procurement').then(r => r.json()).then(renderComments).catch(() => {});
+  document.querySelector('.comment-form .btn-primary[data-tab="procurement"]')?.addEventListener('click', () => {
+    const textarea = document.getElementById('comment-text-procurement');
+    const content = (textarea && textarea.value || '').trim();
+    if (!content) return;
+    const btn = document.querySelector('.comment-form .btn-primary[data-tab="procurement"]');
+    if (btn) btn.disabled = true;
+    fetch('/api/comments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tab: 'procurement', content: content }) })
+      .then(r => { if (btn) btn.disabled = false; if (r.ok) { textarea.value = ''; fetch('/api/comments?tab=procurement').then(r => r.json()).then(renderComments); } })
+      .catch(() => { if (btn) btn.disabled = false; });
+  });
+})();
+</script>
+<script>
+(function() {
+  let lastTariffsData = [];
+  let lastForecast = [];
+  let tariffChart = null;
+  let sortKey = 'hts_number';
+  let sortDir = 'asc';
+  const sourceEl = document.getElementById('tariffs-source');
+  const tbody = document.getElementById('tariffs-tbody');
+  const connectionNoteEl = document.getElementById('tariffs-connection-note');
+
+  function showConnectionNote(message) {
+    if (!connectionNoteEl) return;
+    connectionNoteEl.textContent = message;
+    connectionNoteEl.style.display = 'block';
+  }
+  function hideConnectionNote() {
+    if (connectionNoteEl) { connectionNoteEl.textContent = ''; connectionNoteEl.style.display = 'none'; }
+  }
+
+  function setSource(d) {
+    if (!sourceEl) return;
+    let html = 'Source: <a href="' + (d.source_url || 'https://catalog.data.gov') + '" target="_blank" rel="noopener">' + (d.source_title || d.source || 'Data.gov') + '</a>. US Harmonized Tariff Schedule (USITC).';
+    if (d.error) {
+      html += ' <span class="tariffs-load-error">Could not load from Data.gov: ' + escapeHtml(d.error) + '. Showing sample data.</span>';
+      showConnectionNote('Unable to connect to the tariff data source (Data.gov/USITC). ' + (d.error || '') + ' Showing sample data only.');
+    } else {
+      hideConnectionNote();
+    }
+    sourceEl.innerHTML = html;
+  }
+
+  function applyFiltersAndSort() {
+    const q = (document.getElementById('tariffs-search')?.value || '').trim().toLowerCase();
+    const limit = parseInt(document.getElementById('tariffs-limit')?.value || '100', 10);
+    let list = lastTariffsData.filter(function(r) {
+      if (!q) return true;
+      const hts = String(r.hts_number || '').toLowerCase();
+      const desc = String(r.description || '').toLowerCase();
+      return hts.indexOf(q) >= 0 || desc.indexOf(q) >= 0;
+    });
+    list.sort(function(a, b) {
+      const va = a[sortKey] != null ? String(a[sortKey]) : '';
+      const vb = b[sortKey] != null ? String(b[sortKey]) : '';
+      const c = va.localeCompare(vb, undefined, { numeric: true });
+      return sortDir === 'asc' ? c : -c;
+    });
+    const showing = list.slice(0, limit);
+    const countEl = document.getElementById('tariffs-filter-count');
+    if (countEl) countEl.textContent = 'Showing ' + showing.length + (list.length > limit ? ' of ' + list.length : '') + ' of ' + lastTariffsData.length + ' total';
+    return showing;
+  }
+
+  function renderTable(rows) {
+    if (!tbody) return;
+    tbody.innerHTML = rows.map(function(r) {
+      return '<tr><td>' + escapeHtml(r.hts_number) + '</td><td>' + escapeHtml(r.description) + '</td><td>' + escapeHtml(r.general_rate) + '</td><td>' + escapeHtml(r.special_rate) + '</td><td>' + escapeHtml(r.column2_rate) + '</td></tr>';
+    }).join('');
+  }
+
+  function updateTable() {
+    const rows = applyFiltersAndSort();
+    renderTable(rows);
+  }
+
+  function updateSortUI() {
+    document.querySelectorAll('#tariffs-table thead th[data-sort]').forEach(function(th) {
+      th.removeAttribute('data-sort-direction');
+      if (th.getAttribute('data-sort-key') === sortKey) th.setAttribute('data-sort-direction', sortDir);
+      const ind = th.querySelector('.sort-indicator');
+      if (ind) ind.textContent = th.getAttribute('data-sort-key') === sortKey ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
+    });
+  }
+
+  function loadTariffsData() {
+    if (sourceEl) sourceEl.textContent = 'Loading from Data.gov…';
+    const panel = document.getElementById('tariffs-panel');
+    if (panel) panel.classList.add('is-loading');
+    fetch('/api/tariffs').then(r => r.json()).then(d => {
+      setSource(d);
+      lastTariffsData = d.tariffs || [];
+      lastForecast = d.tariff_forecast_6m || [];
+      const totalEl = document.getElementById('tariffs-total');
+      if (totalEl) totalEl.textContent = 'Total tariff rates: ' + lastTariffsData.length.toLocaleString();
+      updateSortUI();
+      updateTable();
+
+      if (tariffChart) { tariffChart.destroy(); tariffChart = null; }
+      const canvas = document.getElementById('chart-tariff-forecast');
+      if (canvas && lastForecast.length && typeof Chart !== 'undefined') {
+        tariffChart = new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: lastForecast.map(function(x) { return x.label; }),
+            datasets: [{ label: 'Avg tariff rate %', data: lastForecast.map(function(x) { return x.avg_rate_pct; }), backgroundColor: ['#002855', '#0072CE', '#00A3E0', '#4DA6FF', '#5A6C7D', '#00854D'] }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+      }
+    }).catch(function(err) {
+      if (sourceEl) sourceEl.textContent = 'Could not load tariff data. Check network and try again.';
+      showConnectionNote('Unable to connect to the server. Check your network connection and try again.');
+    }).finally(function() { if (panel) panel.classList.remove('is-loading'); });
+  }
+
+  loadTariffsData();
+
+  document.getElementById('tariffs-search')?.addEventListener('input', updateTable);
+  document.getElementById('tariffs-search')?.addEventListener('change', updateTable);
+  document.getElementById('tariffs-limit')?.addEventListener('change', updateTable);
+  document.getElementById('tariffs-refresh')?.addEventListener('click', loadTariffsData);
+
+  document.querySelectorAll('#tariffs-table thead th[data-sort]').forEach(function(th) {
+    th.addEventListener('click', function() {
+      const key = this.getAttribute('data-sort-key');
+      if (key === sortKey) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortKey = key; sortDir = 'asc'; }
+      updateSortUI();
+      updateTable();
+    });
+  });
+})();
+</script>
+<script>
+(function() {
+  function formatNum(x) { return Number(x).toLocaleString(); }
+  function formatMoney(x) { return '$' + formatNum(Math.round(Number(x) || 0)); }
+  var fullList = [];
+  var sortKey = 'po_number';
+  var sortDir = 'asc';
+
+  function populateVendorFilter() {
+    var vendors = [...new Set(fullList.map(function(po) { return po.vendor; }).filter(Boolean))].sort();
+    var sel = document.getElementById('po-filter-vendor');
+    if (!sel) return;
+    var current = sel.value;
+    sel.innerHTML = '<option value="">All vendors</option>' + vendors.map(function(v) {
+      return '<option value="' + (typeof escapeHtml !== 'undefined' ? escapeHtml(v) : v) + '">' + (typeof escapeHtml !== 'undefined' ? escapeHtml(v) : v) + '</option>';
+    }).join('');
+    if (vendors.indexOf(current) >= 0) sel.value = current;
+  }
+
+  function applyFiltersAndSort() {
+    var vendor = (document.getElementById('po-filter-vendor') && document.getElementById('po-filter-vendor').value) || '';
+    var status = (document.getElementById('po-filter-status') && document.getElementById('po-filter-status').value) || '';
+    var q = (document.getElementById('po-search') && document.getElementById('po-search').value.trim().toLowerCase()) || '';
+    var limit = parseInt((document.getElementById('po-limit') && document.getElementById('po-limit').value) || '100', 10);
+    var list = fullList.filter(function(po) {
+      if (vendor && (po.vendor || '') !== vendor) return false;
+      if (status && (po.status || '') !== status) return false;
+      if (q && String(po.po_number || '').toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+    list.sort(function(a, b) {
+      var va = a[sortKey];
+      var vb = b[sortKey];
+      if (sortKey === 'value') { va = Number(va) || 0; vb = Number(vb) || 0; return sortDir === 'asc' ? va - vb : vb - va; }
+      if (sortKey === 'order_date') return sortDir === 'asc' ? String(va || '').localeCompare(vb || '') : String(vb || '').localeCompare(va || '');
+      va = String(va || ''); vb = String(vb || '');
+      var c = va.localeCompare(vb, undefined, { numeric: true });
+      return sortDir === 'asc' ? c : -c;
+    });
+    var showing = list.slice(0, limit);
+    var countEl = document.getElementById('po-filter-count');
+    if (countEl) countEl.textContent = 'Showing ' + showing.length + (list.length > limit ? ' of ' + list.length : '') + ' of ' + fullList.length + ' total';
+    return showing;
+  }
+
+  function updateSortUI() {
+    var headers = document.querySelectorAll('#po-table thead th[data-sort]');
+    if (headers) headers.forEach(function(th) {
+      th.removeAttribute('data-sort-direction');
+      if (th.getAttribute('data-sort-key') === sortKey) th.setAttribute('data-sort-direction', sortDir);
+      var ind = th.querySelector('.sort-indicator');
+      if (ind) ind.textContent = th.getAttribute('data-sort-key') === sortKey ? (sortDir === 'asc' ? ' \u2191' : ' \u2193') : '';
+    });
+  }
+
+  function renderTable(rows) {
+    var tbody = document.getElementById('po-tbody');
+    var meta = document.getElementById('po-meta');
+    if (!tbody) return;
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No purchase orders match the current filters.</td></tr>';
+      if (meta) meta.textContent = fullList.length ? '0 of ' + fullList.length + ' match.' : '';
+      return;
+    }
+    var esc = typeof escapeHtml !== 'undefined' ? escapeHtml : function(s) { return String(s); };
+    tbody.innerHTML = rows.map(function(po) {
+      var num = esc(po.po_number || '');
+      return '<tr><td>' + (num || '—') + '</td><td>' + esc(po.vendor || '—') + '</td><td>' + formatMoney(po.value) + '</td><td>' + esc(po.order_date || '—') + '</td><td>' + esc(po.status || 'Open') + '</td><td><button type="button" class="btn btn-secondary" style="padding:4px 8px; font-size:0.8rem;" data-po-edit data-po-number="' + num + '" data-po-vendor="' + esc(po.vendor || '') + '" data-po-value="' + (po.value != null ? po.value : '') + '" data-po-order-date="' + esc(po.order_date || '') + '" data-po-status="' + esc(po.status || '') + '">Edit</button></td></tr>';
+    }).join('');
+    tbody.querySelectorAll('[data-po-edit]').forEach(function(btn) {
+      btn.addEventListener('click', openPoEditModal);
+    });
+    if (meta) meta.textContent = rows.length + ' purchase order(s) shown.';
+  }
+
+  function load() {
+    var panel = document.getElementById('po-panel');
+    if (panel) panel.classList.add('is-loading');
+    fetch('/api/purchase-orders').then(function(r) { return r.json(); }).then(function(d) {
+      fullList = d.purchase_orders || [];
+      populateVendorFilter();
+      updateSortUI();
+      renderTable(applyFiltersAndSort());
+    }).catch(function() {
+      var tbody = document.getElementById('po-tbody');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load purchase orders.</td></tr>';
+    }).finally(function() { if (panel) panel.classList.remove('is-loading'); });
+  }
+
+  load();
+
+  ['po-filter-vendor', 'po-filter-status', 'po-limit'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', function() { renderTable(applyFiltersAndSort()); });
+  });
+  var searchEl = document.getElementById('po-search');
+  if (searchEl) searchEl.addEventListener('input', function() { renderTable(applyFiltersAndSort()); });
+  document.getElementById('po-refresh') && document.getElementById('po-refresh').addEventListener('click', load);
+
+  document.querySelectorAll('#po-table thead th[data-sort]').forEach(function(th) {
+    th.addEventListener('click', function() {
+      var key = this.getAttribute('data-sort-key');
+      if (key === sortKey) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortKey = key; sortDir = 'asc'; }
+      updateSortUI();
+      renderTable(applyFiltersAndSort());
+    });
+  });
+
+  var poModal = document.getElementById('po-edit-modal');
+  function openPoEditModal() {
+    var btn = this;
+    document.getElementById('po-edit-number').value = btn.getAttribute('data-po-number') || '';
+    document.getElementById('po-edit-vendor').value = btn.getAttribute('data-po-vendor') || '';
+    document.getElementById('po-edit-value').value = btn.getAttribute('data-po-value') || '';
+    document.getElementById('po-edit-order-date').value = btn.getAttribute('data-po-order-date') || '';
+    document.getElementById('po-edit-status').value = btn.getAttribute('data-po-status') || 'Open';
+    var deliveryEl = document.getElementById('po-edit-delivery-date');
+    if (deliveryEl) deliveryEl.value = btn.getAttribute('data-po-delivery-date') || '';
+    document.getElementById('po-edit-message').textContent = '';
+    poModal.style.display = 'flex';
+  }
+  function closePoEditModal() { poModal.style.display = 'none'; }
+  document.getElementById('po-edit-cancel').addEventListener('click', closePoEditModal);
+  poModal.addEventListener('click', function(e) { if (e.target === poModal) closePoEditModal(); });
+  document.getElementById('po-edit-save').addEventListener('click', function() {
+    var num = document.getElementById('po-edit-number').value.trim();
+    if (!num) return;
+    var msgEl = document.getElementById('po-edit-message');
+    msgEl.textContent = '';
+    msgEl.classList.remove('error');
+    var payload = {
+      vendor: document.getElementById('po-edit-vendor').value.trim(),
+      value: parseFloat(document.getElementById('po-edit-value').value) || 0,
+      order_date: document.getElementById('po-edit-order-date').value.trim() || null,
+      delivery_date: (document.getElementById('po-edit-delivery-date') && document.getElementById('po-edit-delivery-date').value.trim()) || null,
+      status: document.getElementById('po-edit-status').value
+    };
+    fetch('/api/purchase-orders/' + encodeURIComponent(num), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+      .then(function(r) {
+        if (r.ok) { closePoEditModal(); load(); }
+        else { msgEl.textContent = r.data.error || 'Update failed'; msgEl.classList.add('error'); }
+      })
+      .catch(function() { msgEl.textContent = 'Request failed'; msgEl.classList.add('error'); });
+  });
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous"></script>
+<script>
+(function() {
+  function formatNum(x) { return (x == null || x === '' || isNaN(x)) ? '—' : Number(x).toLocaleString(undefined, { maximumFractionDigits: 0 }); }
+  function formatMoney(x) { return (x == null || x === '' || isNaN(x)) ? '—' : '$' + Number(x).toLocaleString(undefined, { maximumFractionDigits: 0, minimumFractionDigits: 0 }); }
+  function escapeHtml(s) { if (s == null) return ''; var div = document.createElement('div'); div.textContent = s; return div.innerHTML; }
+
+  var scorecardList = [];
+
+  function renderScorecardTable() {
+    var tbody = document.getElementById('scorecard-tbody');
+    var countEl = document.getElementById('scorecard-filter-count');
+    if (!tbody) return;
+    if (!scorecardList.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No supplier scorecard data.</td></tr>';
+      if (countEl) countEl.textContent = '0 suppliers';
+      return;
+    }
+    tbody.innerHTML = scorecardList.map(function(s) {
+      var vid = escapeHtml(s.vendor_id || s.vendor_name || '');
+      var name = escapeHtml(s.vendor_name || s.vendor_id || '—');
+      return '<tr class="scorecard-row" data-vendor-id="' + vid + '" role="button" tabindex="0">' +
+        '<td>' + name + '</td>' +
+        '<td>' + (s.score != null ? s.score : '—') + '</td>' +
+        '<td>' + escapeHtml(s.tier || '—') + '</td>' +
+        '<td>' + (s.on_time_delivery_pct != null ? s.on_time_delivery_pct + '%' : '—') + '</td>' +
+        '<td>' + (s.quality_acceptance_pct != null ? s.quality_acceptance_pct + '%' : '—') + '</td>' +
+        '<td>' + (s.avg_lead_time_days != null ? s.avg_lead_time_days : '—') + '</td>' +
+        '<td class="money">' + formatMoney(s.total_spend) + '</td>' +
+        '<td>' + formatNum(s.po_count) + '</td>' +
+        '</tr>';
+    }).join('');
+    if (countEl) countEl.textContent = scorecardList.length + ' supplier(s)';
+    tbody.querySelectorAll('.scorecard-row').forEach(function(tr) {
+      tr.addEventListener('click', function() { openSupplierDetail(this.getAttribute('data-vendor-id')); });
+      tr.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSupplierDetail(this.getAttribute('data-vendor-id')); } });
+    });
+  }
+
+  function openSupplierDetail(vendorId) {
+    if (!vendorId) return;
+    var modal = document.getElementById('supplier-detail-modal');
+    var content = document.getElementById('supplier-detail-content');
+    if (!content) return;
+    content.innerHTML = '<p class="loading">Loading…</p>';
+    if (modal) modal.style.display = 'flex';
+
+    fetch('/api/supplier-scorecard/' + encodeURIComponent(vendorId))
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.error) {
+          content.innerHTML = '<p class="error">' + escapeHtml(d.error) + '</p>';
+          return;
+        }
+        renderDetailContent(content, d);
+      })
+      .catch(function() {
+        content.innerHTML = '<p class="error">Failed to load supplier details.</p>';
+      });
+  }
+
+  function renderDetailContent(container, d) {
+    var name = escapeHtml(d.vendor_name || d.vendor_id || 'Supplier');
+    var date = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    var html = '<div class="supplier-detail-report">' +
+      '<h4 style="margin:0 0 0.5rem 0;">' + name + '</h4>' +
+      '<p style="margin:0 0 1rem 0; font-size:0.875rem; color:var(--color-text-muted);">Supplier scorecard report — ' + date + '</p>' +
+      '<table class="data-table" style="width:100%;">' +
+      '<tbody>' +
+      '<tr><td><strong>Overall score</strong></td><td>' + (d.score != null ? d.score + ' / 100' : '—') + '</td></tr>' +
+      '<tr><td><strong>Tier</strong></td><td>' + escapeHtml(d.tier || '—') + '</td></tr>' +
+      '<tr><td><strong>On-time delivery %</strong></td><td>' + (d.on_time_delivery_pct != null ? d.on_time_delivery_pct + '%' : '—') + '</td></tr>' +
+      '<tr><td><strong>Quality acceptance %</strong></td><td>' + (d.quality_acceptance_pct != null ? d.quality_acceptance_pct + '%' : '—') + '</td></tr>' +
+      '<tr><td><strong>Invoices paid on time %</strong></td><td>' + (d.invoices_paid_on_time_pct != null ? d.invoices_paid_on_time_pct + '%' : '—') + '</td></tr>' +
+      '<tr><td><strong>Avg lead time (days)</strong></td><td>' + (d.avg_lead_time_days != null ? d.avg_lead_time_days : '—') + '</td></tr>' +
+      '<tr><td><strong>Total spend</strong></td><td>' + formatMoney(d.total_spend) + '</td></tr>' +
+      '<tr><td><strong>PO count</strong></td><td>' + formatNum(d.po_count) + '</td></tr>' +
+      '<tr><td><strong>Disputes (12m)</strong></td><td>' + formatNum(d.dispute_count_12m) + '</td></tr>' +
+      '<tr><td><strong>Last audit date</strong></td><td>' + escapeHtml(d.last_audit_date || '—') + '</td></tr>' +
+      '<tr><td><strong>Contract expiry</strong></td><td>' + escapeHtml(d.contract_expiry || '—') + '</td></tr>' +
+      '</tbody></table>' +
+      '<p style="margin-top:1rem; font-size:0.8rem; color:var(--color-text-muted);">You can email this PDF to stakeholders.</p>' +
+      '</div>';
+    container.innerHTML = html;
+  }
+
+  function closeSupplierDetailModal() {
+    var modal = document.getElementById('supplier-detail-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function downloadSupplierPdf() {
+    var content = document.getElementById('supplier-detail-content');
+    if (!content || !content.innerHTML || content.querySelector('.error') || content.querySelector('.loading')) return;
+    if (typeof html2pdf === 'undefined') {
+      alert('PDF library not loaded. Try again or use Print to save as PDF.');
+      return;
+    }
+    var opt = {
+      margin: 12,
+      filename: 'supplier-scorecard-' + (content.querySelector('h4') ? content.querySelector('h4').textContent.replace(/\s+/g, '-').slice(0, 30) : 'report') + '.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(content).save();
+  }
+
+  function loadScorecard() {
+    var panel = document.getElementById('supplier-scorecard-panel');
+    if (panel) panel.classList.add('is-loading');
+    fetch('/api/supplier-scorecard')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        scorecardList = d.suppliers || [];
+        renderScorecardTable();
+      })
+      .catch(function() {
+        scorecardList = [];
+        renderScorecardTable();
+      })
+      .finally(function() {
+        if (panel) panel.classList.remove('is-loading');
+      });
+  }
+
+  loadScorecard();
+  document.getElementById('scorecard-refresh')?.addEventListener('click', loadScorecard);
+  document.getElementById('supplier-detail-close')?.addEventListener('click', closeSupplierDetailModal);
+  document.getElementById('supplier-detail-download-pdf')?.addEventListener('click', downloadSupplierPdf);
+  var detailModal = document.getElementById('supplier-detail-modal');
+  if (detailModal) detailModal.addEventListener('click', function(e) { if (e.target === detailModal) closeSupplierDetailModal(); });
+})();
+</script>
+{% endblock %}

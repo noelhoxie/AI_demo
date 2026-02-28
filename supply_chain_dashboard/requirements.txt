@@ -1,0 +1,9 @@
+flask>=2.0
+python-dotenv>=1.0
+requests>=2.28
+numpy>=1.20
+statsmodels>=0.14
+databricks-sql-connector>=2.0
+psycopg[binary]>=3.0
+psycopg_pool>=3.0
+gunicorn>=21.0

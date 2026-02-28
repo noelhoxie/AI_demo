@@ -1,0 +1,1001 @@
+order_id,origin_site_id,origin_name,origin_city,origin_state,origin_zip,customer_name,delivery_city,delivery_state,delivery_zip,delivery_address,order_date,delivery_due_date,total_usd,item_count,status
+ORD-10001,MFG-02,South Central DC,Dallas,TX,75213,Atlas Services,Dallas,TX,75241,3658 Oak Ave,2026-02-15,2026-03-03,18555.59,22,delivered
+ORD-10002,MFG-01,Midwest Plant,Chicago,IL,60613,Crown Services,Chicago,IL,60637,3812 Parkway,2026-02-13,2026-03-02,5091.12,18,delivered
+ORD-10003,MFG-04,Southeast Plant,Atlanta,GA,30367,Central Solutions,Nashville,TN,37245,107 Warehouse Rd,2026-02-16,2026-03-03,10651.97,23,shipped
+ORD-10004,MFG-02,South Central DC,Dallas,TX,75221,Apex LLC,Fort Worth,TX,76122,5882 Warehouse Rd,2026-02-19,2026-03-01,18283.83,2,delivered
+ORD-10005,MFG-05,West Coast DC,Los Angeles,CA,90090,Premier Co,Detroit,MI,48256,9460 Oak Ave,2026-02-14,2026-03-03,16582.39,2,delivered
+ORD-10006,MFG-02,South Central DC,Dallas,TX,75258,Premier Goods,Dallas,TX,75268,5978 Oak Ave,2026-02-21,2026-03-01,16803.85,7,delivered
+ORD-10007,MFG-03,Northeast Plant,Philadelphia,PA,19178,Summit Co,San Diego,CA,92130,7574 Commerce Dr,2026-02-18,2026-02-28,8208.43,22,delivered
+ORD-10008,MFG-01,Midwest Plant,Chicago,IL,60650,Pioneer Corp,Fort Worth,TX,76144,1085 Oak Ave,2026-02-20,2026-03-04,16437.65,7,shipped
+ORD-10009,MFG-05,West Coast DC,Los Angeles,CA,90027,Pacific Distribution,San Diego,CA,92181,8831 Industrial Blvd,2026-02-23,2026-03-03,10075.1,19,picked
+ORD-10010,MFG-08,Pacific Northwest DC,Seattle,WA,98121,Pioneer Distribution,Los Angeles,CA,90024,2505 Highway 10,2026-02-23,2026-02-27,1728.66,20,shipped
+ORD-10011,MFG-05,West Coast DC,Los Angeles,CA,90080,Metro Supply,New York,NY,10097,1877 Highway 10,2026-02-19,2026-03-04,8603.36,21,shipped
+ORD-10012,MFG-01,Midwest Plant,Chicago,IL,60643,Elite Corp,Denver,CO,80232,8318 Main St,2026-02-20,2026-03-04,12765.42,21,picked
+ORD-10013,MFG-01,Midwest Plant,Chicago,IL,60686,Atlas LLC,Austin,TX,78772,320 Main St,2026-02-21,2026-03-04,6100.39,10,picked
+ORD-10014,MFG-02,South Central DC,Dallas,TX,75272,Fusion Services,Chicago,IL,60678,2061 Oak Ave,2026-02-24,2026-03-03,4253.4,18,delivered
+ORD-10015,MFG-04,Southeast Plant,Atlanta,GA,30379,United Co,San Antonio,TX,78249,6538 Highway 10,2026-02-22,2026-03-02,22505.41,15,shipped
+ORD-10016,MFG-02,South Central DC,Dallas,TX,75253,United LLC,New York,NY,10085,9076 Oak Ave,2026-02-18,2026-03-02,1914.18,1,delivered
+ORD-10017,MFG-01,Midwest Plant,Chicago,IL,60652,Atlas Supplies,Chicago,IL,60675,3900 Industrial Blvd,2026-02-24,2026-03-03,13549.96,7,delivered
+ORD-10018,MFG-04,Southeast Plant,Atlanta,GA,30370,Summit LLC,Columbus,OH,43234,1546 Main St,2026-02-23,2026-03-02,10675.93,12,shipped
+ORD-10019,MFG-01,Midwest Plant,Chicago,IL,60661,United LLC,Austin,TX,78723,4074 Oak Ave,2026-02-23,2026-02-28,10633.76,5,shipped
+ORD-10020,MFG-08,Pacific Northwest DC,Seattle,WA,98180,Central Services,Houston,TX,77016,8857 Warehouse Rd,2026-02-15,2026-02-27,4282.83,8,shipped
+ORD-10021,MFG-01,Midwest Plant,Chicago,IL,60631,Crown Supply,Fort Worth,TX,76110,6397 Industrial Blvd,2026-02-24,2026-03-04,10661.74,10,delivered
+ORD-10022,MFG-03,Northeast Plant,Philadelphia,PA,19134,Horizon Distribution,San Jose,CA,95137,959 Parkway,2026-02-14,2026-03-03,7943.08,24,open
+ORD-10023,MFG-03,Northeast Plant,Philadelphia,PA,19117,Atlas Co,Denver,CO,80220,3045 Main St,2026-02-14,2026-03-02,21566.21,22,shipped
+ORD-10024,MFG-01,Midwest Plant,Chicago,IL,60689,United Group,Chicago,IL,60663,9563 Parkway,2026-02-20,2026-03-02,5225.84,9,delivered
+ORD-10025,MFG-07,Southwest Plant,Phoenix,AZ,85026,Global LLC,San Jose,CA,95168,5181 Warehouse Rd,2026-02-14,2026-03-04,11538.4,1,delivered
+ORD-10026,MFG-04,Southeast Plant,Atlanta,GA,30374,Crown Group,Dallas,TX,75226,5719 Main St,2026-02-18,2026-03-04,7231.94,12,shipped
+ORD-10027,MFG-01,Midwest Plant,Chicago,IL,60695,First Materials,Boston,MA,02148,1698 Oak Ave,2026-02-15,2026-02-28,18599.05,4,picked
+ORD-10028,MFG-06,Great Lakes Plant,Detroit,MI,48236,Summit Inc,Dallas,TX,75274,8005 Industrial Blvd,2026-02-14,2026-03-04,15911.97,3,delivered
+ORD-10029,MFG-06,Great Lakes Plant,Detroit,MI,48226,Pacific Distribution,Dallas,TX,75230,7240 Parkway,2026-02-23,2026-03-03,390.29,18,open
+ORD-10030,MFG-01,Midwest Plant,Chicago,IL,60657,Summit Solutions,Nashville,TN,37280,2427 Commerce Dr,2026-02-14,2026-02-27,9211.59,10,delivered
+ORD-10031,MFG-04,Southeast Plant,Atlanta,GA,30397,United Corp,San Diego,CA,92195,1685 Industrial Blvd,2026-02-22,2026-03-03,18774.52,20,delivered
+ORD-10032,MFG-03,Northeast Plant,Philadelphia,PA,19162,National Corp,New York,NY,10032,5443 Warehouse Rd,2026-02-22,2026-03-04,21621.99,22,delivered
+ORD-10033,MFG-02,South Central DC,Dallas,TX,75258,United Co,Los Angeles,CA,90070,3645 Oak Ave,2026-02-24,2026-03-03,7733.99,12,delivered
+ORD-10034,MFG-01,Midwest Plant,Chicago,IL,60694,Crown Solutions,San Antonio,TX,78261,5379 Industrial Blvd,2026-02-14,2026-03-04,8875.98,9,delivered
+ORD-10035,MFG-01,Midwest Plant,Chicago,IL,60624,Prime Services,Dallas,TX,75232,9513 Industrial Blvd,2026-02-15,2026-02-27,10948.91,20,delivered
+ORD-10036,MFG-02,South Central DC,Dallas,TX,75259,Central Solutions,Nashville,TN,37234,4174 Main St,2026-02-23,2026-03-03,13070.02,1,delivered
+ORD-10037,MFG-07,Southwest Plant,Phoenix,AZ,85018,Vertex Solutions,Austin,TX,78789,5144 Highway 10,2026-02-16,2026-03-04,22516.16,24,delivered
+ORD-10038,MFG-07,Southwest Plant,Phoenix,AZ,85099,Atlas Group,San Jose,CA,95180,2086 Oak Ave,2026-02-22,2026-03-01,18741.14,22,picked
+ORD-10039,MFG-07,Southwest Plant,Phoenix,AZ,85080,Sterling Supply,New York,NY,10048,4701 Oak Ave,2026-02-20,2026-03-01,11128.38,15,delivered
+ORD-10040,MFG-03,Northeast Plant,Philadelphia,PA,19194,First Co,Chicago,IL,60646,8446 Highway 10,2026-02-21,2026-03-02,20487.82,3,delivered
+ORD-10041,MFG-04,Southeast Plant,Atlanta,GA,30328,Central Services,New York,NY,10015,4012 Commerce Dr,2026-02-14,2026-03-02,10448.86,15,delivered
+ORD-10042,MFG-08,Pacific Northwest DC,Seattle,WA,98161,Sterling Supply,San Diego,CA,92128,91 Warehouse Rd,2026-02-15,2026-03-04,5588.2,14,delivered
+ORD-10043,MFG-01,Midwest Plant,Chicago,IL,60681,Prime Supply,San Diego,CA,92125,7479 Oak Ave,2026-02-24,2026-03-03,13348.63,22,delivered
+ORD-10044,MFG-07,Southwest Plant,Phoenix,AZ,85080,Horizon Co,Charlotte,NC,28230,7778 Commerce Dr,2026-02-19,2026-02-28,7041.19,21,delivered
+ORD-10045,MFG-05,West Coast DC,Los Angeles,CA,90066,Apex Corp,Chicago,IL,60646,3842 Industrial Blvd,2026-02-20,2026-03-01,2152.35,18,picked
+ORD-10046,MFG-04,Southeast Plant,Atlanta,GA,30318,Atlas Inc,Columbus,OH,43262,5422 Parkway,2026-02-23,2026-03-01,5289.83,2,shipped
+ORD-10047,MFG-07,Southwest Plant,Phoenix,AZ,85071,Fusion Co,New York,NY,10055,4893 Warehouse Rd,2026-02-23,2026-03-01,18725.76,18,delivered
+ORD-10048,MFG-08,Pacific Northwest DC,Seattle,WA,98138,Metro Supply,Dallas,TX,75265,7957 Main St,2026-02-21,2026-03-01,17026.68,22,shipped
+ORD-10049,MFG-03,Northeast Plant,Philadelphia,PA,19189,Pioneer Corp,Boston,MA,02113,6456 Parkway,2026-02-13,2026-03-02,16122.33,3,confirmed
+ORD-10050,MFG-01,Midwest Plant,Chicago,IL,60643,Vertex Group,Fort Worth,TX,76151,3468 Commerce Dr,2026-02-21,2026-02-28,7064.68,13,delivered
+ORD-10051,MFG-02,South Central DC,Dallas,TX,75270,United Co,New York,NY,10079,854 Industrial Blvd,2026-02-14,2026-02-28,1150.41,21,open
+ORD-10052,MFG-01,Midwest Plant,Chicago,IL,60689,National Solutions,Phoenix,AZ,85040,2069 Commerce Dr,2026-02-15,2026-03-03,23701.76,19,shipped
+ORD-10053,MFG-03,Northeast Plant,Philadelphia,PA,19187,Apex Services,Detroit,MI,48224,2684 Industrial Blvd,2026-02-13,2026-02-27,14458.55,10,delivered
+ORD-10054,MFG-04,Southeast Plant,Atlanta,GA,30319,Atlas Inc,Nashville,TN,37298,3979 Main St,2026-02-20,2026-03-03,15070.23,22,confirmed
+ORD-10055,MFG-06,Great Lakes Plant,Detroit,MI,48278,Global Services,Columbus,OH,43294,6072 Main St,2026-02-21,2026-03-02,21261.95,1,delivered
+ORD-10056,MFG-06,Great Lakes Plant,Detroit,MI,48291,Crown Supply,Charlotte,NC,28229,7136 Oak Ave,2026-02-25,2026-03-03,6861.55,21,delivered
+ORD-10057,MFG-08,Pacific Northwest DC,Seattle,WA,98165,Pioneer Components,Nashville,TN,37244,5281 Warehouse Rd,2026-02-15,2026-02-28,22058.53,9,picked
+ORD-10058,MFG-07,Southwest Plant,Phoenix,AZ,85053,Fusion Group,New York,NY,10073,5326 Oak Ave,2026-02-18,2026-03-01,19976.13,12,shipped
+ORD-10059,MFG-01,Midwest Plant,Chicago,IL,60676,Horizon Supply,San Antonio,TX,78220,3955 Highway 10,2026-02-24,2026-03-01,18990.39,18,delivered
+ORD-10060,MFG-01,Midwest Plant,Chicago,IL,60621,Sterling Solutions,San Jose,CA,95138,6626 Highway 10,2026-02-20,2026-02-28,14601.66,22,shipped
+ORD-10061,MFG-07,Southwest Plant,Phoenix,AZ,85080,Global Distribution,Austin,TX,78755,7435 Industrial Blvd,2026-02-19,2026-02-28,3148.3,8,picked
+ORD-10062,MFG-03,Northeast Plant,Philadelphia,PA,19134,Central Group,San Antonio,TX,78271,4531 Highway 10,2026-02-25,2026-03-02,7182.52,20,confirmed
+ORD-10063,MFG-04,Southeast Plant,Atlanta,GA,30356,First Corp,Philadelphia,PA,19148,232 Highway 10,2026-02-16,2026-03-02,1281.07,9,open
+ORD-10064,MFG-08,Pacific Northwest DC,Seattle,WA,98123,Horizon LLC,New York,NY,10083,4659 Commerce Dr,2026-02-23,2026-03-01,4731.44,11,open
+ORD-10065,MFG-02,South Central DC,Dallas,TX,75261,First LLC,Seattle,WA,98119,9454 Highway 10,2026-02-14,2026-03-03,3857.56,5,delivered
+ORD-10066,MFG-04,Southeast Plant,Atlanta,GA,30325,First Supplies,Boston,MA,02163,9934 Parkway,2026-02-18,2026-03-03,9602.39,17,delivered
+ORD-10067,MFG-05,West Coast DC,Los Angeles,CA,90082,Metro Co,Detroit,MI,48217,9989 Highway 10,2026-02-18,2026-02-27,5393.98,21,delivered
+ORD-10068,MFG-03,Northeast Plant,Philadelphia,PA,19180,First Supply,Chicago,IL,60630,44 Commerce Dr,2026-02-24,2026-03-01,961.1,10,shipped
+ORD-10069,MFG-02,South Central DC,Dallas,TX,75297,Pacific Group,San Diego,CA,92143,9664 Highway 10,2026-02-17,2026-03-03,3002.19,14,picked
+ORD-10070,MFG-03,Northeast Plant,Philadelphia,PA,19119,Apex Group,Los Angeles,CA,90031,5040 Parkway,2026-02-20,2026-03-03,3240.19,15,delivered
+ORD-10071,MFG-08,Pacific Northwest DC,Seattle,WA,98166,Atlas Parts,Chicago,IL,60686,654 Commerce Dr,2026-02-20,2026-03-03,6371.64,20,confirmed
+ORD-10072,MFG-05,West Coast DC,Los Angeles,CA,90083,Horizon LLC,Los Angeles,CA,90032,7709 Parkway,2026-02-23,2026-03-02,4660.01,9,delivered
+ORD-10073,MFG-08,Pacific Northwest DC,Seattle,WA,98154,Apex Distribution,Columbus,OH,43252,5261 Highway 10,2026-02-16,2026-02-27,10379.38,11,shipped
+ORD-10074,MFG-01,Midwest Plant,Chicago,IL,60668,Crown Supply,Chicago,IL,60650,4136 Industrial Blvd,2026-02-22,2026-02-27,20649.44,17,open
+ORD-10075,MFG-07,Southwest Plant,Phoenix,AZ,85016,National Distribution,San Antonio,TX,78276,5928 Parkway,2026-02-25,2026-03-03,11134.72,21,open
+ORD-10076,MFG-03,Northeast Plant,Philadelphia,PA,19146,Crown Services,Charlotte,NC,28299,7942 Main St,2026-02-18,2026-02-27,4085.7,23,delivered
+ORD-10077,MFG-02,South Central DC,Dallas,TX,75238,National Services,Houston,TX,77069,1925 Highway 10,2026-02-16,2026-03-04,23326.43,16,shipped
+ORD-10078,MFG-08,Pacific Northwest DC,Seattle,WA,98170,Premier Group,San Diego,CA,92168,9032 Oak Ave,2026-02-17,2026-03-01,12779.79,20,delivered
+ORD-10079,MFG-07,Southwest Plant,Phoenix,AZ,85053,Pacific Supply,Denver,CO,80244,43 Industrial Blvd,2026-02-20,2026-03-03,14561.1,19,delivered
+ORD-10080,MFG-08,Pacific Northwest DC,Seattle,WA,98154,Apex Co,Austin,TX,78780,8904 Commerce Dr,2026-02-20,2026-03-01,24522.25,7,picked
+ORD-10081,MFG-07,Southwest Plant,Phoenix,AZ,85015,Atlas Solutions,Austin,TX,78770,6247 Commerce Dr,2026-02-16,2026-03-04,24125.89,16,confirmed
+ORD-10082,MFG-02,South Central DC,Dallas,TX,75266,Premier Supply,Houston,TX,77077,7487 Main St,2026-02-16,2026-03-03,21792.68,14,delivered
+ORD-10083,MFG-05,West Coast DC,Los Angeles,CA,90053,Prime Supply,Detroit,MI,48298,6513 Highway 10,2026-02-20,2026-02-27,21504.65,22,shipped
+ORD-10084,MFG-01,Midwest Plant,Chicago,IL,60689,Global Supply,Chicago,IL,60640,4709 Oak Ave,2026-02-15,2026-03-03,24461.69,14,delivered
+ORD-10085,MFG-03,Northeast Plant,Philadelphia,PA,19198,United Distribution,San Jose,CA,95113,754 Industrial Blvd,2026-02-14,2026-03-03,9057.81,10,shipped
+ORD-10086,MFG-07,Southwest Plant,Phoenix,AZ,85082,Atlas Corp,Philadelphia,PA,19131,2869 Main St,2026-02-22,2026-03-02,17125.89,20,shipped
+ORD-10087,MFG-04,Southeast Plant,Atlanta,GA,30369,Pioneer Solutions,Dallas,TX,75268,4184 Highway 10,2026-02-24,2026-02-27,16988.63,10,picked
+ORD-10088,MFG-05,West Coast DC,Los Angeles,CA,90091,Global Co,Columbus,OH,43298,4098 Commerce Dr,2026-02-20,2026-03-04,24984.43,7,delivered
+ORD-10089,MFG-07,Southwest Plant,Phoenix,AZ,85083,Summit Goods,Jacksonville,FL,32283,4848 Highway 10,2026-02-13,2026-02-28,9985.77,22,open
+ORD-10090,MFG-08,Pacific Northwest DC,Seattle,WA,98146,Pacific LLC,San Diego,CA,92187,5773 Oak Ave,2026-02-17,2026-03-02,6378.08,20,delivered
+ORD-10091,MFG-01,Midwest Plant,Chicago,IL,60649,Vertex Corp,Charlotte,NC,28214,9496 Industrial Blvd,2026-02-16,2026-03-03,22754.25,3,shipped
+ORD-10092,MFG-04,Southeast Plant,Atlanta,GA,30326,Horizon Group,Boston,MA,02156,8698 Parkway,2026-02-19,2026-03-04,6535.71,6,delivered
+ORD-10093,MFG-06,Great Lakes Plant,Detroit,MI,48224,Crown Solutions,Charlotte,NC,28219,2307 Warehouse Rd,2026-02-18,2026-03-04,18146.79,22,delivered
+ORD-10094,MFG-02,South Central DC,Dallas,TX,75260,Apex Solutions,New York,NY,10043,8792 Main St,2026-02-21,2026-03-01,18762.94,22,shipped
+ORD-10095,MFG-02,South Central DC,Dallas,TX,75296,Pioneer Group,San Diego,CA,92170,411 Parkway,2026-02-20,2026-03-04,5650.97,20,open
+ORD-10096,MFG-07,Southwest Plant,Phoenix,AZ,85024,Apex Supply,Phoenix,AZ,85015,610 Industrial Blvd,2026-02-15,2026-03-01,5984.78,4,delivered
+ORD-10097,MFG-06,Great Lakes Plant,Detroit,MI,48295,Fusion Services,Boston,MA,02163,9623 Highway 10,2026-02-16,2026-03-03,16424.81,14,delivered
+ORD-10098,MFG-05,West Coast DC,Los Angeles,CA,90014,Crown Solutions,Jacksonville,FL,32237,7265 Commerce Dr,2026-02-18,2026-03-04,2618.96,12,delivered
+ORD-10099,MFG-01,Midwest Plant,Chicago,IL,60660,Fusion Inc,Dallas,TX,75234,2002 Warehouse Rd,2026-02-24,2026-03-04,16619.8,3,delivered
+ORD-10100,MFG-01,Midwest Plant,Chicago,IL,60652,Prime Corp,San Diego,CA,92126,9251 Oak Ave,2026-02-18,2026-02-27,5516.39,19,delivered
+ORD-10101,MFG-01,Midwest Plant,Chicago,IL,60645,Acme Solutions,Phoenix,AZ,85026,8851 Industrial Blvd,2026-02-17,2026-03-03,16577.28,4,open
+ORD-10102,MFG-04,Southeast Plant,Atlanta,GA,30385,Premier Supply,Austin,TX,78712,2855 Industrial Blvd,2026-02-16,2026-02-27,10610.87,24,confirmed
+ORD-10103,MFG-08,Pacific Northwest DC,Seattle,WA,98156,Sterling Group,Denver,CO,80285,1787 Commerce Dr,2026-02-18,2026-03-02,1227.62,20,delivered
+ORD-10104,MFG-08,Pacific Northwest DC,Seattle,WA,98192,Pioneer LLC,New York,NY,10017,7848 Warehouse Rd,2026-02-23,2026-03-01,2832.85,22,delivered
+ORD-10105,MFG-02,South Central DC,Dallas,TX,75251,Pioneer Distribution,Detroit,MI,48228,1077 Oak Ave,2026-02-20,2026-02-28,24866.5,13,delivered
+ORD-10106,MFG-07,Southwest Plant,Phoenix,AZ,85022,Prime Supply,Houston,TX,77093,9034 Highway 10,2026-02-18,2026-03-04,11371.14,14,picked
+ORD-10107,MFG-07,Southwest Plant,Phoenix,AZ,85063,Horizon LLC,Houston,TX,77050,6993 Industrial Blvd,2026-02-19,2026-03-03,23846.77,12,delivered
+ORD-10108,MFG-02,South Central DC,Dallas,TX,75220,Crown Distribution,Chicago,IL,60665,1583 Highway 10,2026-02-22,2026-03-03,13975.81,5,delivered
+ORD-10109,MFG-06,Great Lakes Plant,Detroit,MI,48295,First Solutions,Houston,TX,77062,5794 Warehouse Rd,2026-02-23,2026-03-03,1428.44,24,shipped
+ORD-10110,MFG-02,South Central DC,Dallas,TX,75283,Global Group,Denver,CO,80237,2536 Highway 10,2026-02-18,2026-03-01,8850.33,4,delivered
+ORD-10111,MFG-04,Southeast Plant,Atlanta,GA,30364,First Solutions,Boston,MA,02189,9122 Main St,2026-02-19,2026-03-02,4633.34,1,delivered
+ORD-10112,MFG-06,Great Lakes Plant,Detroit,MI,48210,Premier Distribution,Philadelphia,PA,19128,9279 Highway 10,2026-02-14,2026-03-01,18563.08,5,delivered
+ORD-10113,MFG-04,Southeast Plant,Atlanta,GA,30358,Fusion LLC,Columbus,OH,43268,5586 Oak Ave,2026-02-20,2026-03-01,8210.91,24,delivered
+ORD-10114,MFG-01,Midwest Plant,Chicago,IL,60629,Pioneer Services,Philadelphia,PA,19189,816 Highway 10,2026-02-19,2026-02-27,16599.18,15,shipped
+ORD-10115,MFG-05,West Coast DC,Los Angeles,CA,90037,First Inc,Denver,CO,80224,5656 Commerce Dr,2026-02-19,2026-02-27,17010.38,22,shipped
+ORD-10116,MFG-04,Southeast Plant,Atlanta,GA,30360,Global Inc,Detroit,MI,48217,126 Oak Ave,2026-02-18,2026-02-28,19139.4,5,shipped
+ORD-10117,MFG-08,Pacific Northwest DC,Seattle,WA,98165,Elite LLC,Philadelphia,PA,19126,6230 Parkway,2026-02-18,2026-03-03,14034.28,17,delivered
+ORD-10118,MFG-07,Southwest Plant,Phoenix,AZ,85015,Vertex Group,Columbus,OH,43212,7533 Main St,2026-02-20,2026-03-04,10817.71,19,shipped
+ORD-10119,MFG-02,South Central DC,Dallas,TX,75261,Global Co,New York,NY,10051,2816 Warehouse Rd,2026-02-24,2026-03-04,23006.28,23,confirmed
+ORD-10120,MFG-07,Southwest Plant,Phoenix,AZ,85085,Metro LLC,Fort Worth,TX,76177,1289 Commerce Dr,2026-02-20,2026-03-04,8586.91,24,shipped
+ORD-10121,MFG-02,South Central DC,Dallas,TX,75277,Metro Materials,Denver,CO,80234,5725 Industrial Blvd,2026-02-16,2026-03-03,2704.69,8,shipped
+ORD-10122,MFG-02,South Central DC,Dallas,TX,75232,Fusion Solutions,Seattle,WA,98169,9237 Warehouse Rd,2026-02-23,2026-03-02,23115.23,22,delivered
+ORD-10123,MFG-06,Great Lakes Plant,Detroit,MI,48229,Premier Group,Charlotte,NC,28218,7683 Commerce Dr,2026-02-20,2026-03-02,14846.78,9,shipped
+ORD-10124,MFG-08,Pacific Northwest DC,Seattle,WA,98167,Fusion Components,Los Angeles,CA,90017,6042 Warehouse Rd,2026-02-14,2026-02-28,21626.61,21,delivered
+ORD-10125,MFG-07,Southwest Plant,Phoenix,AZ,85069,Summit Supply,Nashville,TN,37280,673 Commerce Dr,2026-02-17,2026-03-04,15184.39,11,delivered
+ORD-10126,MFG-02,South Central DC,Dallas,TX,75253,Elite Solutions,Chicago,IL,60674,2828 Main St,2026-02-23,2026-02-28,13173.1,15,delivered
+ORD-10127,MFG-05,West Coast DC,Los Angeles,CA,90059,Apex Group,Columbus,OH,43253,9796 Main St,2026-02-21,2026-03-03,8342.82,3,delivered
+ORD-10128,MFG-05,West Coast DC,Los Angeles,CA,90094,Apex Corp,Detroit,MI,48229,5462 Main St,2026-02-16,2026-03-02,7859.26,12,delivered
+ORD-10129,MFG-02,South Central DC,Dallas,TX,75249,Elite Inc,Boston,MA,02158,5382 Warehouse Rd,2026-02-25,2026-02-27,16203.72,3,shipped
+ORD-10130,MFG-06,Great Lakes Plant,Detroit,MI,48249,First LLC,Philadelphia,PA,19137,5599 Warehouse Rd,2026-02-17,2026-03-01,24999.42,8,picked
+ORD-10131,MFG-01,Midwest Plant,Chicago,IL,60694,Fusion Corp,Austin,TX,78789,2148 Parkway,2026-02-16,2026-03-01,4644.02,6,delivered
+ORD-10132,MFG-08,Pacific Northwest DC,Seattle,WA,98115,United Group,Columbus,OH,43256,3892 Commerce Dr,2026-02-19,2026-03-02,19627.44,24,picked
+ORD-10133,MFG-08,Pacific Northwest DC,Seattle,WA,98134,Metro Co,Jacksonville,FL,32296,9346 Commerce Dr,2026-02-19,2026-03-01,12647.23,13,shipped
+ORD-10134,MFG-03,Northeast Plant,Philadelphia,PA,19142,First LLC,Los Angeles,CA,90092,7874 Warehouse Rd,2026-02-15,2026-03-01,21170.42,23,delivered
+ORD-10135,MFG-03,Northeast Plant,Philadelphia,PA,19144,Acme Services,Charlotte,NC,28275,2415 Warehouse Rd,2026-02-15,2026-03-01,20445.08,8,delivered
+ORD-10136,MFG-01,Midwest Plant,Chicago,IL,60660,Prime Corp,Denver,CO,80257,3863 Commerce Dr,2026-02-22,2026-02-27,850.46,8,delivered
+ORD-10137,MFG-03,Northeast Plant,Philadelphia,PA,19114,Acme Group,San Jose,CA,95170,2274 Warehouse Rd,2026-02-24,2026-03-03,15441.4,15,delivered
+ORD-10138,MFG-04,Southeast Plant,Atlanta,GA,30329,Vertex Supplies,Boston,MA,02187,8648 Commerce Dr,2026-02-19,2026-02-27,7633.61,8,open
+ORD-10139,MFG-02,South Central DC,Dallas,TX,75224,Vertex Inc,Seattle,WA,98186,8783 Main St,2026-02-25,2026-03-02,6162.16,19,confirmed
+ORD-10140,MFG-06,Great Lakes Plant,Detroit,MI,48240,Sterling Distribution,Nashville,TN,37263,3069 Highway 10,2026-02-15,2026-03-03,24370.16,17,open
+ORD-10141,MFG-01,Midwest Plant,Chicago,IL,60659,Global Goods,Seattle,WA,98115,6339 Industrial Blvd,2026-02-13,2026-02-28,19744.72,12,shipped
+ORD-10142,MFG-06,Great Lakes Plant,Detroit,MI,48227,Metro Corp,Los Angeles,CA,90055,8946 Industrial Blvd,2026-02-17,2026-03-03,11695.88,22,delivered
+ORD-10143,MFG-02,South Central DC,Dallas,TX,75268,Apex Distribution,Los Angeles,CA,90047,3303 Main St,2026-02-17,2026-03-03,7992.56,2,shipped
+ORD-10144,MFG-08,Pacific Northwest DC,Seattle,WA,98142,Elite Services,Los Angeles,CA,90092,3132 Industrial Blvd,2026-02-14,2026-03-01,8398.33,21,confirmed
+ORD-10145,MFG-07,Southwest Plant,Phoenix,AZ,85066,Premier Services,Fort Worth,TX,76153,3061 Commerce Dr,2026-02-25,2026-03-03,23119.12,12,delivered
+ORD-10146,MFG-02,South Central DC,Dallas,TX,75265,Pioneer Goods,Detroit,MI,48233,8938 Industrial Blvd,2026-02-15,2026-02-28,8298.81,3,shipped
+ORD-10147,MFG-07,Southwest Plant,Phoenix,AZ,85031,Summit LLC,Charlotte,NC,28254,7326 Main St,2026-02-21,2026-03-03,24954.04,20,shipped
+ORD-10148,MFG-07,Southwest Plant,Phoenix,AZ,85056,Elite Solutions,Denver,CO,80296,2622 Main St,2026-02-23,2026-02-27,3286.82,2,picked
+ORD-10149,MFG-07,Southwest Plant,Phoenix,AZ,85082,Pacific Distribution,Los Angeles,CA,90087,2514 Highway 10,2026-02-22,2026-03-01,11181.89,12,open
+ORD-10150,MFG-06,Great Lakes Plant,Detroit,MI,48260,Apex Distribution,Austin,TX,78793,4567 Oak Ave,2026-02-15,2026-03-04,18431.52,1,shipped
+ORD-10151,MFG-02,South Central DC,Dallas,TX,75243,Pioneer Corp,Dallas,TX,75267,3516 Parkway,2026-02-24,2026-02-28,3197.54,7,delivered
+ORD-10152,MFG-08,Pacific Northwest DC,Seattle,WA,98121,Metro Solutions,Austin,TX,78795,5693 Highway 10,2026-02-20,2026-02-27,21306.35,10,delivered
+ORD-10153,MFG-04,Southeast Plant,Atlanta,GA,30325,Crown Corp,San Antonio,TX,78227,3879 Warehouse Rd,2026-02-13,2026-03-01,13917.43,12,shipped
+ORD-10154,MFG-02,South Central DC,Dallas,TX,75218,Premier Supply,San Jose,CA,95160,7843 Parkway,2026-02-22,2026-03-01,1982.71,19,delivered
+ORD-10155,MFG-08,Pacific Northwest DC,Seattle,WA,98197,Summit LLC,Denver,CO,80254,2103 Warehouse Rd,2026-02-17,2026-03-03,10900.56,5,delivered
+ORD-10156,MFG-03,Northeast Plant,Philadelphia,PA,19148,National Co,Philadelphia,PA,19130,5287 Highway 10,2026-02-21,2026-02-28,22388.91,17,delivered
+ORD-10157,MFG-05,West Coast DC,Los Angeles,CA,90026,Fusion Equipment,San Jose,CA,95188,8741 Main St,2026-02-17,2026-03-02,23548.93,19,picked
+ORD-10158,MFG-01,Midwest Plant,Chicago,IL,60613,Horizon Distribution,Chicago,IL,60615,9450 Industrial Blvd,2026-02-18,2026-03-02,10502.18,19,delivered
+ORD-10159,MFG-05,West Coast DC,Los Angeles,CA,90092,Metro Supply,San Jose,CA,95171,4013 Warehouse Rd,2026-02-22,2026-03-03,11420.57,10,delivered
+ORD-10160,MFG-07,Southwest Plant,Phoenix,AZ,85071,Elite Services,Charlotte,NC,28236,5574 Parkway,2026-02-20,2026-02-27,8085.01,23,delivered
+ORD-10161,MFG-03,Northeast Plant,Philadelphia,PA,19157,Global Inc,Denver,CO,80281,1740 Industrial Blvd,2026-02-24,2026-02-28,6796.67,4,picked
+ORD-10162,MFG-05,West Coast DC,Los Angeles,CA,90059,Central Corp,Detroit,MI,48263,4068 Warehouse Rd,2026-02-16,2026-03-04,23353.73,11,delivered
+ORD-10163,MFG-08,Pacific Northwest DC,Seattle,WA,98175,Central Equipment,Charlotte,NC,28273,5056 Commerce Dr,2026-02-15,2026-02-27,12710.29,13,delivered
+ORD-10164,MFG-01,Midwest Plant,Chicago,IL,60616,Vertex Corp,San Jose,CA,95173,9790 Warehouse Rd,2026-02-24,2026-03-02,13486.77,10,delivered
+ORD-10165,MFG-05,West Coast DC,Los Angeles,CA,90056,Sterling Supply,Fort Worth,TX,76156,742 Commerce Dr,2026-02-17,2026-02-27,13897.59,12,open
+ORD-10166,MFG-05,West Coast DC,Los Angeles,CA,90089,Pacific Co,Detroit,MI,48225,2109 Main St,2026-02-22,2026-03-01,14012.12,11,shipped
+ORD-10167,MFG-07,Southwest Plant,Phoenix,AZ,85074,Sterling Corp,Los Angeles,CA,90015,638 Oak Ave,2026-02-21,2026-03-03,13055.42,16,confirmed
+ORD-10168,MFG-06,Great Lakes Plant,Detroit,MI,48288,Crown Supply,Austin,TX,78730,6439 Parkway,2026-02-20,2026-03-03,8508.88,19,delivered
+ORD-10169,MFG-05,West Coast DC,Los Angeles,CA,90070,Acme Supplies,New York,NY,10057,5428 Highway 10,2026-02-23,2026-02-27,7795.79,19,delivered
+ORD-10170,MFG-05,West Coast DC,Los Angeles,CA,90093,Apex Corp,Nashville,TN,37283,3729 Highway 10,2026-02-24,2026-02-27,13177.17,6,delivered
+ORD-10171,MFG-04,Southeast Plant,Atlanta,GA,30314,Central Services,Nashville,TN,37299,1801 Oak Ave,2026-02-23,2026-02-27,10556.69,11,shipped
+ORD-10172,MFG-08,Pacific Northwest DC,Seattle,WA,98117,Pioneer Distribution,Phoenix,AZ,85076,3398 Parkway,2026-02-24,2026-02-28,9514.1,17,delivered
+ORD-10173,MFG-06,Great Lakes Plant,Detroit,MI,48279,First Group,Jacksonville,FL,32296,4332 Parkway,2026-02-17,2026-03-01,7083.31,8,shipped
+ORD-10174,MFG-04,Southeast Plant,Atlanta,GA,30398,Apex Services,Seattle,WA,98150,7862 Industrial Blvd,2026-02-19,2026-03-02,3178.57,10,delivered
+ORD-10175,MFG-06,Great Lakes Plant,Detroit,MI,48228,Central Co,San Jose,CA,95115,4713 Highway 10,2026-02-21,2026-02-27,16450.91,15,delivered
+ORD-10176,MFG-05,West Coast DC,Los Angeles,CA,90081,United Co,Dallas,TX,75227,1790 Parkway,2026-02-18,2026-03-03,1411.52,8,delivered
+ORD-10177,MFG-01,Midwest Plant,Chicago,IL,60622,Metro Services,Columbus,OH,43252,7740 Main St,2026-02-16,2026-03-03,24118.29,1,delivered
+ORD-10178,MFG-08,Pacific Northwest DC,Seattle,WA,98171,Summit Corp,San Antonio,TX,78246,5263 Industrial Blvd,2026-02-14,2026-03-02,16359.62,3,picked
+ORD-10179,MFG-07,Southwest Plant,Phoenix,AZ,85032,Global Solutions,Los Angeles,CA,90060,8117 Oak Ave,2026-02-20,2026-03-04,380.29,2,delivered
+ORD-10180,MFG-05,West Coast DC,Los Angeles,CA,90068,Prime Corp,Boston,MA,02177,8093 Oak Ave,2026-02-25,2026-03-04,6930.0,15,delivered
+ORD-10181,MFG-08,Pacific Northwest DC,Seattle,WA,98192,Fusion Services,Dallas,TX,75233,231 Highway 10,2026-02-20,2026-03-01,16908.87,19,picked
+ORD-10182,MFG-07,Southwest Plant,Phoenix,AZ,85075,Acme Group,Austin,TX,78721,6568 Highway 10,2026-02-17,2026-02-27,12014.73,5,delivered
+ORD-10183,MFG-07,Southwest Plant,Phoenix,AZ,85040,Summit LLC,Charlotte,NC,28244,5401 Industrial Blvd,2026-02-13,2026-03-02,16394.03,9,delivered
+ORD-10184,MFG-08,Pacific Northwest DC,Seattle,WA,98149,First Solutions,Philadelphia,PA,19161,8234 Highway 10,2026-02-20,2026-03-03,3067.78,23,delivered
+ORD-10185,MFG-04,Southeast Plant,Atlanta,GA,30338,Crown Co,Phoenix,AZ,85071,2510 Commerce Dr,2026-02-22,2026-03-03,17593.23,14,delivered
+ORD-10186,MFG-04,Southeast Plant,Atlanta,GA,30397,Crown Distribution,Detroit,MI,48220,8610 Commerce Dr,2026-02-21,2026-03-02,22943.53,3,confirmed
+ORD-10187,MFG-04,Southeast Plant,Atlanta,GA,30383,Atlas Supply,Boston,MA,02129,2696 Industrial Blvd,2026-02-25,2026-03-04,3038.56,15,picked
+ORD-10188,MFG-02,South Central DC,Dallas,TX,75275,First Inc,Charlotte,NC,28217,7430 Oak Ave,2026-02-23,2026-03-02,14163.19,15,delivered
+ORD-10189,MFG-07,Southwest Plant,Phoenix,AZ,85042,Summit LLC,New York,NY,10037,9476 Main St,2026-02-23,2026-02-27,17554.56,12,delivered
+ORD-10190,MFG-08,Pacific Northwest DC,Seattle,WA,98114,Apex Services,San Jose,CA,95162,2949 Warehouse Rd,2026-02-23,2026-02-27,24822.49,12,shipped
+ORD-10191,MFG-02,South Central DC,Dallas,TX,75297,Acme Inc,Boston,MA,02127,5698 Main St,2026-02-22,2026-02-28,3314.58,17,delivered
+ORD-10192,MFG-05,West Coast DC,Los Angeles,CA,90069,Central LLC,Boston,MA,02164,8716 Commerce Dr,2026-02-18,2026-03-03,11596.54,8,picked
+ORD-10193,MFG-01,Midwest Plant,Chicago,IL,60694,Summit Co,Columbus,OH,43288,257 Oak Ave,2026-02-14,2026-02-28,14909.51,4,shipped
+ORD-10194,MFG-01,Midwest Plant,Chicago,IL,60661,Atlas Solutions,Charlotte,NC,28239,8844 Oak Ave,2026-02-14,2026-03-03,12671.81,5,shipped
+ORD-10195,MFG-06,Great Lakes Plant,Detroit,MI,48240,Metro Services,San Jose,CA,95128,8541 Oak Ave,2026-02-20,2026-03-01,1664.8,9,delivered
+ORD-10196,MFG-08,Pacific Northwest DC,Seattle,WA,98116,Apex Corp,Jacksonville,FL,32292,6245 Warehouse Rd,2026-02-20,2026-03-02,10495.67,23,confirmed
+ORD-10197,MFG-08,Pacific Northwest DC,Seattle,WA,98140,Sterling Corp,San Diego,CA,92148,2366 Warehouse Rd,2026-02-14,2026-03-01,10405.04,18,shipped
+ORD-10198,MFG-07,Southwest Plant,Phoenix,AZ,85041,Central Inc,Dallas,TX,75236,5412 Highway 10,2026-02-23,2026-02-27,2447.73,12,delivered
+ORD-10199,MFG-05,West Coast DC,Los Angeles,CA,90058,Horizon Co,Detroit,MI,48287,648 Warehouse Rd,2026-02-17,2026-02-27,18148.99,19,delivered
+ORD-10200,MFG-06,Great Lakes Plant,Detroit,MI,48248,Apex Co,New York,NY,10037,3114 Highway 10,2026-02-24,2026-02-27,17436.31,8,delivered
+ORD-10201,MFG-06,Great Lakes Plant,Detroit,MI,48246,Pioneer LLC,Fort Worth,TX,76169,8744 Highway 10,2026-02-20,2026-03-01,9087.17,9,delivered
+ORD-10202,MFG-08,Pacific Northwest DC,Seattle,WA,98150,Atlas Goods,San Antonio,TX,78257,5127 Commerce Dr,2026-02-18,2026-02-27,3776.18,24,shipped
+ORD-10203,MFG-07,Southwest Plant,Phoenix,AZ,85047,Prime Group,Phoenix,AZ,85035,5405 Oak Ave,2026-02-18,2026-03-01,13833.47,16,delivered
+ORD-10204,MFG-08,Pacific Northwest DC,Seattle,WA,98192,Metro Distribution,Seattle,WA,98168,2757 Highway 10,2026-02-21,2026-03-03,3627.97,6,delivered
+ORD-10205,MFG-01,Midwest Plant,Chicago,IL,60677,Pacific Inc,Los Angeles,CA,90019,795 Warehouse Rd,2026-02-23,2026-02-27,21087.24,5,picked
+ORD-10206,MFG-04,Southeast Plant,Atlanta,GA,30374,Crown Services,Charlotte,NC,28257,991 Parkway,2026-02-24,2026-03-02,12273.18,22,open
+ORD-10207,MFG-01,Midwest Plant,Chicago,IL,60612,Metro LLC,Denver,CO,80245,8778 Industrial Blvd,2026-02-25,2026-02-27,16899.72,23,delivered
+ORD-10208,MFG-02,South Central DC,Dallas,TX,75277,Elite Services,Phoenix,AZ,85040,3145 Parkway,2026-02-19,2026-03-02,6793.02,12,shipped
+ORD-10209,MFG-08,Pacific Northwest DC,Seattle,WA,98182,Summit LLC,San Diego,CA,92199,3701 Industrial Blvd,2026-02-14,2026-03-03,24793.12,21,delivered
+ORD-10210,MFG-07,Southwest Plant,Phoenix,AZ,85058,Vertex Solutions,Fort Worth,TX,76180,7799 Main St,2026-02-13,2026-03-02,4408.88,23,shipped
+ORD-10211,MFG-02,South Central DC,Dallas,TX,75277,National Distribution,Los Angeles,CA,90039,3464 Warehouse Rd,2026-02-24,2026-03-03,1307.06,9,open
+ORD-10212,MFG-01,Midwest Plant,Chicago,IL,60632,Atlas Services,Austin,TX,78712,3395 Parkway,2026-02-22,2026-02-27,7587.03,3,delivered
+ORD-10213,MFG-06,Great Lakes Plant,Detroit,MI,48259,Premier Solutions,Phoenix,AZ,85098,1285 Parkway,2026-02-21,2026-03-03,2577.49,2,picked
+ORD-10214,MFG-07,Southwest Plant,Phoenix,AZ,85051,Vertex Corp,New York,NY,10091,4479 Warehouse Rd,2026-02-24,2026-03-01,8991.91,8,delivered
+ORD-10215,MFG-07,Southwest Plant,Phoenix,AZ,85020,Pacific Services,Detroit,MI,48247,4038 Highway 10,2026-02-14,2026-02-27,3982.39,9,delivered
+ORD-10216,MFG-06,Great Lakes Plant,Detroit,MI,48256,Vertex Supply,Houston,TX,77021,86 Industrial Blvd,2026-02-21,2026-03-01,2690.45,9,confirmed
+ORD-10217,MFG-07,Southwest Plant,Phoenix,AZ,85023,Premier Distribution,New York,NY,10021,5799 Parkway,2026-02-20,2026-02-27,456.66,13,shipped
+ORD-10218,MFG-04,Southeast Plant,Atlanta,GA,30383,Metro Services,Denver,CO,80231,6238 Oak Ave,2026-02-19,2026-02-27,6819.91,10,confirmed
+ORD-10219,MFG-05,West Coast DC,Los Angeles,CA,90063,Central Supply,San Jose,CA,95171,1261 Industrial Blvd,2026-02-18,2026-02-28,15682.09,24,delivered
+ORD-10220,MFG-02,South Central DC,Dallas,TX,75227,Fusion Corp,San Jose,CA,95110,6484 Industrial Blvd,2026-02-22,2026-03-04,11089.54,11,shipped
+ORD-10221,MFG-05,West Coast DC,Los Angeles,CA,90051,Horizon Materials,Detroit,MI,48298,3291 Commerce Dr,2026-02-17,2026-02-28,24222.82,13,shipped
+ORD-10222,MFG-06,Great Lakes Plant,Detroit,MI,48258,Crown Inc,Dallas,TX,75260,5981 Main St,2026-02-17,2026-03-04,24932.03,19,picked
+ORD-10223,MFG-08,Pacific Northwest DC,Seattle,WA,98136,United Group,Charlotte,NC,28247,1134 Warehouse Rd,2026-02-22,2026-03-04,12557.68,22,delivered
+ORD-10224,MFG-03,Northeast Plant,Philadelphia,PA,19164,Vertex Distribution,Fort Worth,TX,76119,7358 Parkway,2026-02-22,2026-03-01,12739.32,18,delivered
+ORD-10225,MFG-01,Midwest Plant,Chicago,IL,60656,Fusion Inc,Boston,MA,02186,1393 Main St,2026-02-19,2026-03-03,16667.64,22,picked
+ORD-10226,MFG-07,Southwest Plant,Phoenix,AZ,85052,Atlas Co,Columbus,OH,43223,173 Main St,2026-02-18,2026-02-28,18709.3,17,delivered
+ORD-10227,MFG-08,Pacific Northwest DC,Seattle,WA,98157,First Services,Fort Worth,TX,76169,9644 Highway 10,2026-02-16,2026-03-02,24942.91,12,shipped
+ORD-10228,MFG-02,South Central DC,Dallas,TX,75224,Pioneer Supply,Phoenix,AZ,85054,5111 Industrial Blvd,2026-02-18,2026-03-01,12150.71,17,shipped
+ORD-10229,MFG-06,Great Lakes Plant,Detroit,MI,48218,United Distribution,San Jose,CA,95115,1886 Main St,2026-02-21,2026-03-04,2867.66,21,delivered
+ORD-10230,MFG-03,Northeast Plant,Philadelphia,PA,19180,Metro Services,Philadelphia,PA,19152,9173 Commerce Dr,2026-02-24,2026-03-04,19974.23,8,delivered
+ORD-10231,MFG-07,Southwest Plant,Phoenix,AZ,85013,Premier Parts,Detroit,MI,48235,7366 Parkway,2026-02-22,2026-03-01,17662.68,1,picked
+ORD-10232,MFG-03,Northeast Plant,Philadelphia,PA,19156,Apex Supplies,Austin,TX,78735,7497 Main St,2026-02-24,2026-02-28,24153.02,17,shipped
+ORD-10233,MFG-02,South Central DC,Dallas,TX,75254,Prime LLC,Jacksonville,FL,32268,2827 Warehouse Rd,2026-02-20,2026-03-03,14815.68,20,delivered
+ORD-10234,MFG-04,Southeast Plant,Atlanta,GA,30349,Apex Services,Houston,TX,77033,6117 Highway 10,2026-02-25,2026-02-27,10543.24,13,confirmed
+ORD-10235,MFG-03,Northeast Plant,Philadelphia,PA,19172,Pioneer Parts,Boston,MA,02198,2839 Parkway,2026-02-24,2026-02-28,3636.37,10,shipped
+ORD-10236,MFG-06,Great Lakes Plant,Detroit,MI,48211,Vertex Supply,Seattle,WA,98127,3197 Warehouse Rd,2026-02-25,2026-03-01,12450.0,21,delivered
+ORD-10237,MFG-08,Pacific Northwest DC,Seattle,WA,98131,First Corp,Chicago,IL,60682,506 Warehouse Rd,2026-02-18,2026-03-03,962.47,10,picked
+ORD-10238,MFG-08,Pacific Northwest DC,Seattle,WA,98182,Elite Distribution,Seattle,WA,98180,8370 Main St,2026-02-15,2026-03-02,19411.56,9,delivered
+ORD-10239,MFG-01,Midwest Plant,Chicago,IL,60666,National Solutions,Boston,MA,02137,6966 Main St,2026-02-19,2026-03-03,21889.02,10,open
+ORD-10240,MFG-02,South Central DC,Dallas,TX,75266,Fusion Corp,Houston,TX,77040,3439 Warehouse Rd,2026-02-21,2026-03-03,15315.01,23,shipped
+ORD-10241,MFG-04,Southeast Plant,Atlanta,GA,30336,Atlas Group,Los Angeles,CA,90082,5748 Parkway,2026-02-17,2026-02-28,24478.15,11,shipped
+ORD-10242,MFG-02,South Central DC,Dallas,TX,75227,Prime Co,Columbus,OH,43217,4544 Warehouse Rd,2026-02-16,2026-03-02,21672.06,23,picked
+ORD-10243,MFG-07,Southwest Plant,Phoenix,AZ,85072,Premier Services,Phoenix,AZ,85083,4403 Highway 10,2026-02-22,2026-03-01,2026.58,15,delivered
+ORD-10244,MFG-05,West Coast DC,Los Angeles,CA,90098,Elite LLC,Jacksonville,FL,32268,7997 Industrial Blvd,2026-02-13,2026-03-02,2464.57,24,delivered
+ORD-10245,MFG-07,Southwest Plant,Phoenix,AZ,85037,Horizon Solutions,Columbus,OH,43237,8106 Industrial Blvd,2026-02-19,2026-02-28,13750.67,11,confirmed
+ORD-10246,MFG-01,Midwest Plant,Chicago,IL,60615,Vertex Co,Houston,TX,77090,7530 Main St,2026-02-16,2026-02-27,11494.48,15,delivered
+ORD-10247,MFG-03,Northeast Plant,Philadelphia,PA,19193,Metro Inc,San Jose,CA,95130,4490 Main St,2026-02-21,2026-03-02,2198.15,9,delivered
+ORD-10248,MFG-07,Southwest Plant,Phoenix,AZ,85090,Premier Corp,San Jose,CA,95199,3837 Commerce Dr,2026-02-15,2026-03-02,2515.31,23,picked
+ORD-10249,MFG-04,Southeast Plant,Atlanta,GA,30376,United Services,Charlotte,NC,28211,133 Highway 10,2026-02-15,2026-03-01,17396.67,14,shipped
+ORD-10250,MFG-02,South Central DC,Dallas,TX,75223,Premier Distribution,Houston,TX,77050,6023 Industrial Blvd,2026-02-22,2026-02-27,16093.17,5,delivered
+ORD-10251,MFG-01,Midwest Plant,Chicago,IL,60688,Central LLC,Philadelphia,PA,19166,5754 Highway 10,2026-02-16,2026-02-28,15459.49,14,shipped
+ORD-10252,MFG-02,South Central DC,Dallas,TX,75227,Premier Co,Houston,TX,77085,6292 Industrial Blvd,2026-02-23,2026-03-04,19808.26,11,picked
+ORD-10253,MFG-05,West Coast DC,Los Angeles,CA,90098,Summit Co,New York,NY,10094,4943 Oak Ave,2026-02-25,2026-03-02,18733.91,7,shipped
+ORD-10254,MFG-08,Pacific Northwest DC,Seattle,WA,98159,Elite Solutions,Houston,TX,77040,8186 Highway 10,2026-02-14,2026-03-02,22234.8,17,open
+ORD-10255,MFG-03,Northeast Plant,Philadelphia,PA,19159,Acme Parts,Nashville,TN,37263,5987 Parkway,2026-02-17,2026-03-03,23868.16,16,delivered
+ORD-10256,MFG-01,Midwest Plant,Chicago,IL,60643,Vertex Services,San Antonio,TX,78215,991 Warehouse Rd,2026-02-25,2026-03-01,15769.98,10,delivered
+ORD-10257,MFG-07,Southwest Plant,Phoenix,AZ,85020,Pacific Distribution,Boston,MA,02178,2502 Industrial Blvd,2026-02-20,2026-02-27,12855.92,3,picked
+ORD-10258,MFG-06,Great Lakes Plant,Detroit,MI,48260,United LLC,Nashville,TN,37291,1084 Industrial Blvd,2026-02-23,2026-03-03,23842.69,24,picked
+ORD-10259,MFG-07,Southwest Plant,Phoenix,AZ,85024,Acme Corp,Charlotte,NC,28288,9976 Main St,2026-02-17,2026-02-28,464.72,4,confirmed
+ORD-10260,MFG-08,Pacific Northwest DC,Seattle,WA,98154,Global Inc,Denver,CO,80276,4248 Oak Ave,2026-02-16,2026-03-01,19560.93,24,shipped
+ORD-10261,MFG-06,Great Lakes Plant,Detroit,MI,48264,Horizon Materials,Dallas,TX,75277,1047 Industrial Blvd,2026-02-14,2026-03-03,11461.66,16,shipped
+ORD-10262,MFG-06,Great Lakes Plant,Detroit,MI,48230,Acme Co,Dallas,TX,75223,9403 Highway 10,2026-02-15,2026-03-03,18558.38,8,open
+ORD-10263,MFG-01,Midwest Plant,Chicago,IL,60670,Vertex Co,Jacksonville,FL,32259,2459 Oak Ave,2026-02-13,2026-03-04,20107.42,18,delivered
+ORD-10264,MFG-06,Great Lakes Plant,Detroit,MI,48241,Metro Co,Columbus,OH,43250,4445 Warehouse Rd,2026-02-22,2026-02-27,12625.72,4,delivered
+ORD-10265,MFG-01,Midwest Plant,Chicago,IL,60661,Elite Co,Chicago,IL,60669,4626 Warehouse Rd,2026-02-20,2026-03-04,2296.68,11,shipped
+ORD-10266,MFG-05,West Coast DC,Los Angeles,CA,90082,United Corp,San Jose,CA,95189,3975 Commerce Dr,2026-02-24,2026-03-01,18351.71,7,delivered
+ORD-10267,MFG-01,Midwest Plant,Chicago,IL,60662,First LLC,New York,NY,10039,8873 Industrial Blvd,2026-02-13,2026-03-02,186.33,11,delivered
+ORD-10268,MFG-04,Southeast Plant,Atlanta,GA,30377,United Distribution,San Diego,CA,92163,8062 Main St,2026-02-16,2026-03-04,7103.66,23,open
+ORD-10269,MFG-07,Southwest Plant,Phoenix,AZ,85099,Atlas Parts,Jacksonville,FL,32268,1392 Parkway,2026-02-25,2026-02-27,15984.81,5,shipped
+ORD-10270,MFG-07,Southwest Plant,Phoenix,AZ,85094,Prime Supply,Phoenix,AZ,85040,4779 Industrial Blvd,2026-02-20,2026-03-04,17563.03,13,delivered
+ORD-10271,MFG-05,West Coast DC,Los Angeles,CA,90039,Prime Services,Chicago,IL,60635,2231 Warehouse Rd,2026-02-15,2026-03-03,2775.6,5,shipped
+ORD-10272,MFG-02,South Central DC,Dallas,TX,75278,First Parts,Jacksonville,FL,32236,7405 Industrial Blvd,2026-02-19,2026-03-01,2396.96,4,delivered
+ORD-10273,MFG-04,Southeast Plant,Atlanta,GA,30351,Metro Inc,Phoenix,AZ,85021,4067 Industrial Blvd,2026-02-25,2026-03-01,16978.01,2,shipped
+ORD-10274,MFG-07,Southwest Plant,Phoenix,AZ,85067,United Corp,Boston,MA,02180,4094 Main St,2026-02-15,2026-03-01,3168.11,5,open
+ORD-10275,MFG-04,Southeast Plant,Atlanta,GA,30361,Pioneer Corp,Jacksonville,FL,32297,1377 Parkway,2026-02-19,2026-03-02,691.73,3,open
+ORD-10276,MFG-02,South Central DC,Dallas,TX,75252,Vertex Corp,Houston,TX,77015,7553 Main St,2026-02-23,2026-02-28,9965.72,24,open
+ORD-10277,MFG-06,Great Lakes Plant,Detroit,MI,48237,First Supply,Philadelphia,PA,19145,4586 Commerce Dr,2026-02-16,2026-03-04,15410.55,2,delivered
+ORD-10278,MFG-07,Southwest Plant,Phoenix,AZ,85080,Sterling Co,Seattle,WA,98117,1438 Industrial Blvd,2026-02-16,2026-03-01,5106.53,14,delivered
+ORD-10279,MFG-01,Midwest Plant,Chicago,IL,60658,Metro Inc,Jacksonville,FL,32271,8922 Warehouse Rd,2026-02-21,2026-03-01,12634.47,19,shipped
+ORD-10280,MFG-06,Great Lakes Plant,Detroit,MI,48286,United Corp,San Diego,CA,92113,4603 Main St,2026-02-24,2026-03-03,9032.21,17,delivered
+ORD-10281,MFG-02,South Central DC,Dallas,TX,75241,Apex Solutions,San Diego,CA,92144,8744 Warehouse Rd,2026-02-14,2026-03-03,14455.95,8,delivered
+ORD-10282,MFG-03,Northeast Plant,Philadelphia,PA,19132,Atlas Materials,San Diego,CA,92185,5211 Warehouse Rd,2026-02-21,2026-03-03,850.93,19,delivered
+ORD-10283,MFG-04,Southeast Plant,Atlanta,GA,30373,Sterling Supply,Boston,MA,02149,2877 Commerce Dr,2026-02-15,2026-02-27,5930.69,2,picked
+ORD-10284,MFG-01,Midwest Plant,Chicago,IL,60652,Pacific LLC,Detroit,MI,48235,2138 Industrial Blvd,2026-02-17,2026-03-03,1629.97,11,confirmed
+ORD-10285,MFG-06,Great Lakes Plant,Detroit,MI,48219,Vertex Supply,Jacksonville,FL,32294,6482 Parkway,2026-02-21,2026-02-27,8166.69,10,delivered
+ORD-10286,MFG-06,Great Lakes Plant,Detroit,MI,48232,Pacific Corp,Boston,MA,02198,5847 Oak Ave,2026-02-17,2026-03-03,7774.56,13,delivered
+ORD-10287,MFG-01,Midwest Plant,Chicago,IL,60699,Horizon Corp,Nashville,TN,37260,9298 Main St,2026-02-20,2026-02-28,5639.25,20,delivered
+ORD-10288,MFG-06,Great Lakes Plant,Detroit,MI,48219,Prime Supply,San Diego,CA,92154,5235 Oak Ave,2026-02-15,2026-03-02,16800.11,23,delivered
+ORD-10289,MFG-01,Midwest Plant,Chicago,IL,60643,Vertex Corp,San Antonio,TX,78241,1111 Industrial Blvd,2026-02-15,2026-02-28,181.84,24,shipped
+ORD-10290,MFG-07,Southwest Plant,Phoenix,AZ,85073,Metro Supply,Fort Worth,TX,76154,8947 Commerce Dr,2026-02-24,2026-02-27,16326.59,19,delivered
+ORD-10291,MFG-02,South Central DC,Dallas,TX,75214,Metro LLC,San Jose,CA,95112,5222 Industrial Blvd,2026-02-15,2026-03-04,8643.93,3,delivered
+ORD-10292,MFG-02,South Central DC,Dallas,TX,75253,Metro Inc,Detroit,MI,48288,7910 Highway 10,2026-02-23,2026-02-27,4250.18,21,delivered
+ORD-10293,MFG-02,South Central DC,Dallas,TX,75252,Summit Services,San Antonio,TX,78234,6706 Highway 10,2026-02-19,2026-03-02,7145.85,22,picked
+ORD-10294,MFG-08,Pacific Northwest DC,Seattle,WA,98129,Global Inc,Los Angeles,CA,90056,63 Commerce Dr,2026-02-20,2026-02-27,15683.51,22,shipped
+ORD-10295,MFG-04,Southeast Plant,Atlanta,GA,30331,National LLC,San Jose,CA,95120,7759 Warehouse Rd,2026-02-20,2026-02-27,11852.97,13,delivered
+ORD-10296,MFG-07,Southwest Plant,Phoenix,AZ,85033,National Parts,Jacksonville,FL,32258,6053 Oak Ave,2026-02-14,2026-03-01,11077.55,9,shipped
+ORD-10297,MFG-03,Northeast Plant,Philadelphia,PA,19199,Apex Distribution,Houston,TX,77020,5633 Warehouse Rd,2026-02-23,2026-03-02,5803.69,19,open
+ORD-10298,MFG-07,Southwest Plant,Phoenix,AZ,85078,Sterling Components,Seattle,WA,98183,3861 Commerce Dr,2026-02-14,2026-02-28,22584.01,13,delivered
+ORD-10299,MFG-03,Northeast Plant,Philadelphia,PA,19125,Vertex Co,Charlotte,NC,28232,2739 Oak Ave,2026-02-17,2026-03-03,1210.5,5,open
+ORD-10300,MFG-03,Northeast Plant,Philadelphia,PA,19186,Pioneer Inc,Dallas,TX,75250,1098 Main St,2026-02-22,2026-03-01,8254.25,18,shipped
+ORD-10301,MFG-07,Southwest Plant,Phoenix,AZ,85024,First Distribution,Columbus,OH,43229,2429 Parkway,2026-02-15,2026-03-02,14132.69,4,confirmed
+ORD-10302,MFG-06,Great Lakes Plant,Detroit,MI,48262,Fusion Goods,Dallas,TX,75259,7956 Parkway,2026-02-24,2026-03-02,4429.16,2,shipped
+ORD-10303,MFG-07,Southwest Plant,Phoenix,AZ,85014,First Group,Fort Worth,TX,76152,3893 Main St,2026-02-24,2026-03-03,22441.23,9,open
+ORD-10304,MFG-05,West Coast DC,Los Angeles,CA,90072,Premier Co,Houston,TX,77039,2202 Industrial Blvd,2026-02-23,2026-03-04,6845.09,11,shipped
+ORD-10305,MFG-08,Pacific Northwest DC,Seattle,WA,98137,Sterling Services,Columbus,OH,43272,8463 Warehouse Rd,2026-02-14,2026-03-01,19818.54,17,open
+ORD-10306,MFG-03,Northeast Plant,Philadelphia,PA,19177,Elite Co,Nashville,TN,37213,2847 Oak Ave,2026-02-17,2026-03-04,6349.83,2,shipped
+ORD-10307,MFG-05,West Coast DC,Los Angeles,CA,90057,Fusion Supply,Charlotte,NC,28274,6504 Highway 10,2026-02-16,2026-03-04,909.5,22,shipped
+ORD-10308,MFG-03,Northeast Plant,Philadelphia,PA,19170,Acme Services,Nashville,TN,37280,5731 Industrial Blvd,2026-02-19,2026-02-27,20797.12,24,confirmed
+ORD-10309,MFG-01,Midwest Plant,Chicago,IL,60630,Acme Supply,Nashville,TN,37237,3627 Highway 10,2026-02-18,2026-02-28,16341.95,9,delivered
+ORD-10310,MFG-03,Northeast Plant,Philadelphia,PA,19192,Vertex Services,Philadelphia,PA,19186,139 Oak Ave,2026-02-20,2026-02-28,24180.56,23,delivered
+ORD-10311,MFG-06,Great Lakes Plant,Detroit,MI,48268,Sterling Solutions,Dallas,TX,75237,7647 Industrial Blvd,2026-02-25,2026-03-03,10019.24,20,confirmed
+ORD-10312,MFG-05,West Coast DC,Los Angeles,CA,90048,First Co,Houston,TX,77071,1046 Industrial Blvd,2026-02-19,2026-03-04,8229.66,21,shipped
+ORD-10313,MFG-03,Northeast Plant,Philadelphia,PA,19176,Horizon Group,San Diego,CA,92117,9831 Commerce Dr,2026-02-20,2026-03-03,3627.25,22,open
+ORD-10314,MFG-05,West Coast DC,Los Angeles,CA,90063,Crown Supply,Fort Worth,TX,76159,579 Parkway,2026-02-17,2026-03-03,18204.76,11,picked
+ORD-10315,MFG-06,Great Lakes Plant,Detroit,MI,48274,Crown Corp,San Jose,CA,95131,9147 Oak Ave,2026-02-15,2026-02-28,3329.41,16,shipped
+ORD-10316,MFG-06,Great Lakes Plant,Detroit,MI,48293,National Equipment,Chicago,IL,60638,5821 Oak Ave,2026-02-20,2026-03-03,19734.05,14,shipped
+ORD-10317,MFG-08,Pacific Northwest DC,Seattle,WA,98125,Apex Distribution,Seattle,WA,98116,9562 Parkway,2026-02-14,2026-03-04,22252.24,16,delivered
+ORD-10318,MFG-05,West Coast DC,Los Angeles,CA,90062,Pacific Solutions,Los Angeles,CA,90029,2251 Oak Ave,2026-02-22,2026-03-01,22337.2,19,delivered
+ORD-10319,MFG-03,Northeast Plant,Philadelphia,PA,19120,Metro Materials,Seattle,WA,98152,2898 Industrial Blvd,2026-02-14,2026-03-02,11383.52,1,picked
+ORD-10320,MFG-08,Pacific Northwest DC,Seattle,WA,98121,Summit Distribution,Phoenix,AZ,85088,7106 Highway 10,2026-02-22,2026-03-01,24138.4,14,shipped
+ORD-10321,MFG-04,Southeast Plant,Atlanta,GA,30357,Elite Group,New York,NY,10051,8701 Oak Ave,2026-02-13,2026-02-27,18380.04,21,picked
+ORD-10322,MFG-03,Northeast Plant,Philadelphia,PA,19123,Sterling Components,Fort Worth,TX,76174,9645 Industrial Blvd,2026-02-14,2026-02-28,7560.33,2,shipped
+ORD-10323,MFG-06,Great Lakes Plant,Detroit,MI,48265,Apex Inc,Phoenix,AZ,85053,8032 Industrial Blvd,2026-02-17,2026-03-03,23709.9,6,delivered
+ORD-10324,MFG-04,Southeast Plant,Atlanta,GA,30338,Summit Services,Phoenix,AZ,85037,360 Parkway,2026-02-17,2026-03-02,9259.8,4,delivered
+ORD-10325,MFG-05,West Coast DC,Los Angeles,CA,90078,Global Services,Detroit,MI,48216,9731 Main St,2026-02-15,2026-03-03,20927.58,21,open
+ORD-10326,MFG-08,Pacific Northwest DC,Seattle,WA,98158,First Services,Houston,TX,77080,4141 Commerce Dr,2026-02-16,2026-03-03,17425.52,7,delivered
+ORD-10327,MFG-02,South Central DC,Dallas,TX,75294,First LLC,Denver,CO,80244,9923 Highway 10,2026-02-23,2026-02-27,12862.88,4,delivered
+ORD-10328,MFG-02,South Central DC,Dallas,TX,75273,Metro Inc,San Antonio,TX,78287,3273 Warehouse Rd,2026-02-25,2026-02-28,9044.36,7,shipped
+ORD-10329,MFG-08,Pacific Northwest DC,Seattle,WA,98136,Pacific LLC,Seattle,WA,98152,3843 Main St,2026-02-15,2026-02-27,20905.52,4,delivered
+ORD-10330,MFG-02,South Central DC,Dallas,TX,75222,Metro Inc,Dallas,TX,75292,3788 Commerce Dr,2026-02-20,2026-03-04,11687.29,9,confirmed
+ORD-10331,MFG-05,West Coast DC,Los Angeles,CA,90056,Metro Solutions,Austin,TX,78764,1899 Main St,2026-02-14,2026-03-04,21322.17,1,delivered
+ORD-10332,MFG-06,Great Lakes Plant,Detroit,MI,48266,Pioneer Group,Detroit,MI,48244,1523 Industrial Blvd,2026-02-21,2026-03-03,2978.73,6,shipped
+ORD-10333,MFG-07,Southwest Plant,Phoenix,AZ,85098,Horizon Goods,Seattle,WA,98163,2733 Main St,2026-02-14,2026-02-27,2727.27,6,delivered
+ORD-10334,MFG-08,Pacific Northwest DC,Seattle,WA,98133,Vertex Supply,Detroit,MI,48258,5876 Parkway,2026-02-16,2026-02-27,23021.89,16,confirmed
+ORD-10335,MFG-01,Midwest Plant,Chicago,IL,60618,Prime Distribution,Dallas,TX,75293,5149 Main St,2026-02-25,2026-03-03,14479.73,24,delivered
+ORD-10336,MFG-02,South Central DC,Dallas,TX,75265,Fusion Inc,San Diego,CA,92171,5665 Highway 10,2026-02-22,2026-03-03,20999.97,5,delivered
+ORD-10337,MFG-01,Midwest Plant,Chicago,IL,60692,Prime Group,Philadelphia,PA,19174,7689 Warehouse Rd,2026-02-17,2026-03-02,18823.04,3,shipped
+ORD-10338,MFG-01,Midwest Plant,Chicago,IL,60674,Pioneer LLC,San Diego,CA,92180,6204 Commerce Dr,2026-02-18,2026-03-03,11558.5,3,delivered
+ORD-10339,MFG-08,Pacific Northwest DC,Seattle,WA,98167,Crown Inc,Austin,TX,78725,8149 Highway 10,2026-02-13,2026-03-02,10175.48,4,open
+ORD-10340,MFG-02,South Central DC,Dallas,TX,75287,Elite Inc,Detroit,MI,48291,4991 Parkway,2026-02-18,2026-03-02,16836.14,21,delivered
+ORD-10341,MFG-04,Southeast Plant,Atlanta,GA,30368,United Inc,Austin,TX,78781,9830 Commerce Dr,2026-02-21,2026-03-03,11395.43,23,confirmed
+ORD-10342,MFG-06,Great Lakes Plant,Detroit,MI,48255,Vertex LLC,San Jose,CA,95180,8553 Industrial Blvd,2026-02-15,2026-03-03,22437.4,2,shipped
+ORD-10343,MFG-05,West Coast DC,Los Angeles,CA,90088,Prime LLC,San Antonio,TX,78234,1979 Warehouse Rd,2026-02-18,2026-03-01,20640.17,15,picked
+ORD-10344,MFG-07,Southwest Plant,Phoenix,AZ,85015,Summit Distribution,Nashville,TN,37225,7382 Commerce Dr,2026-02-25,2026-03-02,24101.79,5,open
+ORD-10345,MFG-07,Southwest Plant,Phoenix,AZ,85084,Fusion Equipment,Seattle,WA,98175,2904 Highway 10,2026-02-17,2026-03-02,20408.82,24,confirmed
+ORD-10346,MFG-07,Southwest Plant,Phoenix,AZ,85063,Vertex Goods,Detroit,MI,48298,4068 Industrial Blvd,2026-02-21,2026-03-01,11403.22,10,confirmed
+ORD-10347,MFG-05,West Coast DC,Los Angeles,CA,90099,Elite Corp,Boston,MA,02150,9070 Highway 10,2026-02-17,2026-02-28,15660.56,7,shipped
+ORD-10348,MFG-03,Northeast Plant,Philadelphia,PA,19174,Vertex Distribution,Boston,MA,02198,5282 Highway 10,2026-02-21,2026-02-27,12087.19,18,delivered
+ORD-10349,MFG-05,West Coast DC,Los Angeles,CA,90064,Metro Group,New York,NY,10076,1745 Main St,2026-02-16,2026-03-01,16805.82,2,picked
+ORD-10350,MFG-05,West Coast DC,Los Angeles,CA,90028,Crown Co,Los Angeles,CA,90098,4836 Oak Ave,2026-02-13,2026-03-03,20378.55,12,confirmed
+ORD-10351,MFG-07,Southwest Plant,Phoenix,AZ,85040,Prime Distribution,Denver,CO,80299,4713 Highway 10,2026-02-14,2026-03-03,9780.73,13,delivered
+ORD-10352,MFG-01,Midwest Plant,Chicago,IL,60611,Central Group,Dallas,TX,75235,7260 Warehouse Rd,2026-02-21,2026-02-28,13733.39,19,delivered
+ORD-10353,MFG-08,Pacific Northwest DC,Seattle,WA,98132,National Corp,Chicago,IL,60633,2848 Highway 10,2026-02-15,2026-03-02,1159.76,13,shipped
+ORD-10354,MFG-03,Northeast Plant,Philadelphia,PA,19184,Summit Goods,Dallas,TX,75210,5416 Commerce Dr,2026-02-16,2026-03-03,3969.53,2,shipped
+ORD-10355,MFG-05,West Coast DC,Los Angeles,CA,90072,Premier Distribution,Nashville,TN,37280,5867 Main St,2026-02-20,2026-03-03,5616.06,17,picked
+ORD-10356,MFG-03,Northeast Plant,Philadelphia,PA,19163,First Co,Boston,MA,02178,6610 Main St,2026-02-18,2026-03-01,16633.86,7,shipped
+ORD-10357,MFG-08,Pacific Northwest DC,Seattle,WA,98181,Global Services,New York,NY,10024,5669 Commerce Dr,2026-02-18,2026-02-28,17111.4,2,shipped
+ORD-10358,MFG-05,West Coast DC,Los Angeles,CA,90079,Summit Group,San Jose,CA,95113,8469 Warehouse Rd,2026-02-22,2026-03-03,20100.0,17,shipped
+ORD-10359,MFG-04,Southeast Plant,Atlanta,GA,30351,Central Services,Denver,CO,80220,1573 Oak Ave,2026-02-25,2026-03-04,15729.29,1,picked
+ORD-10360,MFG-02,South Central DC,Dallas,TX,75236,Prime Inc,Boston,MA,02199,7131 Highway 10,2026-02-14,2026-03-03,17198.18,24,open
+ORD-10361,MFG-02,South Central DC,Dallas,TX,75219,Apex Services,Los Angeles,CA,90032,4128 Parkway,2026-02-18,2026-02-27,10279.67,9,shipped
+ORD-10362,MFG-06,Great Lakes Plant,Detroit,MI,48212,Premier Solutions,Fort Worth,TX,76196,1939 Parkway,2026-02-14,2026-02-27,14702.36,24,delivered
+ORD-10363,MFG-02,South Central DC,Dallas,TX,75247,Horizon Corp,San Jose,CA,95187,1418 Industrial Blvd,2026-02-23,2026-03-03,9968.56,13,delivered
+ORD-10364,MFG-04,Southeast Plant,Atlanta,GA,30327,Elite Inc,Fort Worth,TX,76179,4833 Highway 10,2026-02-20,2026-02-27,22191.41,22,delivered
+ORD-10365,MFG-03,Northeast Plant,Philadelphia,PA,19125,Elite Co,Los Angeles,CA,90010,9384 Parkway,2026-02-15,2026-03-01,5369.81,10,delivered
+ORD-10366,MFG-07,Southwest Plant,Phoenix,AZ,85092,Atlas Inc,Denver,CO,80228,2638 Oak Ave,2026-02-19,2026-02-28,2998.37,7,delivered
+ORD-10367,MFG-08,Pacific Northwest DC,Seattle,WA,98192,Prime Solutions,Boston,MA,02119,4763 Highway 10,2026-02-19,2026-02-27,5055.83,4,delivered
+ORD-10368,MFG-03,Northeast Plant,Philadelphia,PA,19195,First Materials,San Diego,CA,92122,4672 Parkway,2026-02-17,2026-02-27,12223.65,11,shipped
+ORD-10369,MFG-06,Great Lakes Plant,Detroit,MI,48250,Elite Corp,Columbus,OH,43231,80 Industrial Blvd,2026-02-18,2026-02-28,18534.43,23,shipped
+ORD-10370,MFG-06,Great Lakes Plant,Detroit,MI,48271,Premier Group,Charlotte,NC,28267,5878 Warehouse Rd,2026-02-24,2026-02-28,2854.49,18,delivered
+ORD-10371,MFG-03,Northeast Plant,Philadelphia,PA,19178,Atlas Services,San Antonio,TX,78243,1253 Highway 10,2026-02-13,2026-02-27,15845.92,17,delivered
+ORD-10372,MFG-04,Southeast Plant,Atlanta,GA,30314,Atlas Group,Boston,MA,02143,8905 Parkway,2026-02-16,2026-03-01,9903.58,12,delivered
+ORD-10373,MFG-03,Northeast Plant,Philadelphia,PA,19169,Fusion Corp,Denver,CO,80275,1484 Commerce Dr,2026-02-25,2026-03-01,16617.56,1,delivered
+ORD-10374,MFG-03,Northeast Plant,Philadelphia,PA,19167,Summit Co,Philadelphia,PA,19132,9280 Parkway,2026-02-16,2026-03-03,18340.31,24,delivered
+ORD-10375,MFG-08,Pacific Northwest DC,Seattle,WA,98139,Horizon Supply,Chicago,IL,60643,6053 Oak Ave,2026-02-18,2026-02-27,22706.99,17,shipped
+ORD-10376,MFG-01,Midwest Plant,Chicago,IL,60615,Metro Services,Austin,TX,78723,8543 Highway 10,2026-02-19,2026-03-04,6693.4,24,delivered
+ORD-10377,MFG-07,Southwest Plant,Phoenix,AZ,85056,Elite Supply,Nashville,TN,37293,1276 Parkway,2026-02-22,2026-02-28,12981.84,8,shipped
+ORD-10378,MFG-08,Pacific Northwest DC,Seattle,WA,98187,Pacific Corp,New York,NY,10074,2277 Commerce Dr,2026-02-18,2026-02-28,12936.35,3,shipped
+ORD-10379,MFG-03,Northeast Plant,Philadelphia,PA,19156,Horizon Co,Detroit,MI,48225,3774 Commerce Dr,2026-02-21,2026-03-03,2966.47,24,delivered
+ORD-10380,MFG-03,Northeast Plant,Philadelphia,PA,19192,Atlas Corp,Columbus,OH,43212,3993 Main St,2026-02-16,2026-02-27,15794.08,5,open
+ORD-10381,MFG-01,Midwest Plant,Chicago,IL,60631,Premier Co,Dallas,TX,75233,8465 Commerce Dr,2026-02-13,2026-03-02,18240.16,24,delivered
+ORD-10382,MFG-08,Pacific Northwest DC,Seattle,WA,98187,Metro Goods,Seattle,WA,98171,2795 Oak Ave,2026-02-22,2026-03-04,3696.4,20,delivered
+ORD-10383,MFG-05,West Coast DC,Los Angeles,CA,90031,Central Distribution,Austin,TX,78768,9774 Parkway,2026-02-18,2026-02-27,9728.73,13,confirmed
+ORD-10384,MFG-07,Southwest Plant,Phoenix,AZ,85029,Horizon Corp,Detroit,MI,48222,2907 Commerce Dr,2026-02-13,2026-03-04,12657.73,18,confirmed
+ORD-10385,MFG-01,Midwest Plant,Chicago,IL,60696,Horizon Services,Columbus,OH,43276,6893 Industrial Blvd,2026-02-14,2026-03-04,13315.94,23,picked
+ORD-10386,MFG-06,Great Lakes Plant,Detroit,MI,48285,Fusion Distribution,Nashville,TN,37222,6972 Oak Ave,2026-02-24,2026-02-28,22765.62,8,confirmed
+ORD-10387,MFG-07,Southwest Plant,Phoenix,AZ,85042,Prime Services,San Antonio,TX,78210,117 Parkway,2026-02-15,2026-03-02,328.77,17,delivered
+ORD-10388,MFG-06,Great Lakes Plant,Detroit,MI,48223,Apex Co,Phoenix,AZ,85064,9591 Industrial Blvd,2026-02-23,2026-02-28,9236.26,19,shipped
+ORD-10389,MFG-07,Southwest Plant,Phoenix,AZ,85080,Apex Corp,Boston,MA,02171,2929 Industrial Blvd,2026-02-24,2026-03-02,24714.43,9,delivered
+ORD-10390,MFG-02,South Central DC,Dallas,TX,75239,Fusion Inc,Charlotte,NC,28299,2651 Main St,2026-02-25,2026-02-28,19684.12,13,delivered
+ORD-10391,MFG-03,Northeast Plant,Philadelphia,PA,19159,Premier Parts,New York,NY,10021,2382 Commerce Dr,2026-02-23,2026-03-04,1742.4,3,picked
+ORD-10392,MFG-07,Southwest Plant,Phoenix,AZ,85061,Central Distribution,Detroit,MI,48293,8537 Industrial Blvd,2026-02-14,2026-03-03,16061.24,6,shipped
+ORD-10393,MFG-05,West Coast DC,Los Angeles,CA,90034,United Inc,Los Angeles,CA,90086,8365 Parkway,2026-02-18,2026-03-03,4361.65,20,open
+ORD-10394,MFG-03,Northeast Plant,Philadelphia,PA,19121,Premier LLC,Dallas,TX,75261,5786 Highway 10,2026-02-22,2026-03-01,5127.71,19,open
+ORD-10395,MFG-05,West Coast DC,Los Angeles,CA,90081,Apex Parts,Nashville,TN,37254,5694 Warehouse Rd,2026-02-18,2026-02-28,24081.97,20,shipped
+ORD-10396,MFG-05,West Coast DC,Los Angeles,CA,90032,Sterling Group,Columbus,OH,43274,1745 Parkway,2026-02-25,2026-02-27,8598.15,10,confirmed
+ORD-10397,MFG-05,West Coast DC,Los Angeles,CA,90098,Pioneer Parts,Charlotte,NC,28258,9227 Commerce Dr,2026-02-18,2026-03-03,24036.78,11,shipped
+ORD-10398,MFG-08,Pacific Northwest DC,Seattle,WA,98124,Vertex Solutions,Dallas,TX,75218,6270 Highway 10,2026-02-18,2026-03-03,17574.23,22,delivered
+ORD-10399,MFG-01,Midwest Plant,Chicago,IL,60699,Prime Solutions,Dallas,TX,75241,4707 Main St,2026-02-21,2026-03-01,13930.6,3,picked
+ORD-10400,MFG-04,Southeast Plant,Atlanta,GA,30383,Central Co,Dallas,TX,75233,3116 Commerce Dr,2026-02-17,2026-03-03,18425.41,8,delivered
+ORD-10401,MFG-04,Southeast Plant,Atlanta,GA,30341,Fusion Inc,Detroit,MI,48255,2556 Warehouse Rd,2026-02-15,2026-02-27,16943.93,3,delivered
+ORD-10402,MFG-01,Midwest Plant,Chicago,IL,60671,Sterling Group,Jacksonville,FL,32289,5168 Commerce Dr,2026-02-19,2026-03-04,4694.37,16,delivered
+ORD-10403,MFG-07,Southwest Plant,Phoenix,AZ,85038,Elite Services,Nashville,TN,37226,888 Parkway,2026-02-23,2026-03-03,23500.41,16,open
+ORD-10404,MFG-03,Northeast Plant,Philadelphia,PA,19168,Global Solutions,Houston,TX,77099,8491 Commerce Dr,2026-02-13,2026-02-28,16901.46,1,shipped
+ORD-10405,MFG-06,Great Lakes Plant,Detroit,MI,48288,Metro Supply,Dallas,TX,75233,8988 Industrial Blvd,2026-02-19,2026-02-28,23969.39,16,shipped
+ORD-10406,MFG-07,Southwest Plant,Phoenix,AZ,85036,Atlas Co,Columbus,OH,43299,6100 Industrial Blvd,2026-02-22,2026-03-04,11350.62,9,delivered
+ORD-10407,MFG-02,South Central DC,Dallas,TX,75244,Horizon Inc,San Diego,CA,92181,7082 Warehouse Rd,2026-02-17,2026-03-01,20030.93,5,delivered
+ORD-10408,MFG-03,Northeast Plant,Philadelphia,PA,19163,Atlas Inc,Seattle,WA,98127,8471 Parkway,2026-02-20,2026-03-03,7605.85,16,delivered
+ORD-10409,MFG-07,Southwest Plant,Phoenix,AZ,85022,National Solutions,Philadelphia,PA,19117,3531 Warehouse Rd,2026-02-24,2026-02-28,2543.1,21,delivered
+ORD-10410,MFG-06,Great Lakes Plant,Detroit,MI,48281,Central Components,Boston,MA,02142,5639 Main St,2026-02-15,2026-03-01,21704.11,12,delivered
+ORD-10411,MFG-03,Northeast Plant,Philadelphia,PA,19146,Pacific Corp,Jacksonville,FL,32251,8364 Commerce Dr,2026-02-23,2026-03-03,9619.61,3,shipped
+ORD-10412,MFG-06,Great Lakes Plant,Detroit,MI,48263,Prime Group,Detroit,MI,48283,6632 Warehouse Rd,2026-02-14,2026-03-04,4175.69,3,picked
+ORD-10413,MFG-05,West Coast DC,Los Angeles,CA,90087,Vertex Corp,Fort Worth,TX,76144,7290 Warehouse Rd,2026-02-21,2026-03-04,14734.96,24,delivered
+ORD-10414,MFG-03,Northeast Plant,Philadelphia,PA,19112,Premier Supply,Phoenix,AZ,85040,4123 Highway 10,2026-02-14,2026-03-03,4297.73,7,confirmed
+ORD-10415,MFG-01,Midwest Plant,Chicago,IL,60613,First Co,Fort Worth,TX,76177,1364 Main St,2026-02-16,2026-02-28,16422.59,3,delivered
+ORD-10416,MFG-04,Southeast Plant,Atlanta,GA,30346,Prime Supply,Charlotte,NC,28290,2072 Oak Ave,2026-02-17,2026-03-02,1023.6,1,shipped
+ORD-10417,MFG-08,Pacific Northwest DC,Seattle,WA,98179,Atlas Services,Dallas,TX,75280,7289 Oak Ave,2026-02-17,2026-03-04,14999.97,19,delivered
+ORD-10418,MFG-05,West Coast DC,Los Angeles,CA,90054,First Inc,Seattle,WA,98179,3722 Warehouse Rd,2026-02-23,2026-02-27,9239.72,10,shipped
+ORD-10419,MFG-01,Midwest Plant,Chicago,IL,60676,Horizon Group,Phoenix,AZ,85054,4699 Commerce Dr,2026-02-13,2026-03-02,23063.9,23,delivered
+ORD-10420,MFG-01,Midwest Plant,Chicago,IL,60665,Apex Co,San Jose,CA,95186,3789 Warehouse Rd,2026-02-22,2026-02-27,10381.64,7,delivered
+ORD-10421,MFG-03,Northeast Plant,Philadelphia,PA,19192,Fusion Group,Fort Worth,TX,76158,3615 Industrial Blvd,2026-02-23,2026-02-27,6103.11,21,delivered
+ORD-10422,MFG-05,West Coast DC,Los Angeles,CA,90093,Pioneer Supplies,Boston,MA,02144,6766 Oak Ave,2026-02-14,2026-03-04,3545.11,6,confirmed
+ORD-10423,MFG-05,West Coast DC,Los Angeles,CA,90099,Global Group,Detroit,MI,48272,3077 Industrial Blvd,2026-02-16,2026-02-27,24247.45,2,open
+ORD-10424,MFG-05,West Coast DC,Los Angeles,CA,90026,Horizon Solutions,Charlotte,NC,28211,3815 Main St,2026-02-13,2026-02-27,5547.12,16,shipped
+ORD-10425,MFG-08,Pacific Northwest DC,Seattle,WA,98199,Crown Supply,Los Angeles,CA,90052,1315 Warehouse Rd,2026-02-16,2026-03-03,6772.61,2,shipped
+ORD-10426,MFG-03,Northeast Plant,Philadelphia,PA,19134,Summit Co,Dallas,TX,75258,207 Main St,2026-02-19,2026-03-04,19314.95,13,shipped
+ORD-10427,MFG-08,Pacific Northwest DC,Seattle,WA,98122,Crown Distribution,Denver,CO,80295,3416 Commerce Dr,2026-02-20,2026-03-01,4091.49,11,delivered
+ORD-10428,MFG-02,South Central DC,Dallas,TX,75242,Vertex Solutions,Seattle,WA,98191,4896 Oak Ave,2026-02-14,2026-03-01,5562.04,22,confirmed
+ORD-10429,MFG-01,Midwest Plant,Chicago,IL,60631,Horizon Materials,Dallas,TX,75284,1961 Commerce Dr,2026-02-18,2026-03-03,24225.55,1,delivered
+ORD-10430,MFG-06,Great Lakes Plant,Detroit,MI,48221,Pacific Distribution,San Diego,CA,92130,8191 Main St,2026-02-21,2026-03-03,1642.3,21,shipped
+ORD-10431,MFG-02,South Central DC,Dallas,TX,75226,Apex Solutions,Seattle,WA,98139,5190 Parkway,2026-02-21,2026-03-03,18369.74,15,open
+ORD-10432,MFG-03,Northeast Plant,Philadelphia,PA,19142,Prime Supply,Los Angeles,CA,90072,7169 Parkway,2026-02-24,2026-02-28,14232.54,7,delivered
+ORD-10433,MFG-05,West Coast DC,Los Angeles,CA,90086,Pioneer Inc,Boston,MA,02130,1129 Parkway,2026-02-23,2026-02-27,20512.55,10,delivered
+ORD-10434,MFG-07,Southwest Plant,Phoenix,AZ,85033,Crown Services,New York,NY,10089,5966 Warehouse Rd,2026-02-18,2026-03-02,18066.94,11,delivered
+ORD-10435,MFG-04,Southeast Plant,Atlanta,GA,30377,Sterling LLC,Seattle,WA,98180,2526 Parkway,2026-02-20,2026-02-28,16076.46,14,confirmed
+ORD-10436,MFG-01,Midwest Plant,Chicago,IL,60626,Apex Supply,Philadelphia,PA,19114,3311 Main St,2026-02-17,2026-03-01,940.66,4,delivered
+ORD-10437,MFG-05,West Coast DC,Los Angeles,CA,90016,Premier Supply,Jacksonville,FL,32238,9928 Highway 10,2026-02-13,2026-02-27,16445.37,7,delivered
+ORD-10438,MFG-01,Midwest Plant,Chicago,IL,60656,Premier Group,Boston,MA,02163,6047 Warehouse Rd,2026-02-14,2026-03-03,6755.52,20,open
+ORD-10439,MFG-02,South Central DC,Dallas,TX,75237,United Goods,Denver,CO,80222,1659 Highway 10,2026-02-25,2026-02-28,4858.09,13,delivered
+ORD-10440,MFG-03,Northeast Plant,Philadelphia,PA,19181,Global Corp,Boston,MA,02163,1729 Warehouse Rd,2026-02-21,2026-03-02,11549.21,22,delivered
+ORD-10441,MFG-03,Northeast Plant,Philadelphia,PA,19180,Prime Distribution,Fort Worth,TX,76174,5530 Highway 10,2026-02-25,2026-02-27,11158.85,20,shipped
+ORD-10442,MFG-06,Great Lakes Plant,Detroit,MI,48257,Apex Distribution,Columbus,OH,43291,7055 Warehouse Rd,2026-02-20,2026-03-03,6131.96,20,delivered
+ORD-10443,MFG-05,West Coast DC,Los Angeles,CA,90056,First Inc,Charlotte,NC,28267,6506 Main St,2026-02-13,2026-03-03,14954.71,10,delivered
+ORD-10444,MFG-05,West Coast DC,Los Angeles,CA,90038,Atlas Corp,San Antonio,TX,78250,356 Warehouse Rd,2026-02-19,2026-03-03,12855.1,18,delivered
+ORD-10445,MFG-02,South Central DC,Dallas,TX,75214,First LLC,Charlotte,NC,28255,2558 Oak Ave,2026-02-21,2026-02-28,6358.94,19,shipped
+ORD-10446,MFG-07,Southwest Plant,Phoenix,AZ,85082,Atlas LLC,San Antonio,TX,78219,5320 Warehouse Rd,2026-02-17,2026-03-01,20668.78,16,delivered
+ORD-10447,MFG-05,West Coast DC,Los Angeles,CA,90014,Global Co,Nashville,TN,37258,1286 Warehouse Rd,2026-02-21,2026-02-27,22012.84,12,shipped
+ORD-10448,MFG-01,Midwest Plant,Chicago,IL,60691,United Corp,Fort Worth,TX,76116,4994 Parkway,2026-02-20,2026-02-27,14188.09,18,shipped
+ORD-10449,MFG-01,Midwest Plant,Chicago,IL,60696,Pacific Corp,Fort Worth,TX,76167,9751 Parkway,2026-02-15,2026-03-02,10883.6,8,delivered
+ORD-10450,MFG-06,Great Lakes Plant,Detroit,MI,48220,Pacific Corp,Seattle,WA,98183,808 Parkway,2026-02-19,2026-03-01,10053.4,3,shipped
+ORD-10451,MFG-08,Pacific Northwest DC,Seattle,WA,98181,United Co,San Antonio,TX,78272,6477 Highway 10,2026-02-17,2026-03-02,15457.52,18,delivered
+ORD-10452,MFG-02,South Central DC,Dallas,TX,75244,Elite Goods,Columbus,OH,43251,9438 Main St,2026-02-23,2026-02-27,9226.9,14,picked
+ORD-10453,MFG-01,Midwest Plant,Chicago,IL,60649,Elite Corp,Philadelphia,PA,19154,7246 Parkway,2026-02-23,2026-02-27,23116.7,2,picked
+ORD-10454,MFG-02,South Central DC,Dallas,TX,75224,First Supply,Los Angeles,CA,90041,2420 Warehouse Rd,2026-02-19,2026-03-04,8680.29,1,delivered
+ORD-10455,MFG-08,Pacific Northwest DC,Seattle,WA,98112,Pacific Inc,Austin,TX,78736,8815 Oak Ave,2026-02-25,2026-02-28,13787.68,9,delivered
+ORD-10456,MFG-07,Southwest Plant,Phoenix,AZ,85084,Summit Supply,Denver,CO,80215,4186 Oak Ave,2026-02-19,2026-02-27,19761.33,7,delivered
+ORD-10457,MFG-01,Midwest Plant,Chicago,IL,60618,Apex Co,Fort Worth,TX,76194,4446 Highway 10,2026-02-21,2026-03-04,624.1,4,delivered
+ORD-10458,MFG-07,Southwest Plant,Phoenix,AZ,85075,Pioneer Distribution,Houston,TX,77050,7941 Warehouse Rd,2026-02-25,2026-03-02,4782.47,3,delivered
+ORD-10459,MFG-01,Midwest Plant,Chicago,IL,60615,Elite Solutions,San Diego,CA,92177,4996 Industrial Blvd,2026-02-22,2026-03-01,4051.58,24,shipped
+ORD-10460,MFG-05,West Coast DC,Los Angeles,CA,90040,United Corp,Denver,CO,80245,1016 Highway 10,2026-02-22,2026-02-28,23611.8,1,delivered
+ORD-10461,MFG-06,Great Lakes Plant,Detroit,MI,48260,First Equipment,Phoenix,AZ,85021,6263 Parkway,2026-02-18,2026-03-04,6122.97,14,picked
+ORD-10462,MFG-08,Pacific Northwest DC,Seattle,WA,98179,Sterling Corp,Phoenix,AZ,85036,2271 Parkway,2026-02-17,2026-03-02,7828.61,5,delivered
+ORD-10463,MFG-07,Southwest Plant,Phoenix,AZ,85028,Pacific Inc,Nashville,TN,37230,5202 Main St,2026-02-25,2026-03-02,3091.92,24,shipped
+ORD-10464,MFG-06,Great Lakes Plant,Detroit,MI,48262,Metro Inc,Columbus,OH,43248,7259 Highway 10,2026-02-19,2026-03-04,19510.83,5,confirmed
+ORD-10465,MFG-05,West Coast DC,Los Angeles,CA,90087,Horizon Corp,Nashville,TN,37288,3784 Parkway,2026-02-18,2026-02-28,798.2,22,open
+ORD-10466,MFG-08,Pacific Northwest DC,Seattle,WA,98193,Acme Group,Jacksonville,FL,32233,6349 Commerce Dr,2026-02-16,2026-03-01,4952.51,6,open
+ORD-10467,MFG-07,Southwest Plant,Phoenix,AZ,85038,Pioneer Co,San Antonio,TX,78236,1084 Oak Ave,2026-02-23,2026-03-04,12325.08,20,shipped
+ORD-10468,MFG-07,Southwest Plant,Phoenix,AZ,85061,Crown Distribution,Los Angeles,CA,90087,6233 Highway 10,2026-02-22,2026-02-28,23487.61,20,delivered
+ORD-10469,MFG-01,Midwest Plant,Chicago,IL,60676,Summit Distribution,Houston,TX,77067,7486 Warehouse Rd,2026-02-14,2026-03-04,13039.76,8,shipped
+ORD-10470,MFG-07,Southwest Plant,Phoenix,AZ,85076,Fusion Inc,Los Angeles,CA,90034,4771 Commerce Dr,2026-02-20,2026-03-01,11614.48,10,shipped
+ORD-10471,MFG-03,Northeast Plant,Philadelphia,PA,19169,Metro Supply,Charlotte,NC,28221,8203 Main St,2026-02-16,2026-02-28,10426.95,13,shipped
+ORD-10472,MFG-04,Southeast Plant,Atlanta,GA,30368,Pioneer Solutions,Chicago,IL,60642,5310 Highway 10,2026-02-16,2026-03-02,18371.57,23,confirmed
+ORD-10473,MFG-02,South Central DC,Dallas,TX,75277,Atlas Corp,Fort Worth,TX,76175,2620 Commerce Dr,2026-02-22,2026-03-02,19241.27,2,delivered
+ORD-10474,MFG-03,Northeast Plant,Philadelphia,PA,19128,Pacific Co,Philadelphia,PA,19116,6875 Industrial Blvd,2026-02-23,2026-02-28,15717.35,10,confirmed
+ORD-10475,MFG-01,Midwest Plant,Chicago,IL,60689,Horizon Co,Dallas,TX,75211,7515 Commerce Dr,2026-02-25,2026-03-04,20215.25,18,delivered
+ORD-10476,MFG-04,Southeast Plant,Atlanta,GA,30385,Crown Co,Seattle,WA,98168,6720 Commerce Dr,2026-02-13,2026-02-27,22071.87,8,shipped
+ORD-10477,MFG-01,Midwest Plant,Chicago,IL,60633,Prime LLC,Phoenix,AZ,85017,5719 Main St,2026-02-13,2026-02-27,14515.6,22,delivered
+ORD-10478,MFG-01,Midwest Plant,Chicago,IL,60623,Summit LLC,Columbus,OH,43232,2644 Highway 10,2026-02-17,2026-02-28,18770.97,15,shipped
+ORD-10479,MFG-05,West Coast DC,Los Angeles,CA,90051,National Solutions,Jacksonville,FL,32258,1109 Warehouse Rd,2026-02-14,2026-03-01,11849.8,10,confirmed
+ORD-10480,MFG-07,Southwest Plant,Phoenix,AZ,85077,Premier Supply,San Antonio,TX,78299,3426 Parkway,2026-02-15,2026-02-27,18283.75,19,delivered
+ORD-10481,MFG-05,West Coast DC,Los Angeles,CA,90064,Horizon Supply,Detroit,MI,48250,4255 Parkway,2026-02-21,2026-03-02,15415.11,5,shipped
+ORD-10482,MFG-03,Northeast Plant,Philadelphia,PA,19188,Central Supplies,San Diego,CA,92147,3172 Main St,2026-02-13,2026-02-27,15692.7,15,confirmed
+ORD-10483,MFG-07,Southwest Plant,Phoenix,AZ,85015,National LLC,Austin,TX,78754,9182 Warehouse Rd,2026-02-18,2026-03-02,16069.37,1,delivered
+ORD-10484,MFG-05,West Coast DC,Los Angeles,CA,90048,Atlas Parts,Denver,CO,80280,5308 Warehouse Rd,2026-02-15,2026-02-27,8432.08,22,shipped
+ORD-10485,MFG-03,Northeast Plant,Philadelphia,PA,19134,Pioneer Distribution,Austin,TX,78753,7850 Commerce Dr,2026-02-13,2026-03-03,3523.48,21,picked
+ORD-10486,MFG-06,Great Lakes Plant,Detroit,MI,48269,Prime Solutions,Columbus,OH,43217,8538 Industrial Blvd,2026-02-20,2026-03-02,13466.75,18,picked
+ORD-10487,MFG-02,South Central DC,Dallas,TX,75229,Fusion LLC,Dallas,TX,75213,5557 Commerce Dr,2026-02-25,2026-03-02,14338.89,6,shipped
+ORD-10488,MFG-05,West Coast DC,Los Angeles,CA,90050,Central Distribution,Los Angeles,CA,90044,6781 Main St,2026-02-18,2026-03-02,11379.87,12,delivered
+ORD-10489,MFG-05,West Coast DC,Los Angeles,CA,90032,Sterling Corp,Houston,TX,77057,613 Warehouse Rd,2026-02-15,2026-02-28,12723.97,15,delivered
+ORD-10490,MFG-04,Southeast Plant,Atlanta,GA,30353,Pacific Co,Seattle,WA,98177,5085 Warehouse Rd,2026-02-16,2026-02-28,20580.14,4,delivered
+ORD-10491,MFG-01,Midwest Plant,Chicago,IL,60668,Prime Supply,Fort Worth,TX,76176,1898 Main St,2026-02-14,2026-02-28,21225.88,22,delivered
+ORD-10492,MFG-01,Midwest Plant,Chicago,IL,60623,Central Group,Denver,CO,80294,5120 Main St,2026-02-20,2026-03-02,22319.57,21,shipped
+ORD-10493,MFG-05,West Coast DC,Los Angeles,CA,90078,Crown Distribution,Austin,TX,78766,1928 Industrial Blvd,2026-02-16,2026-02-27,2994.34,9,delivered
+ORD-10494,MFG-02,South Central DC,Dallas,TX,75236,Metro LLC,Boston,MA,02154,9001 Industrial Blvd,2026-02-16,2026-02-28,20129.47,23,delivered
+ORD-10495,MFG-05,West Coast DC,Los Angeles,CA,90088,Apex Inc,Austin,TX,78779,7269 Main St,2026-02-13,2026-02-27,22596.82,16,open
+ORD-10496,MFG-02,South Central DC,Dallas,TX,75264,Central Distribution,Fort Worth,TX,76132,9767 Parkway,2026-02-23,2026-03-02,8987.26,20,shipped
+ORD-10497,MFG-02,South Central DC,Dallas,TX,75269,Pioneer Supply,Nashville,TN,37226,1523 Warehouse Rd,2026-02-24,2026-03-03,11471.27,4,delivered
+ORD-10498,MFG-04,Southeast Plant,Atlanta,GA,30338,Prime Supply,Phoenix,AZ,85088,4228 Industrial Blvd,2026-02-17,2026-03-01,22944.02,23,shipped
+ORD-10499,MFG-08,Pacific Northwest DC,Seattle,WA,98113,Atlas Corp,Chicago,IL,60670,1850 Industrial Blvd,2026-02-24,2026-03-01,7164.1,6,shipped
+ORD-10500,MFG-02,South Central DC,Dallas,TX,75261,United Materials,Houston,TX,77051,9112 Highway 10,2026-02-20,2026-02-27,11605.23,18,delivered
+ORD-10501,MFG-03,Northeast Plant,Philadelphia,PA,19171,United Corp,Fort Worth,TX,76118,5583 Oak Ave,2026-02-23,2026-03-03,14245.2,14,shipped
+ORD-10502,MFG-02,South Central DC,Dallas,TX,75283,First Services,Seattle,WA,98124,9703 Parkway,2026-02-20,2026-03-01,2576.7,18,shipped
+ORD-10503,MFG-02,South Central DC,Dallas,TX,75286,Premier Co,Houston,TX,77097,9772 Warehouse Rd,2026-02-22,2026-03-03,12433.23,11,delivered
+ORD-10504,MFG-03,Northeast Plant,Philadelphia,PA,19184,Central Solutions,New York,NY,10028,2445 Commerce Dr,2026-02-20,2026-03-02,15446.97,13,shipped
+ORD-10505,MFG-05,West Coast DC,Los Angeles,CA,90082,Pacific Group,San Jose,CA,95165,5641 Main St,2026-02-13,2026-03-02,24662.58,20,shipped
+ORD-10506,MFG-01,Midwest Plant,Chicago,IL,60657,United Services,Boston,MA,02116,14 Highway 10,2026-02-21,2026-03-02,21552.01,4,delivered
+ORD-10507,MFG-07,Southwest Plant,Phoenix,AZ,85090,Crown Services,Austin,TX,78758,6653 Commerce Dr,2026-02-18,2026-03-01,4459.24,22,confirmed
+ORD-10508,MFG-06,Great Lakes Plant,Detroit,MI,48263,Horizon Services,Phoenix,AZ,85046,2057 Oak Ave,2026-02-14,2026-02-27,540.34,21,delivered
+ORD-10509,MFG-03,Northeast Plant,Philadelphia,PA,19120,Crown Supply,Phoenix,AZ,85092,6814 Warehouse Rd,2026-02-23,2026-03-01,4617.96,20,delivered
+ORD-10510,MFG-07,Southwest Plant,Phoenix,AZ,85055,Vertex Distribution,San Diego,CA,92133,6960 Parkway,2026-02-25,2026-02-27,6033.24,24,delivered
+ORD-10511,MFG-06,Great Lakes Plant,Detroit,MI,48214,Pacific Distribution,Los Angeles,CA,90082,7918 Highway 10,2026-02-15,2026-03-01,12116.09,19,delivered
+ORD-10512,MFG-05,West Coast DC,Los Angeles,CA,90069,Premier Distribution,Denver,CO,80220,8575 Parkway,2026-02-18,2026-02-27,15821.97,16,delivered
+ORD-10513,MFG-05,West Coast DC,Los Angeles,CA,90088,Prime Services,Los Angeles,CA,90053,8766 Warehouse Rd,2026-02-24,2026-02-27,12889.68,15,shipped
+ORD-10514,MFG-06,Great Lakes Plant,Detroit,MI,48247,Horizon Materials,San Jose,CA,95131,579 Highway 10,2026-02-20,2026-03-04,19657.79,24,shipped
+ORD-10515,MFG-01,Midwest Plant,Chicago,IL,60694,National Group,San Jose,CA,95189,448 Industrial Blvd,2026-02-15,2026-03-01,12714.06,5,delivered
+ORD-10516,MFG-03,Northeast Plant,Philadelphia,PA,19188,Pacific Supply,Dallas,TX,75245,4210 Main St,2026-02-15,2026-03-03,4489.15,20,delivered
+ORD-10517,MFG-06,Great Lakes Plant,Detroit,MI,48232,Pacific Materials,Dallas,TX,75299,3870 Commerce Dr,2026-02-25,2026-02-28,8669.77,2,confirmed
+ORD-10518,MFG-08,Pacific Northwest DC,Seattle,WA,98162,Summit Group,Fort Worth,TX,76140,7212 Highway 10,2026-02-17,2026-03-02,14507.27,7,delivered
+ORD-10519,MFG-02,South Central DC,Dallas,TX,75216,United Services,Philadelphia,PA,19169,6534 Commerce Dr,2026-02-24,2026-02-28,23714.06,24,delivered
+ORD-10520,MFG-07,Southwest Plant,Phoenix,AZ,85070,Prime Distribution,Dallas,TX,75228,8691 Warehouse Rd,2026-02-13,2026-03-01,23191.48,10,shipped
+ORD-10521,MFG-01,Midwest Plant,Chicago,IL,60622,National Supplies,Boston,MA,02191,5798 Warehouse Rd,2026-02-19,2026-03-01,6867.6,11,delivered
+ORD-10522,MFG-08,Pacific Northwest DC,Seattle,WA,98196,Prime Distribution,San Diego,CA,92196,9646 Warehouse Rd,2026-02-25,2026-02-28,16991.3,11,delivered
+ORD-10523,MFG-01,Midwest Plant,Chicago,IL,60696,First Group,New York,NY,10018,196 Commerce Dr,2026-02-25,2026-02-27,17184.66,4,shipped
+ORD-10524,MFG-04,Southeast Plant,Atlanta,GA,30314,Global LLC,New York,NY,10089,1507 Main St,2026-02-18,2026-03-04,16006.36,20,delivered
+ORD-10525,MFG-03,Northeast Plant,Philadelphia,PA,19158,Pioneer Group,Nashville,TN,37233,1817 Highway 10,2026-02-19,2026-02-28,11753.85,10,delivered
+ORD-10526,MFG-07,Southwest Plant,Phoenix,AZ,85098,Summit Group,Austin,TX,78742,2654 Warehouse Rd,2026-02-19,2026-02-27,9662.56,2,shipped
+ORD-10527,MFG-05,West Coast DC,Los Angeles,CA,90032,Crown Services,Charlotte,NC,28218,8057 Oak Ave,2026-02-22,2026-03-02,16190.26,6,confirmed
+ORD-10528,MFG-04,Southeast Plant,Atlanta,GA,30388,Pioneer Inc,Houston,TX,77066,4244 Main St,2026-02-14,2026-02-27,14347.91,3,shipped
+ORD-10529,MFG-08,Pacific Northwest DC,Seattle,WA,98129,Horizon Supply,New York,NY,10014,6398 Industrial Blvd,2026-02-21,2026-02-27,14429.81,13,delivered
+ORD-10530,MFG-07,Southwest Plant,Phoenix,AZ,85061,Elite Solutions,Chicago,IL,60679,3701 Main St,2026-02-24,2026-03-01,14246.01,4,delivered
+ORD-10531,MFG-05,West Coast DC,Los Angeles,CA,90061,First Co,Los Angeles,CA,90090,1486 Industrial Blvd,2026-02-21,2026-03-02,21053.36,3,delivered
+ORD-10532,MFG-03,Northeast Plant,Philadelphia,PA,19180,Premier Supply,Los Angeles,CA,90059,3130 Industrial Blvd,2026-02-22,2026-03-03,15820.83,4,shipped
+ORD-10533,MFG-04,Southeast Plant,Atlanta,GA,30327,First Supply,Los Angeles,CA,90034,416 Highway 10,2026-02-18,2026-03-02,9810.87,16,delivered
+ORD-10534,MFG-08,Pacific Northwest DC,Seattle,WA,98112,Sterling Supply,Los Angeles,CA,90053,919 Industrial Blvd,2026-02-14,2026-03-03,3086.95,13,delivered
+ORD-10535,MFG-03,Northeast Plant,Philadelphia,PA,19184,Fusion Inc,San Diego,CA,92119,605 Highway 10,2026-02-24,2026-02-27,623.72,21,delivered
+ORD-10536,MFG-04,Southeast Plant,Atlanta,GA,30399,Atlas LLC,Phoenix,AZ,85011,2823 Highway 10,2026-02-20,2026-02-27,11486.19,4,picked
+ORD-10537,MFG-02,South Central DC,Dallas,TX,75224,Apex Solutions,Seattle,WA,98186,3614 Main St,2026-02-17,2026-03-03,8532.98,14,delivered
+ORD-10538,MFG-02,South Central DC,Dallas,TX,75297,Global Group,Nashville,TN,37279,2251 Industrial Blvd,2026-02-18,2026-03-04,14888.17,2,shipped
+ORD-10539,MFG-03,Northeast Plant,Philadelphia,PA,19163,Global Supplies,Philadelphia,PA,19199,6061 Parkway,2026-02-23,2026-02-28,23153.04,8,open
+ORD-10540,MFG-03,Northeast Plant,Philadelphia,PA,19112,Vertex Supply,Seattle,WA,98120,105 Main St,2026-02-15,2026-02-28,16346.13,23,delivered
+ORD-10541,MFG-03,Northeast Plant,Philadelphia,PA,19136,Summit Materials,Phoenix,AZ,85091,4440 Parkway,2026-02-23,2026-03-01,23461.53,8,delivered
+ORD-10542,MFG-08,Pacific Northwest DC,Seattle,WA,98188,Sterling LLC,Chicago,IL,60690,4935 Industrial Blvd,2026-02-13,2026-03-01,6005.63,18,confirmed
+ORD-10543,MFG-06,Great Lakes Plant,Detroit,MI,48279,Pacific Supply,Denver,CO,80238,7606 Warehouse Rd,2026-02-18,2026-03-02,1468.77,9,confirmed
+ORD-10544,MFG-08,Pacific Northwest DC,Seattle,WA,98132,Fusion Supply,Philadelphia,PA,19195,707 Main St,2026-02-21,2026-03-02,5358.31,10,shipped
+ORD-10545,MFG-01,Midwest Plant,Chicago,IL,60623,United Supply,Los Angeles,CA,90078,2882 Oak Ave,2026-02-13,2026-03-03,12945.36,16,open
+ORD-10546,MFG-06,Great Lakes Plant,Detroit,MI,48263,Vertex Co,San Antonio,TX,78296,5337 Oak Ave,2026-02-15,2026-03-03,5810.38,11,picked
+ORD-10547,MFG-07,Southwest Plant,Phoenix,AZ,85038,Metro Services,Chicago,IL,60670,9587 Commerce Dr,2026-02-23,2026-02-27,5521.7,5,delivered
+ORD-10548,MFG-06,Great Lakes Plant,Detroit,MI,48227,National Corp,Charlotte,NC,28234,5876 Industrial Blvd,2026-02-21,2026-02-28,947.55,5,delivered
+ORD-10549,MFG-02,South Central DC,Dallas,TX,75269,Fusion Corp,Charlotte,NC,28263,2805 Warehouse Rd,2026-02-18,2026-03-01,15150.35,10,delivered
+ORD-10550,MFG-04,Southeast Plant,Atlanta,GA,30321,United Co,Columbus,OH,43276,8016 Warehouse Rd,2026-02-24,2026-02-28,7087.4,15,delivered
+ORD-10551,MFG-06,Great Lakes Plant,Detroit,MI,48265,Horizon Distribution,Nashville,TN,37238,9696 Oak Ave,2026-02-13,2026-03-04,24507.57,14,open
+ORD-10552,MFG-01,Midwest Plant,Chicago,IL,60664,Acme Services,Denver,CO,80260,7853 Warehouse Rd,2026-02-15,2026-03-03,12457.83,15,confirmed
+ORD-10553,MFG-04,Southeast Plant,Atlanta,GA,30326,Pioneer Goods,Jacksonville,FL,32247,3917 Highway 10,2026-02-13,2026-02-27,16775.53,16,picked
+ORD-10554,MFG-01,Midwest Plant,Chicago,IL,60668,Premier Services,Charlotte,NC,28227,6642 Oak Ave,2026-02-21,2026-03-03,11687.75,21,delivered
+ORD-10555,MFG-06,Great Lakes Plant,Detroit,MI,48277,Summit Distribution,Los Angeles,CA,90047,6978 Warehouse Rd,2026-02-18,2026-02-28,2161.83,22,delivered
+ORD-10556,MFG-06,Great Lakes Plant,Detroit,MI,48216,Premier Distribution,Houston,TX,77059,5990 Commerce Dr,2026-02-13,2026-03-02,9255.86,12,delivered
+ORD-10557,MFG-04,Southeast Plant,Atlanta,GA,30327,Central Co,Austin,TX,78740,8842 Main St,2026-02-24,2026-03-02,23487.83,24,delivered
+ORD-10558,MFG-06,Great Lakes Plant,Detroit,MI,48255,Sterling LLC,Dallas,TX,75274,6930 Industrial Blvd,2026-02-14,2026-02-27,8728.88,12,shipped
+ORD-10559,MFG-08,Pacific Northwest DC,Seattle,WA,98178,Premier Services,Boston,MA,02147,7406 Parkway,2026-02-14,2026-03-01,22313.79,7,shipped
+ORD-10560,MFG-03,Northeast Plant,Philadelphia,PA,19146,Acme Group,Chicago,IL,60623,2700 Industrial Blvd,2026-02-16,2026-02-27,3889.88,16,picked
+ORD-10561,MFG-07,Southwest Plant,Phoenix,AZ,85097,Premier Inc,Boston,MA,02126,7765 Industrial Blvd,2026-02-23,2026-03-01,16170.41,24,shipped
+ORD-10562,MFG-04,Southeast Plant,Atlanta,GA,30376,Crown Supply,Austin,TX,78762,9482 Industrial Blvd,2026-02-20,2026-03-02,14894.93,16,delivered
+ORD-10563,MFG-08,Pacific Northwest DC,Seattle,WA,98148,Summit Corp,Nashville,TN,37226,5022 Oak Ave,2026-02-19,2026-03-03,12183.44,8,delivered
+ORD-10564,MFG-06,Great Lakes Plant,Detroit,MI,48246,Pacific Corp,Charlotte,NC,28231,2635 Highway 10,2026-02-19,2026-03-02,24334.17,6,delivered
+ORD-10565,MFG-04,Southeast Plant,Atlanta,GA,30324,Summit Solutions,Los Angeles,CA,90050,9414 Oak Ave,2026-02-19,2026-03-01,4734.74,12,delivered
+ORD-10566,MFG-06,Great Lakes Plant,Detroit,MI,48228,Horizon Corp,Jacksonville,FL,32267,8846 Oak Ave,2026-02-20,2026-03-02,23022.78,4,shipped
+ORD-10567,MFG-08,Pacific Northwest DC,Seattle,WA,98150,Atlas Corp,Phoenix,AZ,85010,8949 Parkway,2026-02-20,2026-03-01,22415.04,16,delivered
+ORD-10568,MFG-08,Pacific Northwest DC,Seattle,WA,98153,United Supply,Houston,TX,77071,657 Oak Ave,2026-02-15,2026-03-03,766.17,10,delivered
+ORD-10569,MFG-06,Great Lakes Plant,Detroit,MI,48221,Central Inc,Austin,TX,78717,9964 Highway 10,2026-02-25,2026-02-28,19564.89,8,delivered
+ORD-10570,MFG-02,South Central DC,Dallas,TX,75278,Summit Solutions,Charlotte,NC,28296,1432 Parkway,2026-02-17,2026-03-01,8046.28,16,delivered
+ORD-10571,MFG-07,Southwest Plant,Phoenix,AZ,85028,Crown LLC,Columbus,OH,43257,6327 Industrial Blvd,2026-02-19,2026-02-27,8881.17,12,delivered
+ORD-10572,MFG-04,Southeast Plant,Atlanta,GA,30366,Atlas Parts,Columbus,OH,43266,4729 Oak Ave,2026-02-23,2026-03-03,22426.26,24,confirmed
+ORD-10573,MFG-03,Northeast Plant,Philadelphia,PA,19136,National Services,San Jose,CA,95170,8607 Industrial Blvd,2026-02-22,2026-02-27,314.48,3,delivered
+ORD-10574,MFG-03,Northeast Plant,Philadelphia,PA,19181,First Equipment,Charlotte,NC,28282,2244 Oak Ave,2026-02-22,2026-02-28,13913.59,10,open
+ORD-10575,MFG-08,Pacific Northwest DC,Seattle,WA,98181,Horizon LLC,Charlotte,NC,28238,440 Warehouse Rd,2026-02-16,2026-02-27,7609.21,9,delivered
+ORD-10576,MFG-05,West Coast DC,Los Angeles,CA,90063,Elite Supplies,Philadelphia,PA,19172,4010 Main St,2026-02-19,2026-02-27,24859.17,16,open
+ORD-10577,MFG-07,Southwest Plant,Phoenix,AZ,85043,Prime Supply,Seattle,WA,98198,1960 Industrial Blvd,2026-02-13,2026-03-02,4196.75,9,open
+ORD-10578,MFG-03,Northeast Plant,Philadelphia,PA,19155,Premier Distribution,Philadelphia,PA,19116,4468 Industrial Blvd,2026-02-21,2026-03-01,7352.93,2,delivered
+ORD-10579,MFG-04,Southeast Plant,Atlanta,GA,30390,First Group,Philadelphia,PA,19122,9811 Warehouse Rd,2026-02-20,2026-02-28,20696.53,11,delivered
+ORD-10580,MFG-06,Great Lakes Plant,Detroit,MI,48222,Horizon Services,Boston,MA,02184,5762 Warehouse Rd,2026-02-13,2026-02-27,13026.54,5,shipped
+ORD-10581,MFG-06,Great Lakes Plant,Detroit,MI,48230,Sterling Distribution,Houston,TX,77037,2533 Parkway,2026-02-17,2026-02-28,15393.69,18,delivered
+ORD-10582,MFG-02,South Central DC,Dallas,TX,75263,Pacific Supply,Charlotte,NC,28219,1910 Warehouse Rd,2026-02-13,2026-02-27,8803.02,16,delivered
+ORD-10583,MFG-06,Great Lakes Plant,Detroit,MI,48232,Pacific LLC,San Jose,CA,95113,1944 Oak Ave,2026-02-16,2026-02-27,5780.37,23,confirmed
+ORD-10584,MFG-07,Southwest Plant,Phoenix,AZ,85098,Sterling Parts,Houston,TX,77019,309 Warehouse Rd,2026-02-23,2026-03-01,5029.32,2,open
+ORD-10585,MFG-08,Pacific Northwest DC,Seattle,WA,98125,Central Materials,Dallas,TX,75215,1086 Industrial Blvd,2026-02-13,2026-03-03,19591.91,4,delivered
+ORD-10586,MFG-03,Northeast Plant,Philadelphia,PA,19195,Sterling Materials,Jacksonville,FL,32213,1488 Oak Ave,2026-02-19,2026-03-04,8793.74,19,picked
+ORD-10587,MFG-02,South Central DC,Dallas,TX,75222,Acme LLC,Nashville,TN,37211,8665 Oak Ave,2026-02-17,2026-03-03,4418.57,10,delivered
+ORD-10588,MFG-04,Southeast Plant,Atlanta,GA,30374,Vertex Co,Seattle,WA,98156,9657 Oak Ave,2026-02-15,2026-03-01,20893.34,6,delivered
+ORD-10589,MFG-04,Southeast Plant,Atlanta,GA,30362,First Distribution,Houston,TX,77050,2026 Commerce Dr,2026-02-25,2026-02-27,12471.03,5,shipped
+ORD-10590,MFG-01,Midwest Plant,Chicago,IL,60620,Pioneer Co,Austin,TX,78773,1896 Commerce Dr,2026-02-24,2026-02-28,18443.93,20,delivered
+ORD-10591,MFG-07,Southwest Plant,Phoenix,AZ,85047,Horizon LLC,Columbus,OH,43234,1141 Warehouse Rd,2026-02-24,2026-03-03,9280.92,22,open
+ORD-10592,MFG-07,Southwest Plant,Phoenix,AZ,85066,Metro LLC,Denver,CO,80294,1393 Main St,2026-02-22,2026-02-27,17421.67,13,delivered
+ORD-10593,MFG-06,Great Lakes Plant,Detroit,MI,48235,National Components,Austin,TX,78735,9748 Warehouse Rd,2026-02-15,2026-03-01,20977.01,8,delivered
+ORD-10594,MFG-05,West Coast DC,Los Angeles,CA,90092,Pioneer LLC,Fort Worth,TX,76155,7796 Highway 10,2026-02-22,2026-03-02,12858.65,16,confirmed
+ORD-10595,MFG-02,South Central DC,Dallas,TX,75242,Premier Supply,Seattle,WA,98173,3782 Highway 10,2026-02-16,2026-03-04,2625.14,1,open
+ORD-10596,MFG-01,Midwest Plant,Chicago,IL,60632,Horizon Supply,Fort Worth,TX,76187,5357 Oak Ave,2026-02-15,2026-02-28,16577.85,3,delivered
+ORD-10597,MFG-04,Southeast Plant,Atlanta,GA,30347,Summit Services,Seattle,WA,98172,8271 Industrial Blvd,2026-02-21,2026-03-02,13733.51,18,delivered
+ORD-10598,MFG-02,South Central DC,Dallas,TX,75259,First Corp,Charlotte,NC,28250,6166 Commerce Dr,2026-02-13,2026-03-01,4545.2,2,delivered
+ORD-10599,MFG-08,Pacific Northwest DC,Seattle,WA,98165,Crown Supplies,Phoenix,AZ,85049,6375 Commerce Dr,2026-02-15,2026-03-03,16924.36,19,delivered
+ORD-10600,MFG-08,Pacific Northwest DC,Seattle,WA,98181,Elite Group,Philadelphia,PA,19174,914 Commerce Dr,2026-02-25,2026-02-28,24276.14,19,delivered
+ORD-10601,MFG-06,Great Lakes Plant,Detroit,MI,48217,Prime Services,New York,NY,10085,740 Oak Ave,2026-02-21,2026-03-04,20267.4,12,delivered
+ORD-10602,MFG-02,South Central DC,Dallas,TX,75264,Premier LLC,Jacksonville,FL,32255,6750 Industrial Blvd,2026-02-18,2026-02-27,5980.36,8,shipped
+ORD-10603,MFG-05,West Coast DC,Los Angeles,CA,90024,Sterling Services,Austin,TX,78731,323 Parkway,2026-02-13,2026-02-28,16495.53,15,shipped
+ORD-10604,MFG-05,West Coast DC,Los Angeles,CA,90012,Global Co,Seattle,WA,98185,365 Industrial Blvd,2026-02-22,2026-03-01,14377.59,11,delivered
+ORD-10605,MFG-06,Great Lakes Plant,Detroit,MI,48273,Premier Distribution,Denver,CO,80295,5564 Oak Ave,2026-02-20,2026-03-02,24240.28,12,picked
+ORD-10606,MFG-04,Southeast Plant,Atlanta,GA,30346,Atlas LLC,Dallas,TX,75216,4872 Parkway,2026-02-18,2026-03-01,18610.77,20,confirmed
+ORD-10607,MFG-06,Great Lakes Plant,Detroit,MI,48244,First Distribution,Chicago,IL,60682,8701 Commerce Dr,2026-02-18,2026-03-01,19921.95,12,delivered
+ORD-10608,MFG-05,West Coast DC,Los Angeles,CA,90065,Crown Corp,Boston,MA,02150,3279 Commerce Dr,2026-02-19,2026-03-01,12956.93,20,delivered
+ORD-10609,MFG-01,Midwest Plant,Chicago,IL,60690,Fusion Services,Denver,CO,80233,9452 Commerce Dr,2026-02-24,2026-02-28,23438.5,9,delivered
+ORD-10610,MFG-01,Midwest Plant,Chicago,IL,60676,Vertex Services,San Antonio,TX,78256,7578 Oak Ave,2026-02-16,2026-02-28,17179.87,24,shipped
+ORD-10611,MFG-06,Great Lakes Plant,Detroit,MI,48218,United LLC,San Antonio,TX,78262,4374 Warehouse Rd,2026-02-16,2026-02-28,17218.34,9,picked
+ORD-10612,MFG-03,Northeast Plant,Philadelphia,PA,19134,Metro Group,New York,NY,10041,5088 Commerce Dr,2026-02-23,2026-03-01,16226.01,14,open
+ORD-10613,MFG-03,Northeast Plant,Philadelphia,PA,19113,Premier Solutions,Dallas,TX,75245,9023 Oak Ave,2026-02-14,2026-03-02,12223.17,24,open
+ORD-10614,MFG-05,West Coast DC,Los Angeles,CA,90018,Global Distribution,Columbus,OH,43256,1480 Commerce Dr,2026-02-16,2026-03-04,2931.52,8,delivered
+ORD-10615,MFG-05,West Coast DC,Los Angeles,CA,90073,United Services,Chicago,IL,60640,9828 Main St,2026-02-20,2026-03-03,20833.5,11,delivered
+ORD-10616,MFG-04,Southeast Plant,Atlanta,GA,30328,Crown Solutions,Houston,TX,77032,3508 Industrial Blvd,2026-02-22,2026-03-01,21593.06,9,open
+ORD-10617,MFG-02,South Central DC,Dallas,TX,75250,First Inc,Boston,MA,02164,7781 Highway 10,2026-02-19,2026-02-28,9170.5,5,delivered
+ORD-10618,MFG-01,Midwest Plant,Chicago,IL,60694,Global Distribution,Los Angeles,CA,90098,3927 Industrial Blvd,2026-02-22,2026-03-02,16027.88,10,delivered
+ORD-10619,MFG-04,Southeast Plant,Atlanta,GA,30366,Metro Supply,Fort Worth,TX,76111,6439 Industrial Blvd,2026-02-15,2026-02-28,7540.96,8,delivered
+ORD-10620,MFG-06,Great Lakes Plant,Detroit,MI,48292,Prime Services,Columbus,OH,43214,4490 Warehouse Rd,2026-02-24,2026-02-27,18463.01,16,delivered
+ORD-10621,MFG-02,South Central DC,Dallas,TX,75230,Metro Supply,Dallas,TX,75274,1088 Industrial Blvd,2026-02-20,2026-03-01,17425.97,15,delivered
+ORD-10622,MFG-03,Northeast Plant,Philadelphia,PA,19110,Pacific Goods,Fort Worth,TX,76135,5007 Industrial Blvd,2026-02-14,2026-03-02,4071.89,4,delivered
+ORD-10623,MFG-07,Southwest Plant,Phoenix,AZ,85050,Metro Services,Charlotte,NC,28271,2188 Industrial Blvd,2026-02-20,2026-02-28,5086.79,10,shipped
+ORD-10624,MFG-07,Southwest Plant,Phoenix,AZ,85083,Metro Inc,San Diego,CA,92112,377 Parkway,2026-02-18,2026-03-02,24357.07,3,picked
+ORD-10625,MFG-07,Southwest Plant,Phoenix,AZ,85089,Sterling Services,Columbus,OH,43286,4263 Oak Ave,2026-02-21,2026-02-27,23689.0,6,confirmed
+ORD-10626,MFG-08,Pacific Northwest DC,Seattle,WA,98196,Pacific Services,Seattle,WA,98125,3678 Highway 10,2026-02-17,2026-02-28,7305.86,9,shipped
+ORD-10627,MFG-04,Southeast Plant,Atlanta,GA,30386,United Supplies,San Antonio,TX,78246,3103 Commerce Dr,2026-02-22,2026-02-28,865.01,5,delivered
+ORD-10628,MFG-04,Southeast Plant,Atlanta,GA,30357,Apex Co,Nashville,TN,37297,7507 Main St,2026-02-24,2026-02-27,21805.37,5,delivered
+ORD-10629,MFG-07,Southwest Plant,Phoenix,AZ,85064,Elite Goods,Detroit,MI,48242,1197 Main St,2026-02-14,2026-03-02,8421.63,2,picked
+ORD-10630,MFG-01,Midwest Plant,Chicago,IL,60610,Crown Inc,Dallas,TX,75274,6242 Industrial Blvd,2026-02-22,2026-03-04,9366.9,22,delivered
+ORD-10631,MFG-03,Northeast Plant,Philadelphia,PA,19143,Vertex Corp,Philadelphia,PA,19174,8075 Industrial Blvd,2026-02-24,2026-03-04,2377.75,5,delivered
+ORD-10632,MFG-05,West Coast DC,Los Angeles,CA,90024,National Equipment,Austin,TX,78715,2096 Commerce Dr,2026-02-19,2026-03-04,9110.72,24,shipped
+ORD-10633,MFG-06,Great Lakes Plant,Detroit,MI,48265,Pioneer Inc,Philadelphia,PA,19150,8050 Warehouse Rd,2026-02-16,2026-03-04,21347.89,18,delivered
+ORD-10634,MFG-04,Southeast Plant,Atlanta,GA,30329,Horizon Inc,Los Angeles,CA,90039,3001 Main St,2026-02-19,2026-03-01,17693.18,6,shipped
+ORD-10635,MFG-08,Pacific Northwest DC,Seattle,WA,98155,First Corp,Boston,MA,02172,7500 Commerce Dr,2026-02-16,2026-02-27,8837.67,4,picked
+ORD-10636,MFG-03,Northeast Plant,Philadelphia,PA,19175,Premier Co,Dallas,TX,75282,9596 Oak Ave,2026-02-13,2026-03-02,19206.16,17,picked
+ORD-10637,MFG-08,Pacific Northwest DC,Seattle,WA,98196,Global Solutions,Houston,TX,77052,426 Industrial Blvd,2026-02-15,2026-03-03,9432.92,13,delivered
+ORD-10638,MFG-03,Northeast Plant,Philadelphia,PA,19113,Summit Supplies,Chicago,IL,60668,7862 Commerce Dr,2026-02-19,2026-03-02,16501.46,20,shipped
+ORD-10639,MFG-06,Great Lakes Plant,Detroit,MI,48282,Crown Supplies,Phoenix,AZ,85037,798 Warehouse Rd,2026-02-19,2026-03-02,19983.95,11,delivered
+ORD-10640,MFG-02,South Central DC,Dallas,TX,75261,Apex Services,Dallas,TX,75232,3934 Warehouse Rd,2026-02-22,2026-03-04,659.72,3,picked
+ORD-10641,MFG-05,West Coast DC,Los Angeles,CA,90092,Fusion Corp,Phoenix,AZ,85025,4892 Commerce Dr,2026-02-23,2026-03-03,20187.88,24,shipped
+ORD-10642,MFG-06,Great Lakes Plant,Detroit,MI,48295,Vertex LLC,Houston,TX,77057,8400 Oak Ave,2026-02-23,2026-03-01,11989.53,13,delivered
+ORD-10643,MFG-07,Southwest Plant,Phoenix,AZ,85057,United Corp,Detroit,MI,48233,7113 Highway 10,2026-02-15,2026-03-01,12906.54,2,delivered
+ORD-10644,MFG-08,Pacific Northwest DC,Seattle,WA,98177,First Co,Denver,CO,80220,4763 Commerce Dr,2026-02-14,2026-03-01,7614.77,16,delivered
+ORD-10645,MFG-07,Southwest Plant,Phoenix,AZ,85047,Global Supply,Nashville,TN,37216,9028 Main St,2026-02-14,2026-03-04,2824.66,17,shipped
+ORD-10646,MFG-05,West Coast DC,Los Angeles,CA,90055,Metro Services,Dallas,TX,75284,1340 Warehouse Rd,2026-02-13,2026-03-02,18551.83,4,shipped
+ORD-10647,MFG-01,Midwest Plant,Chicago,IL,60620,Prime Corp,Columbus,OH,43248,5144 Parkway,2026-02-24,2026-03-03,11331.21,22,delivered
+ORD-10648,MFG-04,Southeast Plant,Atlanta,GA,30333,Global Inc,Chicago,IL,60687,4249 Warehouse Rd,2026-02-15,2026-03-03,13429.24,14,open
+ORD-10649,MFG-03,Northeast Plant,Philadelphia,PA,19193,Elite Services,Seattle,WA,98168,6638 Warehouse Rd,2026-02-24,2026-03-02,15519.71,10,delivered
+ORD-10650,MFG-05,West Coast DC,Los Angeles,CA,90021,Central Supply,Phoenix,AZ,85027,228 Oak Ave,2026-02-13,2026-02-27,24267.43,23,delivered
+ORD-10651,MFG-03,Northeast Plant,Philadelphia,PA,19193,Global Corp,San Diego,CA,92165,8825 Oak Ave,2026-02-20,2026-02-27,3831.92,15,shipped
+ORD-10652,MFG-03,Northeast Plant,Philadelphia,PA,19199,Apex Inc,Charlotte,NC,28272,7725 Main St,2026-02-23,2026-03-04,6179.35,19,shipped
+ORD-10653,MFG-06,Great Lakes Plant,Detroit,MI,48211,First Inc,Houston,TX,77090,7075 Commerce Dr,2026-02-25,2026-03-04,14529.73,24,delivered
+ORD-10654,MFG-08,Pacific Northwest DC,Seattle,WA,98161,Vertex Equipment,Seattle,WA,98175,9684 Highway 10,2026-02-24,2026-03-02,17900.11,8,delivered
+ORD-10655,MFG-02,South Central DC,Dallas,TX,75244,First Co,Columbus,OH,43270,1916 Commerce Dr,2026-02-21,2026-03-02,17483.23,15,open
+ORD-10656,MFG-08,Pacific Northwest DC,Seattle,WA,98154,Pioneer Corp,Charlotte,NC,28239,8318 Oak Ave,2026-02-21,2026-03-02,21358.33,20,delivered
+ORD-10657,MFG-05,West Coast DC,Los Angeles,CA,90059,Premier Supply,Columbus,OH,43296,5903 Warehouse Rd,2026-02-16,2026-03-01,5299.13,20,delivered
+ORD-10658,MFG-03,Northeast Plant,Philadelphia,PA,19132,Summit Inc,San Antonio,TX,78230,9925 Commerce Dr,2026-02-23,2026-02-27,7695.75,16,picked
+ORD-10659,MFG-06,Great Lakes Plant,Detroit,MI,48243,Global Materials,Jacksonville,FL,32296,2599 Oak Ave,2026-02-25,2026-03-04,20199.37,2,shipped
+ORD-10660,MFG-02,South Central DC,Dallas,TX,75281,Pacific Distribution,San Diego,CA,92172,4225 Industrial Blvd,2026-02-21,2026-03-03,19286.86,2,delivered
+ORD-10661,MFG-02,South Central DC,Dallas,TX,75216,Global Co,Charlotte,NC,28268,1818 Main St,2026-02-15,2026-03-03,1192.94,18,confirmed
+ORD-10662,MFG-06,Great Lakes Plant,Detroit,MI,48230,Pacific LLC,San Jose,CA,95166,8289 Commerce Dr,2026-02-15,2026-03-03,16230.26,5,shipped
+ORD-10663,MFG-04,Southeast Plant,Atlanta,GA,30366,National Solutions,Columbus,OH,43210,4020 Warehouse Rd,2026-02-24,2026-03-03,7275.94,11,picked
+ORD-10664,MFG-07,Southwest Plant,Phoenix,AZ,85056,Vertex Supply,San Diego,CA,92129,8678 Commerce Dr,2026-02-18,2026-03-03,20073.95,5,shipped
+ORD-10665,MFG-06,Great Lakes Plant,Detroit,MI,48213,Metro Services,Charlotte,NC,28228,163 Highway 10,2026-02-25,2026-03-03,2256.74,3,shipped
+ORD-10666,MFG-01,Midwest Plant,Chicago,IL,60660,Crown Group,Los Angeles,CA,90094,2474 Parkway,2026-02-25,2026-02-27,10569.74,10,delivered
+ORD-10667,MFG-06,Great Lakes Plant,Detroit,MI,48254,Crown Components,New York,NY,10045,8648 Parkway,2026-02-16,2026-03-04,10187.86,23,delivered
+ORD-10668,MFG-08,Pacific Northwest DC,Seattle,WA,98199,Pacific Distribution,Jacksonville,FL,32293,6628 Warehouse Rd,2026-02-20,2026-02-28,1068.71,3,shipped
+ORD-10669,MFG-05,West Coast DC,Los Angeles,CA,90037,Crown Equipment,Chicago,IL,60675,9041 Industrial Blvd,2026-02-21,2026-03-02,4126.68,21,open
+ORD-10670,MFG-04,Southeast Plant,Atlanta,GA,30348,Summit LLC,Columbus,OH,43274,1810 Highway 10,2026-02-22,2026-02-27,15730.69,9,shipped
+ORD-10671,MFG-08,Pacific Northwest DC,Seattle,WA,98148,Crown Materials,Nashville,TN,37210,7425 Industrial Blvd,2026-02-18,2026-03-04,24726.65,24,delivered
+ORD-10672,MFG-06,Great Lakes Plant,Detroit,MI,48248,Sterling Materials,San Jose,CA,95195,9385 Highway 10,2026-02-22,2026-02-27,18477.18,17,confirmed
+ORD-10673,MFG-06,Great Lakes Plant,Detroit,MI,48268,Horizon Co,Houston,TX,77028,6975 Warehouse Rd,2026-02-14,2026-03-01,1695.51,3,delivered
+ORD-10674,MFG-08,Pacific Northwest DC,Seattle,WA,98119,Vertex Supply,Jacksonville,FL,32296,8623 Commerce Dr,2026-02-25,2026-03-02,21819.57,13,delivered
+ORD-10675,MFG-08,Pacific Northwest DC,Seattle,WA,98163,Sterling LLC,Philadelphia,PA,19128,8287 Oak Ave,2026-02-24,2026-03-01,24205.59,5,delivered
+ORD-10676,MFG-04,Southeast Plant,Atlanta,GA,30368,Elite Equipment,Seattle,WA,98114,2570 Parkway,2026-02-15,2026-03-01,21330.1,20,confirmed
+ORD-10677,MFG-01,Midwest Plant,Chicago,IL,60676,Pacific Supplies,Phoenix,AZ,85025,6087 Industrial Blvd,2026-02-20,2026-03-01,12225.25,10,delivered
+ORD-10678,MFG-01,Midwest Plant,Chicago,IL,60649,Summit Services,San Jose,CA,95137,3000 Warehouse Rd,2026-02-24,2026-03-03,3189.85,1,shipped
+ORD-10679,MFG-08,Pacific Northwest DC,Seattle,WA,98183,Pacific Corp,San Jose,CA,95182,7412 Industrial Blvd,2026-02-22,2026-03-03,20886.33,16,delivered
+ORD-10680,MFG-08,Pacific Northwest DC,Seattle,WA,98167,Crown Inc,Charlotte,NC,28229,5329 Main St,2026-02-22,2026-03-03,5935.63,13,shipped
+ORD-10681,MFG-08,Pacific Northwest DC,Seattle,WA,98145,Premier Co,Chicago,IL,60631,407 Parkway,2026-02-20,2026-03-02,16182.22,18,delivered
+ORD-10682,MFG-01,Midwest Plant,Chicago,IL,60682,Acme Group,Denver,CO,80234,7797 Parkway,2026-02-13,2026-03-04,16507.62,4,delivered
+ORD-10683,MFG-04,Southeast Plant,Atlanta,GA,30341,Acme Solutions,Nashville,TN,37266,1387 Warehouse Rd,2026-02-20,2026-03-02,14783.99,13,shipped
+ORD-10684,MFG-07,Southwest Plant,Phoenix,AZ,85033,Metro Group,Columbus,OH,43213,8650 Industrial Blvd,2026-02-19,2026-03-01,2998.92,3,confirmed
+ORD-10685,MFG-03,Northeast Plant,Philadelphia,PA,19133,Prime Corp,Dallas,TX,75221,2527 Industrial Blvd,2026-02-22,2026-03-04,4354.4,22,delivered
+ORD-10686,MFG-01,Midwest Plant,Chicago,IL,60617,Global Inc,San Jose,CA,95159,1618 Industrial Blvd,2026-02-23,2026-02-27,6559.67,11,delivered
+ORD-10687,MFG-04,Southeast Plant,Atlanta,GA,30340,Prime Supply,Detroit,MI,48285,3875 Commerce Dr,2026-02-25,2026-03-02,23741.52,13,shipped
+ORD-10688,MFG-07,Southwest Plant,Phoenix,AZ,85018,Global Co,Seattle,WA,98113,6677 Highway 10,2026-02-13,2026-02-28,13918.77,9,delivered
+ORD-10689,MFG-03,Northeast Plant,Philadelphia,PA,19148,Crown Corp,Nashville,TN,37262,7307 Main St,2026-02-25,2026-03-04,19604.61,7,confirmed
+ORD-10690,MFG-04,Southeast Plant,Atlanta,GA,30378,Acme Inc,Columbus,OH,43281,7402 Main St,2026-02-24,2026-02-27,7337.85,20,delivered
+ORD-10691,MFG-08,Pacific Northwest DC,Seattle,WA,98144,Metro Distribution,Detroit,MI,48242,6229 Industrial Blvd,2026-02-18,2026-03-04,21041.0,19,shipped
+ORD-10692,MFG-02,South Central DC,Dallas,TX,75248,Prime Solutions,Chicago,IL,60660,2015 Warehouse Rd,2026-02-19,2026-02-27,5389.63,14,delivered
+ORD-10693,MFG-05,West Coast DC,Los Angeles,CA,90067,Pacific Inc,Dallas,TX,75241,5270 Industrial Blvd,2026-02-24,2026-02-28,8312.16,20,delivered
+ORD-10694,MFG-08,Pacific Northwest DC,Seattle,WA,98110,Premier Distribution,New York,NY,10096,2844 Commerce Dr,2026-02-24,2026-03-02,13522.57,13,delivered
+ORD-10695,MFG-01,Midwest Plant,Chicago,IL,60695,Acme LLC,Charlotte,NC,28296,2023 Industrial Blvd,2026-02-22,2026-03-04,9045.45,20,picked
+ORD-10696,MFG-08,Pacific Northwest DC,Seattle,WA,98157,Central LLC,San Antonio,TX,78266,154 Oak Ave,2026-02-13,2026-03-03,17061.78,9,delivered
+ORD-10697,MFG-05,West Coast DC,Los Angeles,CA,90038,Central Services,San Diego,CA,92173,5948 Main St,2026-02-24,2026-02-28,17718.15,23,picked
+ORD-10698,MFG-02,South Central DC,Dallas,TX,75245,Fusion Materials,Nashville,TN,37274,8094 Oak Ave,2026-02-17,2026-03-02,18509.55,22,delivered
+ORD-10699,MFG-02,South Central DC,Dallas,TX,75285,Acme Distribution,Phoenix,AZ,85018,2088 Industrial Blvd,2026-02-18,2026-03-04,18263.14,17,shipped
+ORD-10700,MFG-05,West Coast DC,Los Angeles,CA,90097,National LLC,Boston,MA,02168,33 Commerce Dr,2026-02-14,2026-03-02,10898.82,11,delivered
+ORD-10701,MFG-08,Pacific Northwest DC,Seattle,WA,98173,Prime Inc,Jacksonville,FL,32276,713 Highway 10,2026-02-14,2026-02-28,22972.03,9,delivered
+ORD-10702,MFG-07,Southwest Plant,Phoenix,AZ,85034,United Co,Austin,TX,78720,9369 Warehouse Rd,2026-02-18,2026-02-27,10681.93,23,open
+ORD-10703,MFG-03,Northeast Plant,Philadelphia,PA,19152,Prime Group,San Jose,CA,95118,1585 Main St,2026-02-23,2026-03-01,14874.39,1,delivered
+ORD-10704,MFG-04,Southeast Plant,Atlanta,GA,30323,Fusion Supplies,Seattle,WA,98140,5584 Warehouse Rd,2026-02-21,2026-02-27,19883.66,17,delivered
+ORD-10705,MFG-02,South Central DC,Dallas,TX,75290,Premier Corp,Charlotte,NC,28284,2046 Main St,2026-02-14,2026-03-04,9528.27,2,delivered
+ORD-10706,MFG-01,Midwest Plant,Chicago,IL,60666,Apex LLC,Los Angeles,CA,90048,7076 Main St,2026-02-14,2026-02-27,1447.25,18,delivered
+ORD-10707,MFG-07,Southwest Plant,Phoenix,AZ,85039,Prime Inc,Detroit,MI,48294,174 Commerce Dr,2026-02-24,2026-03-01,22016.46,14,delivered
+ORD-10708,MFG-08,Pacific Northwest DC,Seattle,WA,98176,Central Materials,Austin,TX,78785,3154 Main St,2026-02-13,2026-02-27,17875.49,20,delivered
+ORD-10709,MFG-05,West Coast DC,Los Angeles,CA,90055,Vertex Distribution,Columbus,OH,43271,7285 Oak Ave,2026-02-16,2026-02-28,1653.21,2,shipped
+ORD-10710,MFG-06,Great Lakes Plant,Detroit,MI,48249,Acme Distribution,Nashville,TN,37279,2386 Oak Ave,2026-02-20,2026-03-01,8671.07,20,shipped
+ORD-10711,MFG-03,Northeast Plant,Philadelphia,PA,19117,Central LLC,San Diego,CA,92174,9167 Warehouse Rd,2026-02-23,2026-02-27,5005.87,12,picked
+ORD-10712,MFG-06,Great Lakes Plant,Detroit,MI,48234,First Services,Seattle,WA,98198,7658 Parkway,2026-02-21,2026-03-03,14217.51,19,shipped
+ORD-10713,MFG-06,Great Lakes Plant,Detroit,MI,48230,Fusion Co,Houston,TX,77068,692 Commerce Dr,2026-02-13,2026-02-28,5692.17,21,picked
+ORD-10714,MFG-04,Southeast Plant,Atlanta,GA,30371,Crown LLC,Austin,TX,78758,3364 Commerce Dr,2026-02-13,2026-02-28,395.82,12,shipped
+ORD-10715,MFG-03,Northeast Plant,Philadelphia,PA,19147,United Group,Charlotte,NC,28234,9596 Warehouse Rd,2026-02-14,2026-03-01,5098.2,1,shipped
+ORD-10716,MFG-03,Northeast Plant,Philadelphia,PA,19153,Pacific Services,Boston,MA,02141,2926 Oak Ave,2026-02-17,2026-02-27,22779.63,9,open
+ORD-10717,MFG-02,South Central DC,Dallas,TX,75253,Fusion Services,San Antonio,TX,78249,7475 Oak Ave,2026-02-22,2026-03-01,4408.29,22,delivered
+ORD-10718,MFG-02,South Central DC,Dallas,TX,75225,United Inc,Phoenix,AZ,85026,3108 Oak Ave,2026-02-22,2026-03-02,9450.24,23,delivered
+ORD-10719,MFG-04,Southeast Plant,Atlanta,GA,30378,Horizon Co,San Jose,CA,95129,5369 Oak Ave,2026-02-19,2026-02-27,21309.84,5,delivered
+ORD-10720,MFG-02,South Central DC,Dallas,TX,75270,Prime Solutions,Detroit,MI,48218,2744 Parkway,2026-02-25,2026-03-01,12539.91,12,shipped
+ORD-10721,MFG-08,Pacific Northwest DC,Seattle,WA,98173,United Services,Seattle,WA,98144,9523 Commerce Dr,2026-02-13,2026-03-02,5605.23,7,picked
+ORD-10722,MFG-04,Southeast Plant,Atlanta,GA,30349,Premier Group,Columbus,OH,43258,9362 Oak Ave,2026-02-22,2026-03-04,13831.22,9,confirmed
+ORD-10723,MFG-08,Pacific Northwest DC,Seattle,WA,98176,Vertex Services,Jacksonville,FL,32239,9568 Main St,2026-02-25,2026-03-01,8508.89,20,shipped
+ORD-10724,MFG-06,Great Lakes Plant,Detroit,MI,48273,Premier Group,Austin,TX,78744,6265 Main St,2026-02-23,2026-02-28,6750.78,8,open
+ORD-10725,MFG-02,South Central DC,Dallas,TX,75245,Prime Group,San Diego,CA,92122,1943 Main St,2026-02-13,2026-03-01,5127.62,18,picked
+ORD-10726,MFG-05,West Coast DC,Los Angeles,CA,90097,Elite Services,Dallas,TX,75234,9897 Oak Ave,2026-02-19,2026-03-04,19286.39,1,shipped
+ORD-10727,MFG-07,Southwest Plant,Phoenix,AZ,85084,Central Supply,New York,NY,10070,8400 Warehouse Rd,2026-02-16,2026-03-04,5805.33,13,delivered
+ORD-10728,MFG-04,Southeast Plant,Atlanta,GA,30376,Central Services,Nashville,TN,37280,7680 Highway 10,2026-02-24,2026-03-03,19829.08,11,shipped
+ORD-10729,MFG-07,Southwest Plant,Phoenix,AZ,85036,Acme Supply,Charlotte,NC,28267,9150 Main St,2026-02-16,2026-03-01,21862.69,19,shipped
+ORD-10730,MFG-06,Great Lakes Plant,Detroit,MI,48253,Acme Parts,San Diego,CA,92163,6975 Highway 10,2026-02-22,2026-03-03,13509.46,23,shipped
+ORD-10731,MFG-03,Northeast Plant,Philadelphia,PA,19129,Crown Services,Austin,TX,78782,9880 Parkway,2026-02-22,2026-03-02,5224.48,13,shipped
+ORD-10732,MFG-04,Southeast Plant,Atlanta,GA,30370,Metro Inc,Houston,TX,77052,9331 Commerce Dr,2026-02-20,2026-03-02,4409.88,3,delivered
+ORD-10733,MFG-08,Pacific Northwest DC,Seattle,WA,98113,Pioneer Inc,Philadelphia,PA,19135,1139 Commerce Dr,2026-02-17,2026-02-28,7383.97,8,delivered
+ORD-10734,MFG-06,Great Lakes Plant,Detroit,MI,48276,Crown Services,New York,NY,10031,5354 Warehouse Rd,2026-02-22,2026-03-04,4052.33,13,confirmed
+ORD-10735,MFG-08,Pacific Northwest DC,Seattle,WA,98118,Metro Components,Fort Worth,TX,76136,2129 Warehouse Rd,2026-02-20,2026-02-28,20474.72,14,delivered
+ORD-10736,MFG-05,West Coast DC,Los Angeles,CA,90085,Fusion Co,San Antonio,TX,78274,7520 Industrial Blvd,2026-02-13,2026-02-28,11226.43,5,delivered
+ORD-10737,MFG-06,Great Lakes Plant,Detroit,MI,48282,Elite Group,Seattle,WA,98168,7581 Parkway,2026-02-15,2026-02-27,16210.53,10,delivered
+ORD-10738,MFG-07,Southwest Plant,Phoenix,AZ,85088,Atlas LLC,Philadelphia,PA,19163,4082 Oak Ave,2026-02-23,2026-03-04,9708.93,15,delivered
+ORD-10739,MFG-07,Southwest Plant,Phoenix,AZ,85099,Central Supply,Los Angeles,CA,90040,2588 Industrial Blvd,2026-02-20,2026-03-04,22919.96,22,delivered
+ORD-10740,MFG-07,Southwest Plant,Phoenix,AZ,85080,Central Distribution,Houston,TX,77057,1254 Warehouse Rd,2026-02-25,2026-02-27,10340.89,11,picked
+ORD-10741,MFG-01,Midwest Plant,Chicago,IL,60669,Global Corp,New York,NY,10019,7568 Commerce Dr,2026-02-22,2026-03-01,10007.36,7,open
+ORD-10742,MFG-06,Great Lakes Plant,Detroit,MI,48295,National Corp,Charlotte,NC,28272,7559 Main St,2026-02-18,2026-02-27,23757.96,23,confirmed
+ORD-10743,MFG-03,Northeast Plant,Philadelphia,PA,19112,Acme Group,Detroit,MI,48222,2904 Industrial Blvd,2026-02-25,2026-02-27,9862.61,24,open
+ORD-10744,MFG-03,Northeast Plant,Philadelphia,PA,19166,Sterling LLC,Jacksonville,FL,32232,3550 Highway 10,2026-02-25,2026-02-27,11135.14,7,open
+ORD-10745,MFG-07,Southwest Plant,Phoenix,AZ,85098,Elite Co,San Jose,CA,95166,859 Parkway,2026-02-14,2026-02-27,19212.79,13,delivered
+ORD-10746,MFG-04,Southeast Plant,Atlanta,GA,30321,Global Corp,New York,NY,10063,458 Main St,2026-02-17,2026-03-01,16773.39,22,picked
+ORD-10747,MFG-03,Northeast Plant,Philadelphia,PA,19115,Crown Services,Columbus,OH,43275,1765 Warehouse Rd,2026-02-20,2026-02-28,15725.64,18,delivered
+ORD-10748,MFG-07,Southwest Plant,Phoenix,AZ,85025,Apex Co,San Diego,CA,92137,1735 Industrial Blvd,2026-02-17,2026-02-28,10143.17,1,shipped
+ORD-10749,MFG-08,Pacific Northwest DC,Seattle,WA,98138,First Supplies,Chicago,IL,60694,4563 Highway 10,2026-02-21,2026-03-02,1823.18,2,picked
+ORD-10750,MFG-02,South Central DC,Dallas,TX,75278,Pacific Solutions,Nashville,TN,37231,4128 Main St,2026-02-20,2026-03-02,17453.44,21,delivered
+ORD-10751,MFG-03,Northeast Plant,Philadelphia,PA,19191,Sterling Co,Austin,TX,78795,7900 Main St,2026-02-13,2026-03-01,22815.77,20,shipped
+ORD-10752,MFG-01,Midwest Plant,Chicago,IL,60639,Elite Supply,New York,NY,10088,2033 Industrial Blvd,2026-02-23,2026-02-28,15551.19,8,open
+ORD-10753,MFG-05,West Coast DC,Los Angeles,CA,90035,Prime Corp,Phoenix,AZ,85058,3349 Highway 10,2026-02-18,2026-02-27,15012.17,24,delivered
+ORD-10754,MFG-05,West Coast DC,Los Angeles,CA,90050,Prime Co,Los Angeles,CA,90076,6798 Highway 10,2026-02-20,2026-03-03,5840.9,1,delivered
+ORD-10755,MFG-04,Southeast Plant,Atlanta,GA,30379,Metro Supply,Los Angeles,CA,90095,4069 Warehouse Rd,2026-02-18,2026-03-03,21836.74,20,delivered
+ORD-10756,MFG-01,Midwest Plant,Chicago,IL,60618,Crown Co,Seattle,WA,98118,3154 Main St,2026-02-16,2026-03-02,3270.19,7,picked
+ORD-10757,MFG-04,Southeast Plant,Atlanta,GA,30374,First Group,Chicago,IL,60664,7653 Industrial Blvd,2026-02-17,2026-02-27,10686.82,8,delivered
+ORD-10758,MFG-08,Pacific Northwest DC,Seattle,WA,98191,Vertex Distribution,San Antonio,TX,78244,7884 Main St,2026-02-21,2026-03-04,9536.28,13,shipped
+ORD-10759,MFG-07,Southwest Plant,Phoenix,AZ,85029,Metro Group,Seattle,WA,98112,6250 Commerce Dr,2026-02-15,2026-03-04,14940.31,10,picked
+ORD-10760,MFG-07,Southwest Plant,Phoenix,AZ,85069,Central Corp,San Jose,CA,95168,4641 Commerce Dr,2026-02-24,2026-03-02,8430.87,3,delivered
+ORD-10761,MFG-04,Southeast Plant,Atlanta,GA,30310,Horizon Group,New York,NY,10074,6132 Commerce Dr,2026-02-23,2026-03-01,24266.74,13,shipped
+ORD-10762,MFG-02,South Central DC,Dallas,TX,75262,Elite Distribution,Los Angeles,CA,90025,6305 Parkway,2026-02-17,2026-02-27,23933.86,14,delivered
+ORD-10763,MFG-08,Pacific Northwest DC,Seattle,WA,98191,Elite Inc,Jacksonville,FL,32299,946 Highway 10,2026-02-23,2026-03-01,6282.78,24,shipped
+ORD-10764,MFG-03,Northeast Plant,Philadelphia,PA,19143,Apex Services,Detroit,MI,48268,2415 Industrial Blvd,2026-02-16,2026-02-28,3050.76,1,confirmed
+ORD-10765,MFG-02,South Central DC,Dallas,TX,75276,Apex Equipment,San Antonio,TX,78264,2717 Warehouse Rd,2026-02-19,2026-03-01,7660.16,23,delivered
+ORD-10766,MFG-07,Southwest Plant,Phoenix,AZ,85021,Apex Group,Houston,TX,77091,9382 Warehouse Rd,2026-02-21,2026-03-03,6835.18,5,picked
+ORD-10767,MFG-01,Midwest Plant,Chicago,IL,60631,Vertex Corp,Seattle,WA,98110,1588 Main St,2026-02-23,2026-03-03,10508.53,17,shipped
+ORD-10768,MFG-03,Northeast Plant,Philadelphia,PA,19157,Metro Co,Philadelphia,PA,19127,3245 Commerce Dr,2026-02-25,2026-02-28,11348.92,4,delivered
+ORD-10769,MFG-01,Midwest Plant,Chicago,IL,60633,Apex LLC,San Antonio,TX,78243,6698 Commerce Dr,2026-02-15,2026-03-02,4278.23,21,shipped
+ORD-10770,MFG-05,West Coast DC,Los Angeles,CA,90018,National Inc,Austin,TX,78713,9596 Oak Ave,2026-02-24,2026-03-01,19049.26,22,open
+ORD-10771,MFG-01,Midwest Plant,Chicago,IL,60622,Prime Supplies,San Antonio,TX,78276,119 Commerce Dr,2026-02-25,2026-03-02,23313.39,9,shipped
+ORD-10772,MFG-06,Great Lakes Plant,Detroit,MI,48257,Prime LLC,Austin,TX,78750,3926 Industrial Blvd,2026-02-22,2026-03-03,15328.61,13,delivered
+ORD-10773,MFG-01,Midwest Plant,Chicago,IL,60668,United Solutions,Fort Worth,TX,76127,421 Parkway,2026-02-25,2026-02-27,23783.89,9,delivered
+ORD-10774,MFG-08,Pacific Northwest DC,Seattle,WA,98189,Acme Solutions,Seattle,WA,98175,6769 Highway 10,2026-02-13,2026-02-28,23945.05,21,delivered
+ORD-10775,MFG-01,Midwest Plant,Chicago,IL,60651,Horizon LLC,Charlotte,NC,28239,9942 Commerce Dr,2026-02-14,2026-03-01,10783.72,12,delivered
+ORD-10776,MFG-07,Southwest Plant,Phoenix,AZ,85047,First Distribution,Detroit,MI,48234,2346 Warehouse Rd,2026-02-25,2026-03-02,3327.35,2,delivered
+ORD-10777,MFG-08,Pacific Northwest DC,Seattle,WA,98131,Premier LLC,Charlotte,NC,28224,7900 Highway 10,2026-02-18,2026-03-02,5409.27,8,delivered
+ORD-10778,MFG-07,Southwest Plant,Phoenix,AZ,85013,Global Corp,Philadelphia,PA,19151,6284 Warehouse Rd,2026-02-18,2026-02-28,6552.07,24,shipped
+ORD-10779,MFG-08,Pacific Northwest DC,Seattle,WA,98121,Apex Distribution,Austin,TX,78738,9437 Warehouse Rd,2026-02-14,2026-03-04,8679.16,21,delivered
+ORD-10780,MFG-07,Southwest Plant,Phoenix,AZ,85039,Central LLC,San Diego,CA,92143,1896 Industrial Blvd,2026-02-15,2026-02-27,8604.91,3,delivered
+ORD-10781,MFG-06,Great Lakes Plant,Detroit,MI,48226,Apex Services,Austin,TX,78758,9453 Highway 10,2026-02-20,2026-02-27,14812.99,2,picked
+ORD-10782,MFG-06,Great Lakes Plant,Detroit,MI,48256,Prime Corp,Phoenix,AZ,85076,9857 Parkway,2026-02-15,2026-02-28,378.33,13,delivered
+ORD-10783,MFG-05,West Coast DC,Los Angeles,CA,90038,Summit Equipment,Seattle,WA,98197,7468 Oak Ave,2026-02-19,2026-03-02,18714.44,5,delivered
+ORD-10784,MFG-05,West Coast DC,Los Angeles,CA,90074,Summit Solutions,Houston,TX,77045,9404 Commerce Dr,2026-02-18,2026-03-02,7393.65,16,delivered
+ORD-10785,MFG-03,Northeast Plant,Philadelphia,PA,19136,Metro Inc,San Diego,CA,92199,862 Warehouse Rd,2026-02-17,2026-03-03,18225.78,16,shipped
+ORD-10786,MFG-07,Southwest Plant,Phoenix,AZ,85053,First Co,Columbus,OH,43296,7757 Industrial Blvd,2026-02-22,2026-03-03,1934.81,13,delivered
+ORD-10787,MFG-07,Southwest Plant,Phoenix,AZ,85022,Atlas Corp,Phoenix,AZ,85051,9510 Warehouse Rd,2026-02-14,2026-03-03,7706.24,23,delivered
+ORD-10788,MFG-08,Pacific Northwest DC,Seattle,WA,98199,Atlas LLC,Seattle,WA,98147,2373 Oak Ave,2026-02-17,2026-02-28,16333.26,24,shipped
+ORD-10789,MFG-03,Northeast Plant,Philadelphia,PA,19158,Sterling Solutions,Columbus,OH,43296,2757 Main St,2026-02-21,2026-02-27,4613.88,16,open
+ORD-10790,MFG-07,Southwest Plant,Phoenix,AZ,85029,Metro Services,Fort Worth,TX,76141,557 Main St,2026-02-22,2026-02-28,7671.84,16,delivered
+ORD-10791,MFG-02,South Central DC,Dallas,TX,75269,Sterling Co,Fort Worth,TX,76145,7293 Industrial Blvd,2026-02-15,2026-02-27,2203.53,4,shipped
+ORD-10792,MFG-01,Midwest Plant,Chicago,IL,60685,Vertex Group,Nashville,TN,37283,7857 Industrial Blvd,2026-02-15,2026-03-03,4650.25,19,shipped
+ORD-10793,MFG-03,Northeast Plant,Philadelphia,PA,19122,Sterling Supply,Austin,TX,78718,8807 Oak Ave,2026-02-13,2026-03-01,13968.1,13,delivered
+ORD-10794,MFG-02,South Central DC,Dallas,TX,75276,Fusion Corp,Nashville,TN,37278,2034 Warehouse Rd,2026-02-18,2026-03-03,22455.42,22,picked
+ORD-10795,MFG-01,Midwest Plant,Chicago,IL,60681,Summit LLC,Charlotte,NC,28250,2016 Main St,2026-02-18,2026-02-27,4156.08,21,delivered
+ORD-10796,MFG-02,South Central DC,Dallas,TX,75274,Sterling Group,San Jose,CA,95156,8920 Oak Ave,2026-02-13,2026-03-01,7619.91,8,delivered
+ORD-10797,MFG-08,Pacific Northwest DC,Seattle,WA,98127,Global Inc,Nashville,TN,37272,5128 Parkway,2026-02-21,2026-03-04,13524.51,20,picked
+ORD-10798,MFG-04,Southeast Plant,Atlanta,GA,30314,Elite Group,San Antonio,TX,78228,4911 Warehouse Rd,2026-02-18,2026-03-04,15113.29,5,picked
+ORD-10799,MFG-03,Northeast Plant,Philadelphia,PA,19189,Premier Group,Columbus,OH,43219,9009 Industrial Blvd,2026-02-22,2026-02-28,22605.95,21,shipped
+ORD-10800,MFG-07,Southwest Plant,Phoenix,AZ,85098,Elite Goods,Phoenix,AZ,85078,3339 Main St,2026-02-19,2026-03-02,17465.55,21,picked
+ORD-10801,MFG-03,Northeast Plant,Philadelphia,PA,19163,Crown Services,Phoenix,AZ,85050,7105 Commerce Dr,2026-02-19,2026-02-27,6862.61,3,delivered
+ORD-10802,MFG-02,South Central DC,Dallas,TX,75252,United Services,Chicago,IL,60656,5465 Warehouse Rd,2026-02-16,2026-02-28,6950.12,8,confirmed
+ORD-10803,MFG-02,South Central DC,Dallas,TX,75225,First Distribution,Philadelphia,PA,19177,5023 Parkway,2026-02-24,2026-03-03,13294.66,4,delivered
+ORD-10804,MFG-05,West Coast DC,Los Angeles,CA,90087,Crown Distribution,Houston,TX,77016,2798 Industrial Blvd,2026-02-22,2026-03-04,8727.55,6,delivered
+ORD-10805,MFG-07,Southwest Plant,Phoenix,AZ,85071,Apex Goods,Nashville,TN,37226,4245 Main St,2026-02-25,2026-03-03,4013.96,23,confirmed
+ORD-10806,MFG-05,West Coast DC,Los Angeles,CA,90016,Pioneer Distribution,Jacksonville,FL,32241,9973 Commerce Dr,2026-02-24,2026-03-03,11058.16,6,shipped
+ORD-10807,MFG-05,West Coast DC,Los Angeles,CA,90045,Premier LLC,Columbus,OH,43276,3749 Industrial Blvd,2026-02-15,2026-03-02,10251.89,10,shipped
+ORD-10808,MFG-02,South Central DC,Dallas,TX,75240,Acme Services,Chicago,IL,60631,9426 Main St,2026-02-19,2026-02-27,23250.29,18,delivered
+ORD-10809,MFG-03,Northeast Plant,Philadelphia,PA,19171,Acme Services,Seattle,WA,98175,8723 Highway 10,2026-02-22,2026-02-27,15464.72,1,delivered
+ORD-10810,MFG-06,Great Lakes Plant,Detroit,MI,48241,Sterling Co,Denver,CO,80297,9982 Main St,2026-02-23,2026-03-02,16911.88,6,delivered
+ORD-10811,MFG-03,Northeast Plant,Philadelphia,PA,19119,Global Solutions,Jacksonville,FL,32227,8417 Industrial Blvd,2026-02-14,2026-03-04,12463.37,14,picked
+ORD-10812,MFG-04,Southeast Plant,Atlanta,GA,30379,Apex Co,Houston,TX,77047,4902 Commerce Dr,2026-02-19,2026-02-28,205.52,7,delivered
+ORD-10813,MFG-05,West Coast DC,Los Angeles,CA,90092,Prime Group,Denver,CO,80214,7587 Parkway,2026-02-24,2026-03-04,8990.24,2,delivered
+ORD-10814,MFG-06,Great Lakes Plant,Detroit,MI,48223,Sterling Distribution,New York,NY,10054,3051 Commerce Dr,2026-02-13,2026-03-01,10855.47,4,picked
+ORD-10815,MFG-03,Northeast Plant,Philadelphia,PA,19162,Elite Services,Houston,TX,77072,114 Oak Ave,2026-02-19,2026-03-03,11846.86,8,shipped
+ORD-10816,MFG-03,Northeast Plant,Philadelphia,PA,19178,Acme Solutions,Dallas,TX,75223,7186 Highway 10,2026-02-23,2026-03-04,3625.88,6,delivered
+ORD-10817,MFG-04,Southeast Plant,Atlanta,GA,30324,Central Supply,San Antonio,TX,78246,660 Oak Ave,2026-02-23,2026-03-01,8380.66,24,open
+ORD-10818,MFG-05,West Coast DC,Los Angeles,CA,90025,Apex Distribution,Columbus,OH,43272,9014 Commerce Dr,2026-02-16,2026-03-03,18814.58,11,delivered
+ORD-10819,MFG-07,Southwest Plant,Phoenix,AZ,85026,Summit Solutions,Houston,TX,77023,347 Oak Ave,2026-02-21,2026-02-27,489.18,17,delivered
+ORD-10820,MFG-07,Southwest Plant,Phoenix,AZ,85086,Pacific Distribution,New York,NY,10065,7868 Industrial Blvd,2026-02-24,2026-02-28,19058.36,3,picked
+ORD-10821,MFG-03,Northeast Plant,Philadelphia,PA,19141,Global Distribution,Dallas,TX,75224,4318 Highway 10,2026-02-23,2026-02-28,11926.24,7,delivered
+ORD-10822,MFG-03,Northeast Plant,Philadelphia,PA,19134,Pacific Services,Nashville,TN,37290,2437 Oak Ave,2026-02-16,2026-02-27,1103.41,13,delivered
+ORD-10823,MFG-01,Midwest Plant,Chicago,IL,60688,United Solutions,San Antonio,TX,78221,835 Commerce Dr,2026-02-25,2026-03-01,17548.95,10,delivered
+ORD-10824,MFG-07,Southwest Plant,Phoenix,AZ,85071,Elite Services,Los Angeles,CA,90075,6998 Highway 10,2026-02-20,2026-02-27,6840.77,4,shipped
+ORD-10825,MFG-04,Southeast Plant,Atlanta,GA,30350,Fusion LLC,Los Angeles,CA,90033,670 Main St,2026-02-20,2026-02-27,7240.13,7,shipped
+ORD-10826,MFG-07,Southwest Plant,Phoenix,AZ,85033,Pacific Solutions,Dallas,TX,75272,5957 Industrial Blvd,2026-02-15,2026-02-28,16773.35,4,delivered
+ORD-10827,MFG-06,Great Lakes Plant,Detroit,MI,48256,Global Corp,Nashville,TN,37277,9908 Industrial Blvd,2026-02-19,2026-02-28,14670.53,7,confirmed
+ORD-10828,MFG-02,South Central DC,Dallas,TX,75215,Prime Group,Nashville,TN,37293,3121 Oak Ave,2026-02-23,2026-03-03,2010.76,4,delivered
+ORD-10829,MFG-08,Pacific Northwest DC,Seattle,WA,98135,Crown Solutions,Boston,MA,02129,718 Oak Ave,2026-02-23,2026-02-28,17833.34,18,delivered
+ORD-10830,MFG-06,Great Lakes Plant,Detroit,MI,48267,National Corp,Houston,TX,77065,1110 Commerce Dr,2026-02-25,2026-03-01,19803.5,17,picked
+ORD-10831,MFG-05,West Coast DC,Los Angeles,CA,90015,Premier Corp,Nashville,TN,37217,3117 Highway 10,2026-02-22,2026-03-03,17164.65,16,delivered
+ORD-10832,MFG-08,Pacific Northwest DC,Seattle,WA,98175,Central Goods,Fort Worth,TX,76181,6394 Commerce Dr,2026-02-19,2026-03-02,4724.05,7,picked
+ORD-10833,MFG-01,Midwest Plant,Chicago,IL,60675,Metro Co,Charlotte,NC,28274,8603 Industrial Blvd,2026-02-18,2026-02-28,17750.13,10,delivered
+ORD-10834,MFG-01,Midwest Plant,Chicago,IL,60678,United Co,San Diego,CA,92147,641 Highway 10,2026-02-19,2026-02-27,6870.31,5,delivered
+ORD-10835,MFG-02,South Central DC,Dallas,TX,75210,Pacific Services,Jacksonville,FL,32290,9915 Industrial Blvd,2026-02-15,2026-02-28,22117.06,23,shipped
+ORD-10836,MFG-05,West Coast DC,Los Angeles,CA,90051,Acme Distribution,Los Angeles,CA,90090,171 Warehouse Rd,2026-02-18,2026-03-01,24135.9,24,picked
+ORD-10837,MFG-02,South Central DC,Dallas,TX,75298,Atlas Services,Fort Worth,TX,76193,4217 Warehouse Rd,2026-02-18,2026-03-02,5632.88,15,shipped
+ORD-10838,MFG-03,Northeast Plant,Philadelphia,PA,19167,Metro Co,San Diego,CA,92165,6040 Oak Ave,2026-02-24,2026-03-04,12474.64,3,shipped
+ORD-10839,MFG-08,Pacific Northwest DC,Seattle,WA,98133,Pacific LLC,San Jose,CA,95112,5082 Oak Ave,2026-02-17,2026-03-04,17231.07,13,picked
+ORD-10840,MFG-07,Southwest Plant,Phoenix,AZ,85041,Fusion LLC,Charlotte,NC,28292,6595 Main St,2026-02-25,2026-03-03,18210.1,5,delivered
+ORD-10841,MFG-07,Southwest Plant,Phoenix,AZ,85059,Pacific Parts,New York,NY,10024,223 Warehouse Rd,2026-02-14,2026-03-04,6321.32,5,confirmed
+ORD-10842,MFG-01,Midwest Plant,Chicago,IL,60623,First Solutions,Boston,MA,02153,1393 Oak Ave,2026-02-24,2026-02-27,22325.9,19,delivered
+ORD-10843,MFG-08,Pacific Northwest DC,Seattle,WA,98129,First LLC,San Diego,CA,92117,8906 Highway 10,2026-02-15,2026-02-28,20649.38,1,confirmed
+ORD-10844,MFG-07,Southwest Plant,Phoenix,AZ,85028,Apex LLC,New York,NY,10038,394 Oak Ave,2026-02-22,2026-03-01,8929.75,5,shipped
+ORD-10845,MFG-08,Pacific Northwest DC,Seattle,WA,98131,Premier Inc,Houston,TX,77038,1667 Industrial Blvd,2026-02-14,2026-03-01,8443.06,20,shipped
+ORD-10846,MFG-03,Northeast Plant,Philadelphia,PA,19132,Fusion Group,Columbus,OH,43277,5487 Parkway,2026-02-23,2026-02-28,22343.97,5,delivered
+ORD-10847,MFG-06,Great Lakes Plant,Detroit,MI,48223,Pacific Solutions,Dallas,TX,75273,6048 Industrial Blvd,2026-02-14,2026-03-03,21563.59,1,delivered
+ORD-10848,MFG-03,Northeast Plant,Philadelphia,PA,19159,Pacific Corp,Charlotte,NC,28271,1103 Main St,2026-02-23,2026-03-02,7070.13,24,confirmed
+ORD-10849,MFG-07,Southwest Plant,Phoenix,AZ,85055,United Services,Austin,TX,78773,6945 Commerce Dr,2026-02-23,2026-03-03,19868.51,20,shipped
+ORD-10850,MFG-07,Southwest Plant,Phoenix,AZ,85080,Sterling Goods,Seattle,WA,98178,8746 Commerce Dr,2026-02-18,2026-03-02,2227.9,13,delivered
+ORD-10851,MFG-04,Southeast Plant,Atlanta,GA,30399,Global Inc,Chicago,IL,60640,5927 Main St,2026-02-13,2026-02-28,14025.61,12,delivered
+ORD-10852,MFG-06,Great Lakes Plant,Detroit,MI,48256,Pacific LLC,Phoenix,AZ,85047,7544 Oak Ave,2026-02-23,2026-03-04,5386.82,8,picked
+ORD-10853,MFG-03,Northeast Plant,Philadelphia,PA,19158,Fusion Corp,New York,NY,10099,6959 Industrial Blvd,2026-02-15,2026-02-27,14602.94,22,shipped
+ORD-10854,MFG-01,Midwest Plant,Chicago,IL,60628,Metro Supply,Jacksonville,FL,32228,1295 Oak Ave,2026-02-13,2026-02-27,20802.04,19,shipped
+ORD-10855,MFG-03,Northeast Plant,Philadelphia,PA,19177,Pacific Inc,San Jose,CA,95170,6743 Highway 10,2026-02-23,2026-03-01,17426.89,21,shipped
+ORD-10856,MFG-01,Midwest Plant,Chicago,IL,60687,National Components,Philadelphia,PA,19174,2628 Main St,2026-02-23,2026-03-01,23713.81,22,shipped
+ORD-10857,MFG-05,West Coast DC,Los Angeles,CA,90039,Summit Co,Columbus,OH,43230,4454 Main St,2026-02-22,2026-03-02,18616.9,5,shipped
+ORD-10858,MFG-07,Southwest Plant,Phoenix,AZ,85033,Apex Corp,Boston,MA,02187,1265 Warehouse Rd,2026-02-24,2026-03-03,7932.76,16,delivered
+ORD-10859,MFG-01,Midwest Plant,Chicago,IL,60657,Acme Co,Columbus,OH,43234,4423 Main St,2026-02-14,2026-02-27,15139.28,12,delivered
+ORD-10860,MFG-05,West Coast DC,Los Angeles,CA,90030,Summit Co,Boston,MA,02123,1071 Oak Ave,2026-02-13,2026-03-02,4815.43,10,picked
+ORD-10861,MFG-05,West Coast DC,Los Angeles,CA,90020,First Inc,Nashville,TN,37282,736 Parkway,2026-02-24,2026-03-04,1344.02,2,confirmed
+ORD-10862,MFG-06,Great Lakes Plant,Detroit,MI,48246,Global Solutions,Fort Worth,TX,76174,3193 Industrial Blvd,2026-02-22,2026-03-03,8992.56,24,confirmed
+ORD-10863,MFG-07,Southwest Plant,Phoenix,AZ,85074,First Corp,Houston,TX,77074,2461 Main St,2026-02-22,2026-03-02,14721.0,16,delivered
+ORD-10864,MFG-03,Northeast Plant,Philadelphia,PA,19197,Metro Distribution,Charlotte,NC,28220,1529 Highway 10,2026-02-18,2026-02-28,16407.37,22,delivered
+ORD-10865,MFG-06,Great Lakes Plant,Detroit,MI,48267,Apex Co,Phoenix,AZ,85053,4766 Industrial Blvd,2026-02-23,2026-03-02,22283.4,2,delivered
+ORD-10866,MFG-04,Southeast Plant,Atlanta,GA,30388,First Distribution,Detroit,MI,48219,2497 Parkway,2026-02-25,2026-03-02,20147.45,4,confirmed
+ORD-10867,MFG-02,South Central DC,Dallas,TX,75273,Elite LLC,Houston,TX,77068,5140 Oak Ave,2026-02-20,2026-03-04,1843.82,6,delivered
+ORD-10868,MFG-02,South Central DC,Dallas,TX,75232,Atlas Supply,Charlotte,NC,28243,7754 Industrial Blvd,2026-02-23,2026-03-03,23115.4,21,delivered
+ORD-10869,MFG-01,Midwest Plant,Chicago,IL,60656,Prime Solutions,San Jose,CA,95161,6702 Warehouse Rd,2026-02-16,2026-03-02,9263.3,15,delivered
+ORD-10870,MFG-02,South Central DC,Dallas,TX,75297,United Distribution,Columbus,OH,43274,7375 Industrial Blvd,2026-02-14,2026-03-04,24439.18,20,open
+ORD-10871,MFG-01,Midwest Plant,Chicago,IL,60629,Premier Solutions,Houston,TX,77047,6158 Oak Ave,2026-02-22,2026-03-02,5692.82,3,delivered
+ORD-10872,MFG-08,Pacific Northwest DC,Seattle,WA,98169,Prime LLC,Boston,MA,02169,1788 Main St,2026-02-15,2026-02-28,19240.18,13,picked
+ORD-10873,MFG-06,Great Lakes Plant,Detroit,MI,48253,Pacific Supply,Detroit,MI,48272,3484 Highway 10,2026-02-24,2026-03-03,7067.62,4,open
+ORD-10874,MFG-03,Northeast Plant,Philadelphia,PA,19191,Vertex Supply,San Antonio,TX,78250,9310 Main St,2026-02-22,2026-03-04,23421.02,2,shipped
+ORD-10875,MFG-04,Southeast Plant,Atlanta,GA,30316,Premier Group,San Antonio,TX,78212,6930 Industrial Blvd,2026-02-17,2026-02-28,3672.19,3,shipped
+ORD-10876,MFG-08,Pacific Northwest DC,Seattle,WA,98163,First Corp,Denver,CO,80237,4251 Oak Ave,2026-02-14,2026-03-04,22389.67,3,shipped
+ORD-10877,MFG-04,Southeast Plant,Atlanta,GA,30354,Atlas Services,Columbus,OH,43271,7791 Parkway,2026-02-16,2026-03-03,11004.08,23,delivered
+ORD-10878,MFG-01,Midwest Plant,Chicago,IL,60681,Prime Inc,Detroit,MI,48235,1275 Highway 10,2026-02-16,2026-03-03,16651.96,11,delivered
+ORD-10879,MFG-03,Northeast Plant,Philadelphia,PA,19168,Pioneer Corp,Phoenix,AZ,85073,5185 Main St,2026-02-22,2026-03-03,13089.19,9,open
+ORD-10880,MFG-08,Pacific Northwest DC,Seattle,WA,98191,Fusion Services,Nashville,TN,37222,598 Oak Ave,2026-02-17,2026-03-03,17456.69,14,delivered
+ORD-10881,MFG-04,Southeast Plant,Atlanta,GA,30354,Global Supply,San Antonio,TX,78234,9451 Main St,2026-02-21,2026-03-01,7653.32,1,shipped
+ORD-10882,MFG-08,Pacific Northwest DC,Seattle,WA,98162,Metro Supply,Columbus,OH,43255,5771 Warehouse Rd,2026-02-23,2026-03-02,24355.64,17,shipped
+ORD-10883,MFG-07,Southwest Plant,Phoenix,AZ,85057,Vertex Group,Philadelphia,PA,19180,9747 Oak Ave,2026-02-23,2026-03-02,7232.94,13,delivered
+ORD-10884,MFG-02,South Central DC,Dallas,TX,75221,Crown LLC,Houston,TX,77021,270 Parkway,2026-02-22,2026-03-04,12485.66,4,delivered
+ORD-10885,MFG-08,Pacific Northwest DC,Seattle,WA,98174,Global Co,Nashville,TN,37214,4750 Warehouse Rd,2026-02-18,2026-03-01,19455.47,8,delivered
+ORD-10886,MFG-08,Pacific Northwest DC,Seattle,WA,98125,Sterling Group,Jacksonville,FL,32269,6766 Warehouse Rd,2026-02-22,2026-03-02,23499.48,1,delivered
+ORD-10887,MFG-05,West Coast DC,Los Angeles,CA,90094,Elite Distribution,Dallas,TX,75249,6795 Highway 10,2026-02-13,2026-02-28,961.96,14,open
+ORD-10888,MFG-06,Great Lakes Plant,Detroit,MI,48252,Summit Supplies,Philadelphia,PA,19183,7046 Oak Ave,2026-02-22,2026-03-02,15464.26,7,shipped
+ORD-10889,MFG-03,Northeast Plant,Philadelphia,PA,19191,Pacific Distribution,Fort Worth,TX,76132,6605 Industrial Blvd,2026-02-16,2026-03-02,5889.59,14,delivered
+ORD-10890,MFG-02,South Central DC,Dallas,TX,75290,Vertex Inc,Nashville,TN,37260,4264 Warehouse Rd,2026-02-16,2026-03-02,5213.5,11,confirmed
+ORD-10891,MFG-03,Northeast Plant,Philadelphia,PA,19113,Elite Corp,Detroit,MI,48279,1291 Parkway,2026-02-13,2026-03-01,18394.1,24,delivered
+ORD-10892,MFG-04,Southeast Plant,Atlanta,GA,30393,National Inc,San Diego,CA,92148,3176 Parkway,2026-02-18,2026-03-04,19533.72,24,delivered
+ORD-10893,MFG-05,West Coast DC,Los Angeles,CA,90020,Global Corp,Phoenix,AZ,85090,380 Highway 10,2026-02-15,2026-03-04,11559.32,4,delivered
+ORD-10894,MFG-05,West Coast DC,Los Angeles,CA,90043,Acme Services,Philadelphia,PA,19121,1268 Commerce Dr,2026-02-21,2026-03-04,9861.39,7,shipped
+ORD-10895,MFG-02,South Central DC,Dallas,TX,75272,Metro Group,Chicago,IL,60636,6880 Commerce Dr,2026-02-20,2026-03-04,22721.31,21,delivered
+ORD-10896,MFG-01,Midwest Plant,Chicago,IL,60632,Fusion Components,Nashville,TN,37290,9940 Warehouse Rd,2026-02-15,2026-02-27,24844.43,11,shipped
+ORD-10897,MFG-01,Midwest Plant,Chicago,IL,60630,Pacific Co,Denver,CO,80242,1993 Oak Ave,2026-02-13,2026-03-02,722.5,18,delivered
+ORD-10898,MFG-06,Great Lakes Plant,Detroit,MI,48224,National Supply,San Antonio,TX,78213,5367 Oak Ave,2026-02-15,2026-02-28,17336.3,24,confirmed
+ORD-10899,MFG-04,Southeast Plant,Atlanta,GA,30321,Central Group,Jacksonville,FL,32280,4823 Commerce Dr,2026-02-25,2026-03-03,12889.52,14,shipped
+ORD-10900,MFG-03,Northeast Plant,Philadelphia,PA,19135,Horizon Services,Dallas,TX,75260,1686 Parkway,2026-02-20,2026-03-03,19883.37,6,delivered
+ORD-10901,MFG-08,Pacific Northwest DC,Seattle,WA,98164,Premier Supply,Detroit,MI,48244,5223 Parkway,2026-02-22,2026-02-27,5113.06,14,shipped
+ORD-10902,MFG-03,Northeast Plant,Philadelphia,PA,19114,Prime Services,Denver,CO,80242,9616 Commerce Dr,2026-02-25,2026-02-28,10047.92,12,confirmed
+ORD-10903,MFG-03,Northeast Plant,Philadelphia,PA,19155,Prime Inc,San Diego,CA,92119,3526 Highway 10,2026-02-22,2026-03-01,19520.94,5,confirmed
+ORD-10904,MFG-06,Great Lakes Plant,Detroit,MI,48237,Central LLC,Charlotte,NC,28282,5269 Oak Ave,2026-02-14,2026-03-02,7197.81,13,picked
+ORD-10905,MFG-05,West Coast DC,Los Angeles,CA,90087,Summit Supply,Chicago,IL,60683,6910 Highway 10,2026-02-23,2026-03-03,20362.85,11,picked
+ORD-10906,MFG-08,Pacific Northwest DC,Seattle,WA,98115,Atlas Inc,Dallas,TX,75263,1954 Main St,2026-02-17,2026-03-01,8272.84,20,shipped
+ORD-10907,MFG-05,West Coast DC,Los Angeles,CA,90012,Summit Solutions,Nashville,TN,37210,7566 Industrial Blvd,2026-02-22,2026-02-27,22411.36,2,delivered
+ORD-10908,MFG-01,Midwest Plant,Chicago,IL,60618,Crown Solutions,Seattle,WA,98122,6801 Highway 10,2026-02-19,2026-02-28,18879.25,11,shipped
+ORD-10909,MFG-08,Pacific Northwest DC,Seattle,WA,98188,Global Solutions,Los Angeles,CA,90060,4890 Highway 10,2026-02-24,2026-03-04,21239.51,16,delivered
+ORD-10910,MFG-02,South Central DC,Dallas,TX,75213,Premier Co,San Diego,CA,92116,171 Oak Ave,2026-02-20,2026-02-27,18147.7,23,picked
+ORD-10911,MFG-06,Great Lakes Plant,Detroit,MI,48278,National Solutions,New York,NY,10098,861 Industrial Blvd,2026-02-14,2026-03-04,1342.88,4,shipped
+ORD-10912,MFG-07,Southwest Plant,Phoenix,AZ,85044,Vertex Supply,Philadelphia,PA,19127,9560 Commerce Dr,2026-02-16,2026-02-27,21568.09,11,delivered
+ORD-10913,MFG-02,South Central DC,Dallas,TX,75276,United LLC,Denver,CO,80240,9469 Commerce Dr,2026-02-24,2026-03-03,8149.5,9,delivered
+ORD-10914,MFG-05,West Coast DC,Los Angeles,CA,90047,Premier LLC,Chicago,IL,60655,9151 Warehouse Rd,2026-02-18,2026-03-04,16231.29,22,delivered
+ORD-10915,MFG-08,Pacific Northwest DC,Seattle,WA,98117,Atlas Distribution,San Antonio,TX,78211,3542 Commerce Dr,2026-02-22,2026-03-03,12267.99,7,shipped
+ORD-10916,MFG-06,Great Lakes Plant,Detroit,MI,48249,Pioneer Components,Charlotte,NC,28293,2524 Warehouse Rd,2026-02-15,2026-03-02,5586.8,5,shipped
+ORD-10917,MFG-04,Southeast Plant,Atlanta,GA,30361,Global LLC,San Antonio,TX,78218,4553 Commerce Dr,2026-02-20,2026-02-27,16262.32,19,confirmed
+ORD-10918,MFG-04,Southeast Plant,Atlanta,GA,30312,Crown LLC,Charlotte,NC,28233,4371 Main St,2026-02-25,2026-03-01,8896.13,15,confirmed
+ORD-10919,MFG-06,Great Lakes Plant,Detroit,MI,48265,Global Inc,San Antonio,TX,78229,6504 Parkway,2026-02-25,2026-03-01,1470.95,11,shipped
+ORD-10920,MFG-07,Southwest Plant,Phoenix,AZ,85064,Global Inc,San Antonio,TX,78247,3104 Commerce Dr,2026-02-19,2026-02-28,15245.09,17,delivered
+ORD-10921,MFG-04,Southeast Plant,Atlanta,GA,30324,United Goods,San Diego,CA,92124,871 Main St,2026-02-19,2026-03-02,1786.31,8,confirmed
+ORD-10922,MFG-07,Southwest Plant,Phoenix,AZ,85060,Elite Group,Fort Worth,TX,76122,3603 Highway 10,2026-02-19,2026-03-04,5261.78,16,delivered
+ORD-10923,MFG-05,West Coast DC,Los Angeles,CA,90010,United Corp,Houston,TX,77033,8246 Highway 10,2026-02-24,2026-03-02,7737.31,24,delivered
+ORD-10924,MFG-06,Great Lakes Plant,Detroit,MI,48297,Vertex Solutions,Chicago,IL,60631,3070 Industrial Blvd,2026-02-24,2026-03-04,24061.74,5,delivered
+ORD-10925,MFG-01,Midwest Plant,Chicago,IL,60632,Acme Supply,Dallas,TX,75219,2798 Highway 10,2026-02-13,2026-03-03,8900.77,20,shipped
+ORD-10926,MFG-04,Southeast Plant,Atlanta,GA,30370,Pacific LLC,Houston,TX,77015,285 Parkway,2026-02-20,2026-03-03,13202.94,8,picked
+ORD-10927,MFG-02,South Central DC,Dallas,TX,75248,Acme Solutions,Austin,TX,78767,8040 Highway 10,2026-02-19,2026-03-01,12239.36,22,shipped
+ORD-10928,MFG-05,West Coast DC,Los Angeles,CA,90052,Pacific Services,Denver,CO,80294,9761 Commerce Dr,2026-02-19,2026-02-27,13054.83,22,delivered
+ORD-10929,MFG-04,Southeast Plant,Atlanta,GA,30394,Apex LLC,Phoenix,AZ,85055,8157 Main St,2026-02-23,2026-02-28,5276.74,12,confirmed
+ORD-10930,MFG-05,West Coast DC,Los Angeles,CA,90090,National Group,Boston,MA,02167,8633 Oak Ave,2026-02-21,2026-02-28,9867.0,11,shipped
+ORD-10931,MFG-04,Southeast Plant,Atlanta,GA,30315,Elite Group,Nashville,TN,37276,5625 Warehouse Rd,2026-02-15,2026-03-02,19914.02,14,delivered
+ORD-10932,MFG-02,South Central DC,Dallas,TX,75211,Metro Group,Seattle,WA,98197,2411 Commerce Dr,2026-02-16,2026-03-03,24171.79,17,delivered
+ORD-10933,MFG-08,Pacific Northwest DC,Seattle,WA,98146,Horizon Group,Chicago,IL,60647,256 Commerce Dr,2026-02-18,2026-02-27,20662.94,10,confirmed
+ORD-10934,MFG-01,Midwest Plant,Chicago,IL,60665,Sterling Distribution,Jacksonville,FL,32294,11 Main St,2026-02-16,2026-02-28,21986.24,12,delivered
+ORD-10935,MFG-03,Northeast Plant,Philadelphia,PA,19121,Elite Co,Dallas,TX,75228,3224 Commerce Dr,2026-02-14,2026-03-02,5588.62,10,shipped
+ORD-10936,MFG-07,Southwest Plant,Phoenix,AZ,85064,Prime Materials,Fort Worth,TX,76122,4281 Industrial Blvd,2026-02-20,2026-03-02,14163.1,6,delivered
+ORD-10937,MFG-04,Southeast Plant,Atlanta,GA,30342,Pioneer Distribution,Phoenix,AZ,85063,9082 Oak Ave,2026-02-20,2026-02-28,7538.75,3,delivered
+ORD-10938,MFG-03,Northeast Plant,Philadelphia,PA,19158,Pioneer Solutions,Columbus,OH,43222,2271 Parkway,2026-02-20,2026-03-01,23381.76,17,delivered
+ORD-10939,MFG-07,Southwest Plant,Phoenix,AZ,85069,First Co,Columbus,OH,43262,7558 Main St,2026-02-13,2026-03-04,2347.46,14,confirmed
+ORD-10940,MFG-06,Great Lakes Plant,Detroit,MI,48226,Sterling Supply,Detroit,MI,48279,9267 Industrial Blvd,2026-02-22,2026-02-27,10163.11,5,open
+ORD-10941,MFG-01,Midwest Plant,Chicago,IL,60620,Summit LLC,Los Angeles,CA,90044,1754 Industrial Blvd,2026-02-15,2026-03-02,14201.27,10,delivered
+ORD-10942,MFG-01,Midwest Plant,Chicago,IL,60699,Pacific Group,San Antonio,TX,78276,2362 Parkway,2026-02-25,2026-03-03,5705.06,5,delivered
+ORD-10943,MFG-05,West Coast DC,Los Angeles,CA,90010,Global Co,Seattle,WA,98189,3289 Main St,2026-02-13,2026-02-27,15154.2,5,confirmed
+ORD-10944,MFG-04,Southeast Plant,Atlanta,GA,30323,Metro Co,Seattle,WA,98113,8288 Commerce Dr,2026-02-14,2026-03-01,7603.11,4,shipped
+ORD-10945,MFG-05,West Coast DC,Los Angeles,CA,90088,United Corp,Charlotte,NC,28294,2019 Commerce Dr,2026-02-13,2026-02-27,3670.9,6,delivered
+ORD-10946,MFG-04,Southeast Plant,Atlanta,GA,30370,Global Supply,Seattle,WA,98147,4743 Highway 10,2026-02-24,2026-02-27,16742.34,12,shipped
+ORD-10947,MFG-07,Southwest Plant,Phoenix,AZ,85064,Fusion Supply,Phoenix,AZ,85013,4644 Commerce Dr,2026-02-22,2026-02-27,14576.37,1,open
+ORD-10948,MFG-01,Midwest Plant,Chicago,IL,60655,Central Solutions,Phoenix,AZ,85069,7510 Industrial Blvd,2026-02-16,2026-02-27,12590.86,12,delivered
+ORD-10949,MFG-07,Southwest Plant,Phoenix,AZ,85075,National Group,Chicago,IL,60632,2481 Industrial Blvd,2026-02-21,2026-03-02,17922.28,15,delivered
+ORD-10950,MFG-07,Southwest Plant,Phoenix,AZ,85018,Sterling Group,Seattle,WA,98158,7730 Parkway,2026-02-17,2026-03-02,17756.23,19,delivered
+ORD-10951,MFG-03,Northeast Plant,Philadelphia,PA,19199,Metro Co,Austin,TX,78785,9515 Industrial Blvd,2026-02-22,2026-03-02,1266.49,3,delivered
+ORD-10952,MFG-02,South Central DC,Dallas,TX,75295,Metro Services,Houston,TX,77073,7806 Industrial Blvd,2026-02-18,2026-03-03,19920.78,24,confirmed
+ORD-10953,MFG-07,Southwest Plant,Phoenix,AZ,85018,Acme Corp,Los Angeles,CA,90088,4104 Main St,2026-02-14,2026-02-27,19119.3,15,delivered
+ORD-10954,MFG-06,Great Lakes Plant,Detroit,MI,48223,First Co,Charlotte,NC,28258,2183 Highway 10,2026-02-17,2026-03-02,6424.5,7,shipped
+ORD-10955,MFG-04,Southeast Plant,Atlanta,GA,30330,Summit Corp,Columbus,OH,43277,3151 Main St,2026-02-13,2026-03-02,24001.83,21,confirmed
+ORD-10956,MFG-01,Midwest Plant,Chicago,IL,60656,Sterling Supply,Columbus,OH,43282,8956 Warehouse Rd,2026-02-21,2026-02-27,17106.68,6,delivered
+ORD-10957,MFG-04,Southeast Plant,Atlanta,GA,30336,Premier Parts,Nashville,TN,37270,8206 Industrial Blvd,2026-02-16,2026-03-01,11056.12,3,delivered
+ORD-10958,MFG-03,Northeast Plant,Philadelphia,PA,19176,First Group,San Jose,CA,95122,1933 Commerce Dr,2026-02-14,2026-02-28,13582.37,20,open
+ORD-10959,MFG-07,Southwest Plant,Phoenix,AZ,85055,Apex Parts,Chicago,IL,60630,4720 Main St,2026-02-18,2026-03-02,23305.45,17,delivered
+ORD-10960,MFG-02,South Central DC,Dallas,TX,75284,Summit Corp,Seattle,WA,98143,492 Main St,2026-02-23,2026-03-01,5132.7,9,delivered
+ORD-10961,MFG-04,Southeast Plant,Atlanta,GA,30380,Summit Solutions,Austin,TX,78794,1022 Oak Ave,2026-02-14,2026-03-01,22622.45,19,delivered
+ORD-10962,MFG-02,South Central DC,Dallas,TX,75263,Horizon Distribution,Detroit,MI,48288,1321 Parkway,2026-02-16,2026-03-01,18124.74,9,confirmed
+ORD-10963,MFG-04,Southeast Plant,Atlanta,GA,30393,Central Distribution,Jacksonville,FL,32265,7825 Industrial Blvd,2026-02-18,2026-03-03,23291.48,1,open
+ORD-10964,MFG-07,Southwest Plant,Phoenix,AZ,85097,Crown Corp,New York,NY,10080,7900 Main St,2026-02-22,2026-03-01,3262.15,23,delivered
+ORD-10965,MFG-02,South Central DC,Dallas,TX,75266,Premier Parts,Houston,TX,77088,6025 Industrial Blvd,2026-02-21,2026-02-28,22964.0,14,picked
+ORD-10966,MFG-04,Southeast Plant,Atlanta,GA,30362,Metro Group,Boston,MA,02182,751 Warehouse Rd,2026-02-19,2026-02-27,2053.8,2,confirmed
+ORD-10967,MFG-01,Midwest Plant,Chicago,IL,60650,Premier Group,Jacksonville,FL,32287,4002 Industrial Blvd,2026-02-22,2026-02-27,16490.93,16,delivered
+ORD-10968,MFG-04,Southeast Plant,Atlanta,GA,30373,Sterling Group,Jacksonville,FL,32238,7267 Highway 10,2026-02-21,2026-02-28,7423.18,18,delivered
+ORD-10969,MFG-06,Great Lakes Plant,Detroit,MI,48299,Premier Co,Boston,MA,02174,1711 Main St,2026-02-22,2026-03-01,23771.5,23,shipped
+ORD-10970,MFG-03,Northeast Plant,Philadelphia,PA,19176,United Supply,San Diego,CA,92149,9060 Oak Ave,2026-02-22,2026-02-27,20437.04,24,confirmed
+ORD-10971,MFG-08,Pacific Northwest DC,Seattle,WA,98124,National Supplies,New York,NY,10073,554 Industrial Blvd,2026-02-22,2026-02-28,20705.39,10,confirmed
+ORD-10972,MFG-08,Pacific Northwest DC,Seattle,WA,98112,Summit Group,Fort Worth,TX,76159,7275 Main St,2026-02-17,2026-02-28,4733.01,13,shipped
+ORD-10973,MFG-01,Midwest Plant,Chicago,IL,60679,Acme Solutions,Jacksonville,FL,32213,9974 Warehouse Rd,2026-02-21,2026-03-04,20284.56,9,delivered
+ORD-10974,MFG-07,Southwest Plant,Phoenix,AZ,85064,Atlas Distribution,Los Angeles,CA,90023,9066 Commerce Dr,2026-02-19,2026-03-04,11668.04,18,delivered
+ORD-10975,MFG-05,West Coast DC,Los Angeles,CA,90030,Premier Co,Fort Worth,TX,76169,3904 Oak Ave,2026-02-13,2026-03-04,20019.78,9,delivered
+ORD-10976,MFG-05,West Coast DC,Los Angeles,CA,90053,Fusion Inc,Nashville,TN,37260,633 Parkway,2026-02-21,2026-02-28,16531.86,9,delivered
+ORD-10977,MFG-02,South Central DC,Dallas,TX,75249,Pioneer Inc,Nashville,TN,37294,5260 Warehouse Rd,2026-02-17,2026-02-28,11648.7,15,shipped
+ORD-10978,MFG-06,Great Lakes Plant,Detroit,MI,48271,Premier Supply,Boston,MA,02137,6695 Main St,2026-02-14,2026-03-02,22441.55,9,delivered
+ORD-10979,MFG-03,Northeast Plant,Philadelphia,PA,19143,United LLC,Dallas,TX,75243,8109 Oak Ave,2026-02-17,2026-02-28,21800.29,5,delivered
+ORD-10980,MFG-01,Midwest Plant,Chicago,IL,60633,National Inc,Denver,CO,80266,9501 Industrial Blvd,2026-02-18,2026-02-27,23799.84,2,delivered
+ORD-10981,MFG-06,Great Lakes Plant,Detroit,MI,48279,United Co,Los Angeles,CA,90086,3846 Industrial Blvd,2026-02-14,2026-02-27,11178.75,17,delivered
+ORD-10982,MFG-06,Great Lakes Plant,Detroit,MI,48283,Elite Solutions,Jacksonville,FL,32297,6816 Main St,2026-02-23,2026-03-02,3705.53,10,shipped
+ORD-10983,MFG-07,Southwest Plant,Phoenix,AZ,85093,Atlas Inc,Jacksonville,FL,32270,4818 Parkway,2026-02-16,2026-02-27,1258.57,12,delivered
+ORD-10984,MFG-02,South Central DC,Dallas,TX,75287,Apex Parts,San Antonio,TX,78250,8369 Highway 10,2026-02-25,2026-03-03,17864.08,19,delivered
+ORD-10985,MFG-03,Northeast Plant,Philadelphia,PA,19158,Sterling Inc,Chicago,IL,60619,3680 Parkway,2026-02-23,2026-03-02,18366.18,18,delivered
+ORD-10986,MFG-08,Pacific Northwest DC,Seattle,WA,98194,United Solutions,Denver,CO,80276,7226 Industrial Blvd,2026-02-17,2026-02-28,7432.67,19,picked
+ORD-10987,MFG-04,Southeast Plant,Atlanta,GA,30368,Premier Solutions,Austin,TX,78724,3950 Commerce Dr,2026-02-22,2026-03-03,2130.3,12,delivered
+ORD-10988,MFG-08,Pacific Northwest DC,Seattle,WA,98187,Atlas Corp,San Diego,CA,92167,6863 Oak Ave,2026-02-16,2026-03-02,6236.86,18,delivered
+ORD-10989,MFG-05,West Coast DC,Los Angeles,CA,90046,Central Corp,Austin,TX,78750,1933 Main St,2026-02-23,2026-03-01,24583.71,17,delivered
+ORD-10990,MFG-08,Pacific Northwest DC,Seattle,WA,98111,Vertex Inc,Philadelphia,PA,19125,6859 Industrial Blvd,2026-02-24,2026-03-03,2659.73,24,delivered
+ORD-10991,MFG-03,Northeast Plant,Philadelphia,PA,19119,United Group,Phoenix,AZ,85075,8673 Commerce Dr,2026-02-23,2026-03-04,3317.21,12,delivered
+ORD-10992,MFG-02,South Central DC,Dallas,TX,75253,Pioneer Services,Austin,TX,78785,9974 Parkway,2026-02-14,2026-02-27,18507.9,3,shipped
+ORD-10993,MFG-08,Pacific Northwest DC,Seattle,WA,98165,Atlas Solutions,San Jose,CA,95171,2206 Highway 10,2026-02-25,2026-02-28,3933.57,3,open
+ORD-10994,MFG-08,Pacific Northwest DC,Seattle,WA,98158,Summit Components,Austin,TX,78766,2896 Parkway,2026-02-19,2026-03-03,5921.75,4,shipped
+ORD-10995,MFG-07,Southwest Plant,Phoenix,AZ,85046,Central Services,Austin,TX,78759,5220 Warehouse Rd,2026-02-16,2026-02-28,20377.58,2,delivered
+ORD-10996,MFG-05,West Coast DC,Los Angeles,CA,90083,United Corp,Detroit,MI,48250,1630 Industrial Blvd,2026-02-17,2026-02-28,7302.9,4,shipped
+ORD-10997,MFG-05,West Coast DC,Los Angeles,CA,90043,Metro Inc,Detroit,MI,48223,3796 Highway 10,2026-02-16,2026-02-28,5290.05,4,delivered
+ORD-10998,MFG-01,Midwest Plant,Chicago,IL,60679,Atlas Services,Boston,MA,02134,110 Commerce Dr,2026-02-13,2026-03-04,5198.05,12,delivered
+ORD-10999,MFG-08,Pacific Northwest DC,Seattle,WA,98176,Premier Corp,Phoenix,AZ,85068,4833 Main St,2026-02-15,2026-03-03,22238.66,15,shipped
+ORD-11000,MFG-05,West Coast DC,Los Angeles,CA,90095,Prime Group,Houston,TX,77055,1296 Highway 10,2026-02-18,2026-03-03,1997.61,24,picked

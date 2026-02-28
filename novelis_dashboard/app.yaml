@@ -1,0 +1,25 @@
+# Databricks App spec — Novelis Supply Chain & Production Dashboard
+# Uses catalog serverless_hadnqm_catalog and schema ai_sc_test
+command:
+  - gunicorn
+  - "--bind"
+  - "0.0.0.0:$DATABRICKS_APP_PORT"
+  - "--workers"
+  - "2"
+  - "--timeout"
+  - "120"
+  - app:app
+
+env:
+  - name: CATALOG
+    value: serverless_hadnqm_catalog
+  - name: SCHEMA
+    value: ai_sc_test
+  # DATABRICKS_HOST and token are injected by Databricks Apps at runtime.
+  # DATABRICKS_WAREHOUSE_ID is set when you attach a SQL warehouse to the app.
+
+resources:
+  - name: sql-warehouse
+    description: SQL Warehouse for querying gold tables
+    sql_warehouse:
+      permission: CAN_USE

@@ -1,0 +1,142 @@
+{% extends "dashboard_base.html" %}
+
+{% block content %}
+<section class="panel active">
+  <div class="panel-content">
+    <p class="sim-intro">Search all public Federal Reserve Economic Data (FRED). Results are series you can view or use in the Forecasting tab.</p>
+    <div class="chart-card">
+      <h3>Search FRED data</h3>
+      <div class="demand-search-row">
+        <label for="fred-search-input" class="sr-only">Search FRED series</label>
+        <input type="search" id="fred-search-input" class="fred-search-input" placeholder="e.g. GDP, unemployment, CPI, industrial production" aria-label="Search FRED series" />
+        <button type="button" class="btn btn-primary" id="fred-search-btn">Search</button>
+      </div>
+      <p id="fred-search-hint" class="meta">Enter a term and click Search. A free FRED API key is required (set FRED_API_KEY). Get one at <a href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank" rel="noopener">fred.stlouisfed.org</a>.</p>
+      <div id="fred-results-wrap" class="demand-results-wrap" style="display: none;">
+        <h4 id="fred-results-title">Results</h4>
+        <div class="demand-results-table-wrap">
+          <table class="data-table" id="fred-results-table">
+            <thead>
+              <tr>
+                <th>Series ID</th>
+                <th>Title</th>
+                <th>Frequency</th>
+                <th>Units</th>
+                <th>Date range</th>
+                <th>View</th>
+              </tr>
+            </thead>
+            <tbody id="fred-results-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="fred-error" class="sim-message error" style="display: none;"></div>
+    </div>
+    <div class="chart-card" id="fred-series-chart-card" style="display: none;">
+      <h3 id="fred-series-chart-title">Series data</h3>
+      <div class="chart-container" style="height: 360px;">
+        <canvas id="fred-series-chart"></canvas>
+      </div>
+      <p class="meta" id="fred-series-meta"></p>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  const BAR_COLORS = ['#002855', '#0072CE', '#00A3E0', '#4DA6FF', '#5A6C7D', '#00854D', '#C9A227'];
+  const input = document.getElementById('fred-search-input');
+  const btn = document.getElementById('fred-search-btn');
+  const resultsWrap = document.getElementById('fred-results-wrap');
+  const resultsTbody = document.getElementById('fred-results-tbody');
+  const errorEl = document.getElementById('fred-error');
+  const chartCard = document.getElementById('fred-series-chart-card');
+  const chartTitle = document.getElementById('fred-series-chart-title');
+  const chartMeta = document.getElementById('fred-series-meta');
+  let currentChart = null;
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  function doSearch() {
+    const q = (input && input.value || '').trim();
+    if (!q) return;
+    if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+    if (resultsWrap) resultsWrap.style.display = 'block';
+    if (resultsTbody) resultsTbody.innerHTML = '<tr><td colspan="6" class="meta">Searching…</td></tr>';
+    fetch('/api/fred/search?q=' + encodeURIComponent(q))
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+      .then(function(res) {
+        const d = res.data;
+        if (d.error && res.ok === false) {
+          if (errorEl) { errorEl.textContent = d.error; errorEl.style.display = 'block'; }
+          if (resultsTbody) resultsTbody.innerHTML = '';
+          return;
+        }
+        const list = d.seriess || [];
+        if (resultsTbody) {
+          if (!list.length) {
+            resultsTbody.innerHTML = '<tr><td colspan="6" class="meta">No series found. Try different keywords.</td></tr>';
+            return;
+          }
+          resultsTbody.innerHTML = list.map(function(s) {
+            return '<tr><td>' + escapeHtml(s.id) + '</td><td>' + escapeHtml(s.title) + '</td><td>' + escapeHtml(s.frequency_short || s.frequency || '') + '</td><td>' + escapeHtml(s.units_short || s.units || '') + '</td><td>' + escapeHtml(s.observation_start) + ' to ' + escapeHtml(s.observation_end) + '</td><td><button type="button" class="btn btn-action btn-view-series" data-series-id="' + escapeHtml(s.id) + '" data-title="' + escapeHtml(s.title) + '">View data</button></td></tr>';
+          }).join('');
+        }
+        resultsWrap.querySelectorAll('.btn-view-series').forEach(function(b) {
+          b.addEventListener('click', function() {
+            loadSeries(this.getAttribute('data-series-id'), this.getAttribute('data-title'));
+          });
+        });
+      })
+      .catch(function(e) {
+        if (errorEl) { errorEl.textContent = 'Search failed: ' + (e.message || 'network error'); errorEl.style.display = 'block'; }
+        if (resultsTbody) resultsTbody.innerHTML = '';
+      });
+  }
+
+  function loadSeries(seriesId, title) {
+    if (!seriesId) return;
+    if (currentChart) { currentChart.destroy(); currentChart = null; }
+    chartCard.style.display = 'block';
+    chartTitle.textContent = title || seriesId;
+    chartMeta.textContent = 'Loading observations…';
+    fetch('/api/fred/observations?series_id=' + encodeURIComponent(seriesId))
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.error) {
+          chartMeta.textContent = d.error;
+          return;
+        }
+        const obs = (d.observations || []).filter(function(o) { return o.value && String(o.value) !== '.'; });
+        chartMeta.textContent = 'Source: FRED (' + seriesId + '). ' + obs.length + ' observations.';
+        if (!obs.length) return;
+        const labels = obs.map(function(o) { return o.date; });
+        const values = obs.map(function(o) { return parseFloat(o.value); });
+        const ctx = document.getElementById('fred-series-chart');
+        if (!ctx) return;
+        currentChart = new Chart(ctx.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{ label: seriesId, data: values, borderColor: BAR_COLORS[0], backgroundColor: BAR_COLORS[0] + '20', fill: true, tension: 0.2 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { maxTicksLimit: 12 }, y: { beginAtZero: false } } }
+        });
+      })
+      .catch(function(e) {
+        chartMeta.textContent = 'Failed to load: ' + (e.message || 'network error');
+      });
+  }
+
+  if (btn) btn.addEventListener('click', doSearch);
+  if (input) input.addEventListener('keydown', function(e) { if (e.key === 'Enter') doSearch(); });
+})();
+</script>
+{% endblock %}

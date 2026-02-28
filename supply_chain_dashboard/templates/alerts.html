@@ -1,0 +1,302 @@
+{% extends "dashboard_base.html" %}
+
+{% block head_extra %}
+<style>
+  .alerts-page .alert-banner { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 1rem 1.25rem; border-radius: var(--radius); margin-bottom: 1rem; }
+  .alerts-page .alert-banner strong { display: block; margin-bottom: 0.25rem; }
+  .alerts-page .alerts-table-wrap { max-height: 65vh; overflow: auto; background: var(--color-card); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .alerts-page .alerts-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .alerts-page .alerts-table th { text-align: left; padding: 0.6rem 0.75rem; background: var(--color-border); font-weight: 600; position: sticky; top: 0; z-index: 1; }
+  .alerts-page .alerts-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--color-border); }
+  .alerts-page .alerts-table tbody tr { background: #fef2f2; }
+  .alerts-page .alerts-table tbody tr td { border-bottom-color: #fecaca; }
+  .alerts-page .badge-late { background: #dc2626; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+  .alerts-page .meta { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 0.5rem; }
+  .alerts-page .loading { padding: 2rem; text-align: center; color: var(--color-text-muted); }
+  .alerts-page .error { padding: 1rem; background: #fef2f2; color: #991b1b; border-radius: var(--radius); margin: 1rem 0; }
+  .alerts-page .util-high { color: #b91c1c; font-weight: 600; }
+  .alerts-page .util-ok { color: var(--color-text-muted); }
+  .alerts-page .btn-submit { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+  .alerts-page .submit-msg { font-size: 0.8rem; color: var(--color-success); margin-top: 0.25rem; }
+  .alerts-page .alerts-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: 1rem; background: var(--color-card); border: 1px solid var(--color-border); border-radius: var(--radius); margin-bottom: 1rem; }
+  .alerts-page .alerts-filters .filter-group { display: flex; align-items: center; gap: 0.5rem; }
+  .alerts-page .alerts-filters label { font-size: 0.8rem; font-weight: 500; color: var(--color-text-muted); white-space: nowrap; }
+  .alerts-page .alerts-filters select, .alerts-page .alerts-filters input[type="text"] { padding: 0.4rem 0.6rem; font-size: 0.875rem; border: 1px solid var(--color-border); border-radius: var(--radius); min-width: 120px; font-family: var(--font-sans); }
+  .alerts-page .alerts-filters input[type="text"] { min-width: 140px; }
+  .alerts-page .alerts-filters .filter-count { font-size: 0.8rem; color: var(--color-text-muted); margin-left: auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="panel active">
+  <div class="panel-content alerts-page">
+    <div class="alert-banner" id="alert-banner">
+      <strong>Weather alerts</strong>
+      <span id="alert-summary">Loading…</span>
+    </div>
+
+    <div class="alerts-filters" id="alerts-filters" style="display: none;">
+      <div class="filter-group">
+        <label for="filter-reroute">Reroute</label>
+        <select id="filter-reroute" aria-label="Filter by reroute suggestion">
+          <option value="all">All</option>
+          <option value="has-reroute">Has reroute suggestion</option>
+          <option value="no-reroute">No reroute</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-origin">Origin state</label>
+        <select id="filter-origin" aria-label="Filter by origin state">
+          <option value="all">All</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-destination">Destination state</label>
+        <select id="filter-destination" aria-label="Filter by destination state">
+          <option value="all">All</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-customer">Customer</label>
+        <input type="text" id="filter-customer" placeholder="Search customer" aria-label="Filter by customer name" />
+      </div>
+      <div class="filter-group">
+        <label for="filter-due">Due</label>
+        <select id="filter-due" aria-label="Filter by due date">
+          <option value="all">All</option>
+          <option value="3">Next 3 days</option>
+          <option value="7">Next 7 days</option>
+          <option value="14">Next 14 days</option>
+        </select>
+      </div>
+      <span class="filter-count" id="filter-count"></span>
+    </div>
+
+    <div id="alerts-content">
+      <div class="loading" id="alerts-loading">Loading orders at risk…</div>
+      <div id="alerts-error" class="error" style="display: none;"></div>
+      <div id="alerts-table-wrap" class="alerts-table-wrap" style="display: none;">
+        <table class="alerts-table" id="alerts-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Origin</th>
+              <th>Destination</th>
+              <th>Due date</th>
+              <th>Origin delay</th>
+              <th>Dest delay</th>
+              <th>Reroute to</th>
+              <th>Plant impact</th>
+              <th>Reason</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="alerts-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="meta">Orders whose origin or destination state has forecasted weather delay. &quot;Reroute to&quot; suggests a closer manufacturing site with same or better weather; &quot;Plant impact&quot; shows that plant's load after reassigning this order (load / capacity, utilization %). Capacity is derived from current order mix.</p>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const banner = document.getElementById('alert-banner');
+  const summary = document.getElementById('alert-summary');
+  const loading = document.getElementById('alerts-loading');
+  const errorEl = document.getElementById('alerts-error');
+  const tableWrap = document.getElementById('alerts-table-wrap');
+  const tbody = document.getElementById('alerts-tbody');
+  const filtersEl = document.getElementById('alerts-filters');
+  const filterCountEl = document.getElementById('filter-count');
+
+  let allOrders = [];
+
+  function parseDueDate(s) {
+    if (!s) return null;
+    var parts = String(s).split(/[-T]/);
+    if (parts.length >= 3) return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    return null;
+  }
+
+  function daysFromToday(d) {
+    if (!d) return null;
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var t = d.getTime() - today.getTime();
+    return Math.floor(t / (24 * 60 * 60 * 1000));
+  }
+
+  function applyFilters() {
+    var rerouteVal = document.getElementById('filter-reroute') && document.getElementById('filter-reroute').value;
+    var originVal = document.getElementById('filter-origin') && document.getElementById('filter-origin').value;
+    var destVal = document.getElementById('filter-destination') && document.getElementById('filter-destination').value;
+    var customerVal = (document.getElementById('filter-customer') && document.getElementById('filter-customer').value || '').trim().toLowerCase();
+    var dueVal = document.getElementById('filter-due') && document.getElementById('filter-due').value;
+
+    var filtered = allOrders.filter(function (o) {
+      if (rerouteVal === 'has-reroute' && !o.reroute_site_id) return false;
+      if (rerouteVal === 'no-reroute' && o.reroute_site_id) return false;
+      if (originVal !== 'all' && (o.origin_state || '') !== originVal) return false;
+      if (destVal !== 'all' && (o.delivery_state || '') !== destVal) return false;
+      if (customerVal && (o.customer_name || '').toLowerCase().indexOf(customerVal) === -1) return false;
+      if (dueVal !== 'all') {
+        var dueDate = parseDueDate(o.delivery_due_date);
+        var days = daysFromToday(dueDate);
+        if (days == null || days < 0 || days > parseInt(dueVal, 10)) return false;
+      }
+      return true;
+    });
+
+    renderTable(filtered);
+    if (filterCountEl) filterCountEl.textContent = 'Showing ' + filtered.length + ' of ' + allOrders.length;
+  }
+
+  function renderTable(orders) {
+    if (!orders.length) {
+      tbody.innerHTML = '<tr><td colspan="11" class="meta">No orders match the current filters.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = orders.map(function (o) {
+      var reroute = o.reroute_site_name ? (o.reroute_site_name + ' (' + (o.reroute_distance_miles != null ? o.reroute_distance_miles + ' mi)' : ')')) : (o.reroute_reason || '—');
+      var impact = '';
+      if (o.reroute_plant_new_load != null && o.reroute_plant_capacity != null && o.reroute_plant_utilization_pct != null) {
+        impact = o.reroute_plant_new_load + ' / ' + o.reroute_plant_capacity + ' (' + o.reroute_plant_utilization_pct + '%)';
+        impact = '<span class="' + (o.reroute_plant_utilization_pct >= 90 ? 'util-high' : 'util-ok') + '">' + impact + '</span>';
+      } else {
+        impact = '—';
+      }
+      var submitBtn = '';
+      if (o.reroute_site_id) {
+        submitBtn = '<button type="button" class="btn btn-primary btn-submit" data-submit-order>' +
+          'Submit for approval</button><div class="submit-msg" data-submit-msg style="display:none;"></div>';
+      } else {
+        submitBtn = '—';
+      }
+      return '<tr data-order-id="' + (o.order_id || '') + '">' +
+        '<td>' + (o.order_id || '') + '</td>' +
+        '<td>' + (o.customer_name || '') + '</td>' +
+        '<td>' + (o.origin_name || '') + ', ' + (o.origin_state || '') + '</td>' +
+        '<td>' + (o.delivery_city || '') + ', ' + (o.delivery_state || '') + '</td>' +
+        '<td>' + (o.delivery_due_date || '') + '</td>' +
+        '<td>' + (o.origin_delay_days > 0 ? o.origin_delay_days + ' day(s)' : '0') + '</td>' +
+        '<td>' + (o.destination_delay_days > 0 ? o.destination_delay_days + ' day(s)' : '0') + '</td>' +
+        '<td>' + reroute + '</td>' +
+        '<td>' + impact + '</td>' +
+        '<td><span class="badge-late">Late risk</span> ' + (o.weather_risk_reason || '') + '</td>' +
+        '<td>' + submitBtn + '</td>' +
+        '</tr>';
+    }).join('');
+
+    tbody.querySelectorAll('[data-submit-order]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var row = this.closest('tr');
+        var orderId = row.getAttribute('data-order-id');
+        var order = allOrders.find(function (o) { return o.order_id === orderId; });
+        if (!order) return;
+        var msgEl = row.querySelector('[data-submit-msg]');
+        fetch('/api/reassignments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order_id: order.order_id,
+            customer_name: order.customer_name,
+            origin_site_id: order.origin_site_id,
+            origin_name: order.origin_name,
+            reroute_site_id: order.reroute_site_id,
+            reroute_site_name: order.reroute_site_name,
+            delivery_city: order.delivery_city,
+            delivery_state: order.delivery_state,
+            delivery_due_date: order.delivery_due_date,
+            reroute_plant_new_load: order.reroute_plant_new_load,
+            reroute_plant_capacity: order.reroute_plant_capacity,
+            reroute_plant_utilization_pct: order.reroute_plant_utilization_pct
+          })
+        }).then(function (r) { return r.json(); }).then(function (data) {
+          if (data.created && data.created > 0) {
+            btn.disabled = true;
+            btn.textContent = 'Submitted';
+            if (msgEl) {
+              msgEl.style.display = 'block';
+              msgEl.textContent = data.email_sent
+                ? 'Approval email sent to noel.hoxie@databricks.com'
+                : 'Reassignment submitted. Review at Reassignments page (email not configured).';
+            }
+          }
+        }).catch(function () {
+          if (msgEl) { msgEl.style.display = 'block'; msgEl.textContent = 'Submit failed'; msgEl.style.color = '#991b1b'; }
+        });
+      });
+    });
+  }
+
+  function populateStateFilters() {
+    var originStates = [];
+    var destStates = [];
+    allOrders.forEach(function (o) {
+      if (o.origin_state && originStates.indexOf(o.origin_state) === -1) originStates.push(o.origin_state);
+      if (o.delivery_state && destStates.indexOf(o.delivery_state) === -1) destStates.push(o.delivery_state);
+    });
+    originStates.sort();
+    destStates.sort();
+    var originSel = document.getElementById('filter-origin');
+    var destSel = document.getElementById('filter-destination');
+    if (originSel) {
+      var first = originSel.querySelector('option');
+      originSel.innerHTML = '';
+      if (first) originSel.appendChild(first);
+      originStates.forEach(function (s) { var o = document.createElement('option'); o.value = s; o.textContent = s; originSel.appendChild(o); });
+    }
+    if (destSel) {
+      var firstDest = destSel.querySelector('option');
+      destSel.innerHTML = '';
+      if (firstDest) destSel.appendChild(firstDest);
+      destStates.forEach(function (s) { var o = document.createElement('option'); o.value = s; o.textContent = s; destSel.appendChild(o); });
+    }
+  }
+
+  function loadAlerts() {
+    loading.style.display = 'block';
+    errorEl.style.display = 'none';
+    fetch('/api/orders-weather-alerts')
+      .then(function (r) { return r.json(); })
+      .then(function (orders) {
+        loading.style.display = 'none';
+        allOrders = Array.isArray(orders) ? orders : [];
+        if (allOrders.length === 0) {
+          summary.textContent = 'No orders currently at risk due to weather.';
+          tableWrap.style.display = 'none';
+          if (filtersEl) filtersEl.style.display = 'none';
+          return;
+        }
+        summary.textContent = allOrders.length + ' order(s) at risk. Reroute suggestions show a closer plant with same or better weather and the impact on that plant\'s capacity.';
+        if (filtersEl) filtersEl.style.display = 'flex';
+        tableWrap.style.display = 'block';
+        populateStateFilters();
+        applyFilters();
+      })
+      .catch(function (err) {
+        loading.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorEl.textContent = 'Failed to load alerts: ' + (err.message || 'Unknown error');
+      });
+  }
+
+  loadAlerts();
+
+  document.getElementById('filter-reroute')?.addEventListener('change', applyFilters);
+  document.getElementById('filter-origin')?.addEventListener('change', applyFilters);
+  document.getElementById('filter-destination')?.addEventListener('change', applyFilters);
+  document.getElementById('filter-due')?.addEventListener('change', applyFilters);
+  var customerInput = document.getElementById('filter-customer');
+  if (customerInput) {
+    customerInput.addEventListener('input', function () { applyFilters(); });
+    customerInput.addEventListener('keyup', function (e) { if (e.key === 'Enter') applyFilters(); });
+  }
+  document.getElementById('alerts-refresh')?.addEventListener('click', loadAlerts);
+})();
+</script>
+{% endblock %}
