@@ -1,0 +1,26 @@
+command:
+  - gunicorn
+  - "--bind"
+  - "0.0.0.0:$DATABRICKS_APP_PORT"
+  - "--workers"
+  - "2"
+  - "--timeout"
+  - "120"
+  - api:app
+
+resources:
+  - name: sql-warehouse
+    description: SQL Warehouse for querying finance gold tables
+    sql_warehouse:
+      id: 23720e4bb845c623
+      permission: CAN_USE
+
+env:
+  - name: DATABRICKS_HOST
+    value: https://fevm-demo-nah.cloud.databricks.com
+  - name: DATABRICKS_WAREHOUSE_ID
+    value: 23720e4bb845c623
+  - name: CATALOG
+    value: demo_nah_catalog
+  - name: GOLD_SCHEMA
+    value: duracell_finance_gold
