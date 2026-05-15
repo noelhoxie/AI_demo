@@ -1,0 +1,6 @@
+flask>=3.0
+gunicorn
+requests
+databricks-sql-connector>=3.0
+reportlab>=4.0
+psycopg2-binary>=2.9
