@@ -384,9 +384,6 @@ async function init() {
     _portalCompany = company;
     document.title = 'Solution Studio' + (company ? ' — ' + company : '');
     if (username) document.getElementById('header-username').textContent = username + (company ? ' · ' + company : '');
-    const heroEl = document.getElementById('hero-username');
-    if (username) heroEl.textContent = ', ' + username + (company ? ' (' + company + ')' : '') + '!';
-    else if (company) heroEl.textContent = ' to ' + company + '!';
 
     // Render app cards
     if (d.apps && d.apps.length) renderCards(d.apps);
