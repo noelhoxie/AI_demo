@@ -28,29 +28,30 @@ COMPANY_NAME    = os.getenv("COMPANY_NAME", "")
 
 @app.before_request
 def _auto_auth():
-    """Silently authenticate the session when credentials are already known.
+    """Silently authenticate the session when identity is already known.
 
     Priority:
-    1. Databricks App — platform injects X-Forwarded-User on every request.
-    2. Railway / standalone — if DATABRICKS_TOKEN is set the deployment is
-       trusted; use AUTO_USERNAME / AUTO_COMPANY (or sensible defaults) so
-       visitors skip the login form entirely.
+    1. Portal launch — ?auto_user=&auto_company= params in the URL.
+    2. Databricks App — platform injects X-Forwarded-User on every request.
+    Login form is always shown for direct / unauthenticated visits.
     """
     if session.get("authenticated"):
         return
-    # 1. Databricks Apps SSO
+    # 1. Launched from portal with identity params in URL
+    auto_user    = request.args.get("auto_user", "").strip()
+    auto_company = request.args.get("auto_company", "").strip()
+    if auto_user and auto_company:
+        session["authenticated"] = True
+        session["username"]       = auto_user
+        session["company_name"]   = auto_company
+        return
+    # 2. Databricks Apps SSO header
     fwd_user = (request.headers.get("X-Forwarded-User")
                 or request.headers.get("X-Forwarded-Email", ""))
     if fwd_user:
         session["authenticated"] = True
         session["username"]       = fwd_user
         session["company_name"]   = COMPANY_NAME or "Databricks"
-        return
-    # 2. Token-configured deployment (Railway, local with .env, etc.)
-    if os.getenv("DATABRICKS_TOKEN"):
-        session["authenticated"] = True
-        session["username"]       = os.getenv("AUTO_USERNAME", "Demo User")
-        session["company_name"]   = os.getenv("AUTO_COMPANY", COMPANY_NAME or "Solution Studio")
 
 def login_required(f):
     @wraps(f)
