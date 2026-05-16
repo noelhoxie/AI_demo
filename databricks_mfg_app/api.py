@@ -10,7 +10,8 @@ import math
 import os
 import time
 import requests
-from flask import Flask, jsonify, request, send_from_directory
+from functools import wraps
+from flask import Flask, jsonify, request, send_from_directory, session, redirect
 
 try:
     import psycopg2
@@ -20,6 +21,21 @@ except ImportError:
     _PSYCOPG2_OK = False
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
+app.secret_key = os.getenv("SECRET_KEY", os.urandom(32))
+
+# ── Auth ────────────────────────────────────────────────────────────────────────
+APP_PASSWORD    = os.getenv("APP_PASSWORD", "")
+COMPANY_NAME    = os.getenv("COMPANY_NAME") or APP_PASSWORD
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if APP_PASSWORD and not session.get("authenticated"):
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "not authenticated"}), 401
+            return redirect("/login")
+        return f(*args, **kwargs)
+    return decorated
 
 # ── Credentials ────────────────────────────────────────────────────────────────
 
@@ -56,10 +72,10 @@ _LAKEBASE_OK = bool(LAKEBASE_HOST) and _PSYCOPG2_OK
 
 def _lakebase_token():
     try:
-        host = os.getenv("DATABRICKS_HOST", "").rstrip("/")
+        host = (os.getenv("LAKEBASE_DATABRICKS_HOST") or os.getenv("DATABRICKS_HOST", "")).rstrip("/")
         if host and not host.startswith("http"):
             host = f"https://{host}"
-        pat           = os.getenv("DATABRICKS_TOKEN", "")
+        pat           = os.getenv("LAKEBASE_DATABRICKS_TOKEN") or os.getenv("DATABRICKS_TOKEN", "")
         client_id     = os.getenv("DATABRICKS_CLIENT_ID", "")
         client_secret = os.getenv("DATABRICKS_CLIENT_SECRET", "")
         if not host:
@@ -877,7 +893,40 @@ def _extract_answer(msg):
 
 @app.route("/")
 def index():
+    if APP_PASSWORD and not session.get("authenticated"):
+        return redirect("/login")
     return send_from_directory("static", "index.html")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    # Auto-auth via URL params (launched from portal)
+    if request.method == "GET":
+        auto_user    = request.args.get("auto_user", "").strip()
+        auto_company = request.args.get("auto_company", "").strip()
+        if auto_user and auto_company:
+            session["authenticated"] = True
+            session["username"]       = auto_user
+            session["company_name"]   = auto_company
+            return redirect("/")
+
+    error = None
+    if request.method == "POST":
+        username     = (request.form.get("username") or "").strip()
+        company_name = (request.form.get("password") or "").strip()
+        if username and company_name:
+            session["authenticated"] = True
+            session["username"]       = username
+            session["company_name"]   = company_name
+            return redirect("/")
+        else:
+            error = "Please enter your name and company to continue."
+
+    return send_from_directory("static", "login.html"), 200 if not error else 401
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
 
 
 @app.route("/api/live")
@@ -1576,7 +1625,7 @@ def log_page_time():
     page    = str(data.get("page", ""))[:64]
     seconds = int(data.get("seconds_spent", 0))
     user    = (request.headers.get("X-Forwarded-User")
-               or request.headers.get("X-Forwarded-Email", "anonymous"))
+               or session.get("username", "anonymous"))
 
     if not _LAKEBASE_OK:
         return jsonify({"status": "skipped", "reason": "no database configured"})

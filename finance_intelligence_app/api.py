@@ -3,8 +3,9 @@ Finance Intelligence — Flask Backend
 Executive CFO dashboard: Genie chat + Gemini briefing + live KPIs from gold tables.
 """
 import os, time, json
+from functools import wraps
 from pathlib import Path
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, session, redirect
 import requests
 
 try:
@@ -25,6 +26,21 @@ GOLD_SCHEMA      = os.environ.get("GOLD_SCHEMA",       "finance_gold")
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app = Flask(__name__, static_folder=str(STATIC_DIR), static_url_path="")
+app.secret_key = os.getenv("SECRET_KEY", os.urandom(32))
+
+# ── Auth ────────────────────────────────────────────────────────────────────────
+_APP_PASSWORD = os.getenv("APP_PASSWORD", "")
+_COMPANY_NAME = os.getenv("COMPANY_NAME") or _APP_PASSWORD
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if _APP_PASSWORD and not session.get("authenticated"):
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "not authenticated"}), 401
+            return redirect("/login")
+        return f(*args, **kwargs)
+    return decorated
 
 # ── Lakebase (shared Databricks-managed PostgreSQL) ───────────────────────────
 APP_NAME          = "Finance Intelligence"
@@ -41,10 +57,10 @@ _LAKEBASE_OK = bool(LAKEBASE_HOST) and _PSYCOPG2_OK
 
 def _lakebase_token():
     try:
-        host = DATABRICKS_HOST.rstrip("/")
+        host = (os.getenv("LAKEBASE_DATABRICKS_HOST") or DATABRICKS_HOST).rstrip("/")
         if host and not host.startswith("http"):
             host = f"https://{host}"
-        pat           = DATABRICKS_TOKEN
+        pat           = os.getenv("LAKEBASE_DATABRICKS_TOKEN") or DATABRICKS_TOKEN
         client_id     = os.getenv("DATABRICKS_CLIENT_ID", "")
         client_secret = os.getenv("DATABRICKS_CLIENT_SECRET", "")
         if not host:
@@ -247,7 +263,40 @@ Be concise and specific. Do not repeat the raw numbers — interpret them."""
 
 @app.route("/")
 def index():
+    if _APP_PASSWORD and not session.get("authenticated"):
+        return redirect("/login")
     return send_from_directory(str(STATIC_DIR), "index.html")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    # Auto-auth via URL params (launched from portal)
+    if request.method == "GET":
+        auto_user    = request.args.get("auto_user", "").strip()
+        auto_company = request.args.get("auto_company", "").strip()
+        if auto_user and auto_company:
+            session["authenticated"] = True
+            session["username"]       = auto_user
+            session["company_name"]   = auto_company
+            return redirect("/")
+
+    error = None
+    if request.method == "POST":
+        username     = (request.form.get("username") or "").strip()
+        company_name = (request.form.get("password") or "").strip()
+        if username and company_name:
+            session["authenticated"] = True
+            session["username"]       = username
+            session["company_name"]   = company_name
+            return redirect("/")
+        else:
+            error = "Please enter your name and company to continue."
+
+    return send_from_directory(str(STATIC_DIR), "login.html"), 200 if not error else 401
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
 
 
 @app.route("/api/kpis")
@@ -318,6 +367,56 @@ def api_working_capital():
         {"region":"North America","dso":38.2,"dpo":52.4,"ccc":-14.2,"ar_90_plus_pct":4.1},
         {"region":"EMEA",         "dso":44.5,"dpo":48.1,"ccc":-3.6, "ar_90_plus_pct":6.8},
         {"region":"APAC",         "dso":52.1,"dpo":41.3,"ccc":10.8, "ar_90_plus_pct":9.2},
+    ])
+
+
+@app.route("/api/cash-flow")
+def api_cash_flow():
+    ok, rows = _sql(f"""
+        SELECT period_key,
+               ROUND(operating_cash_flow/1e6, 1)  AS operating_cf,
+               ROUND(capital_expenditures/1e6, 1) AS capex,
+               ROUND(free_cash_flow/1e6, 1)       AS fcf
+        FROM {CATALOG}.{GOLD_SCHEMA}.gold_cash_flow_summary
+        ORDER BY fiscal_year, fiscal_quarter
+    """)
+    if ok and rows:
+        return jsonify(rows)
+    return jsonify([
+        {"period_key":"FY2023-Q1","operating_cf":82.4, "capex":-24.1,"fcf":58.3},
+        {"period_key":"FY2023-Q2","operating_cf":98.2, "capex":-26.4,"fcf":71.8},
+        {"period_key":"FY2023-Q3","operating_cf":105.6,"capex":-22.8,"fcf":82.8},
+        {"period_key":"FY2023-Q4","operating_cf":132.1,"capex":-28.3,"fcf":103.8},
+        {"period_key":"FY2024-Q1","operating_cf":88.7, "capex":-23.5,"fcf":65.2},
+        {"period_key":"FY2024-Q2","operating_cf":110.4,"capex":-25.1,"fcf":85.3},
+        {"period_key":"FY2024-Q3","operating_cf":118.9,"capex":-24.6,"fcf":94.3},
+        {"period_key":"FY2024-Q4","operating_cf":142.3,"capex":-27.4,"fcf":114.9},
+        {"period_key":"FY2025-Q1","operating_cf":104.8,"capex":-21.3,"fcf":83.5},
+    ])
+
+
+@app.route("/api/cost-centers")
+def api_cost_centers():
+    ok, rows = _sql(f"""
+        SELECT cost_center, department,
+               ROUND(budget_amount/1e6, 1)   AS budget_m,
+               ROUND(actual_amount/1e6, 1)   AS actual_m,
+               ROUND((budget_amount - actual_amount)/1e6, 1) AS variance_m
+        FROM {CATALOG}.{GOLD_SCHEMA}.gold_cost_center_summary
+        WHERE fiscal_year = 2025 AND fiscal_quarter = 1
+        ORDER BY ABS(budget_amount - actual_amount) DESC
+    """)
+    if ok and rows:
+        return jsonify(rows)
+    return jsonify([
+        {"cost_center":"Sales & Marketing",      "department":"Commercial",  "budget_m":48.2,"actual_m":45.8,"variance_m":2.4},
+        {"cost_center":"Research & Development", "department":"Technology",  "budget_m":62.5,"actual_m":67.1,"variance_m":-4.6},
+        {"cost_center":"General & Administrative","department":"Corporate",  "budget_m":22.1,"actual_m":24.3,"variance_m":-2.2},
+        {"cost_center":"Supply Chain Operations","department":"Operations",  "budget_m":35.8,"actual_m":34.2,"variance_m":1.6},
+        {"cost_center":"Manufacturing",          "department":"Operations",  "budget_m":88.4,"actual_m":89.7,"variance_m":-1.3},
+        {"cost_center":"IT & Digital",           "department":"Technology",  "budget_m":18.6,"actual_m":17.9,"variance_m":0.7},
+        {"cost_center":"Finance & Accounting",   "department":"Corporate",   "budget_m":12.4,"actual_m":12.1,"variance_m":0.3},
+        {"cost_center":"Human Resources",        "department":"Corporate",   "budget_m":9.8, "actual_m":10.4,"variance_m":-0.6},
     ])
 
 
@@ -396,7 +495,7 @@ def log_page_time():
     page    = str(data.get("page", ""))[:64]
     seconds = int(data.get("seconds_spent", 0))
     user    = (request.headers.get("X-Forwarded-User")
-               or request.headers.get("X-Forwarded-Email", "anonymous"))
+               or session.get("username", "anonymous"))
 
     print(f"[PageLog] app={APP_NAME} user={user} page={page} seconds={seconds}", flush=True)
 

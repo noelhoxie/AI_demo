@@ -365,12 +365,22 @@ function renderCards(apps) {
   }).join('');
 }
 
+let _portalUser    = '';
+let _portalCompany = '';
+
 function launch(url) {
-  // Internal URLs open in same tab; external Databricks Apps open in new tab
-  if (url.startsWith('http')) {
-    window.open(url, '_blank', 'noopener');
+  // Append auto-auth params so the target app logs the user in automatically
+  let target = url;
+  if (_portalUser && _portalCompany) {
+    const sep = url.includes('?') ? '&' : '?';
+    target = url + sep
+      + 'auto_user='    + encodeURIComponent(_portalUser)
+      + '&auto_company=' + encodeURIComponent(_portalCompany);
+  }
+  if (target.startsWith('http')) {
+    window.open(target, '_blank', 'noopener');
   } else {
-    window.location.href = url;
+    window.location.href = target;
   }
 }
 
@@ -381,6 +391,8 @@ async function init() {
     // Update branding
     const company  = d.company_name || '';
     const username = d.username || '';
+    _portalUser    = username;
+    _portalCompany = company;
     document.title = 'Solution Studio' + (company ? ' — ' + company : '');
     if (username) document.getElementById('header-username').textContent = username + (company ? ' · ' + company : '');
     const heroEl = document.getElementById('hero-username');

@@ -221,6 +221,16 @@ def _j(base, pct=0.02):
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    # Auto-auth via URL params (launched from portal)
+    if request.method == "GET":
+        auto_user    = request.args.get("auto_user", "").strip()
+        auto_company = request.args.get("auto_company", "").strip()
+        if auto_user and auto_company:
+            session["authenticated"] = True
+            session["username"]       = auto_user
+            session["company_name"]   = auto_company
+            return redirect("/portal")
+
     error = None
     if request.method == "POST":
         username     = (request.form.get("username") or "").strip()
