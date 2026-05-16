@@ -194,19 +194,19 @@
   </div>
 
   <div class="login-title">Welcome to the Solution Studio</div>
-  <div class="login-sub">Login with your email to find out about different AI powered business applications specifically for the manufacturing industry.</div>
+  <div class="login-sub">Login with your name and company to find out about different AI powered business applications specifically for the manufacturing industry.</div>
 
   <!-- Error message injected server-side via JS below -->
   <div class="error-box" id="error-box" style="display:none"></div>
 
   <form method="POST" action="/login" id="login-form">
     <div class="field">
-      <label for="email">Work Email</label>
-      <input type="email" id="email" name="email" placeholder="you@company.com" required autocomplete="email" autofocus/>
+      <label for="username">Your Name</label>
+      <input type="text" id="username" name="username" placeholder="Jane Smith" required autocomplete="name" autofocus/>
     </div>
     <div class="field">
-      <label for="password">Password</label>
-      <input type="password" id="password" name="password" placeholder="••••••••••" required autocomplete="current-password"/>
+      <label for="password">Company</label>
+      <input type="text" id="password" name="password" placeholder="Acme Corp" required autocomplete="organization"/>
     </div>
     <button class="submit-btn" type="submit">Sign In</button>
   </form>
@@ -248,10 +248,9 @@
       window.location.href = res.url;
     } else if (res.status === 401) {
       const box = document.getElementById('error-box');
-      box.textContent = 'Invalid email or password. Please try again.';
+      box.textContent = 'Please enter your name and company to continue.';
       box.style.display = 'block';
-      document.getElementById('password').value = '';
-      document.getElementById('password').focus();
+      document.getElementById('username').focus();
     }
   });
 </script>

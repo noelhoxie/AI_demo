@@ -223,20 +223,16 @@ def _j(base, pct=0.02):
 def login():
     error = None
     if request.method == "POST":
-        email    = (request.form.get("email") or "").strip().lower()
-        password = (request.form.get("password") or "").strip()
-        domain   = email.split("@")[-1] if "@" in email else ""
+        username     = (request.form.get("username") or "").strip()
+        company_name = (request.form.get("password") or "").strip()
 
-        domain_ok = (not ALLOWED_DOMAINS) or (domain in ALLOWED_DOMAINS)
-        if "@" in email and domain_ok:
-            session["authenticated"] = True
-            session["email"] = email
-            session["company_name"] = COMPANY_NAME
+        if username and company_name:
+            session["authenticated"]  = True
+            session["username"]        = username
+            session["company_name"]    = company_name
             return redirect("/portal")
-        elif not domain_ok:
-            error = f"Email domain @{domain} is not authorised for this application."
         else:
-            error = "Invalid email or password. Please try again."
+            error = "Please enter your name and company to continue."
 
     return send_from_directory("static", "login.html"), 200 if not error else 401
 
@@ -288,7 +284,7 @@ def config():
     ]
     return jsonify({
         "company_name": session.get("company_name", COMPANY_NAME),
-        "email":        session.get("email", ""),
+        "username":     session.get("username", ""),
         "apps":         apps,
     })
 
@@ -1150,7 +1146,7 @@ def log_page_time():
     page    = str(data.get("page", ""))[:64]
     seconds = int(data.get("seconds_spent", 0))
     user    = (request.headers.get("X-Forwarded-User")
-               or session.get("email", "anonymous"))
+               or session.get("username", "anonymous"))
 
     if not _LAKEBASE_OK:
         return jsonify({"status": "skipped", "reason": "no database configured"})
