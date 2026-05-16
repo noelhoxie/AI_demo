@@ -24,13 +24,25 @@ app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.secret_key = os.getenv("SECRET_KEY", os.urandom(32))
 
 # ── Auth ────────────────────────────────────────────────────────────────────────
-APP_PASSWORD    = os.getenv("APP_PASSWORD", "")
-COMPANY_NAME    = os.getenv("COMPANY_NAME") or APP_PASSWORD
+COMPANY_NAME    = os.getenv("COMPANY_NAME", "")
+
+@app.before_request
+def _auto_auth_from_databricks():
+    """When running as a Databricks App the platform forwards the user identity.
+    Use it to silently authenticate the session so users never see the login form."""
+    if session.get("authenticated"):
+        return
+    fwd_user = (request.headers.get("X-Forwarded-User")
+                or request.headers.get("X-Forwarded-Email", ""))
+    if fwd_user:
+        session["authenticated"] = True
+        session["username"]       = fwd_user
+        session["company_name"]   = session.get("company_name") or COMPANY_NAME or "Databricks"
 
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if APP_PASSWORD and not session.get("authenticated"):
+        if not session.get("authenticated"):
             if request.path.startswith("/api/"):
                 return jsonify({"error": "not authenticated"}), 401
             return redirect("/login")
@@ -893,7 +905,7 @@ def _extract_answer(msg):
 
 @app.route("/")
 def index():
-    if APP_PASSWORD and not session.get("authenticated"):
+    if not session.get("authenticated"):
         return redirect("/login")
     return send_from_directory("static", "index.html")
 
