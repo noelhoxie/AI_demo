@@ -1,0 +1,34 @@
+# Databricks Apps deployment config (not used by Railway)
+# Railway reads environment variables from the Railway dashboard instead.
+command:
+  - "sh"
+  - "-c"
+  - "gunicorn --bind 0.0.0.0:$DATABRICKS_APP_PORT --workers 2 --worker-class gthread --threads 4 --timeout 120 api:app"
+
+env:
+  # ── Genie / AI ──────────────────────────────────────────────────────────────
+  # Run supply_chain_bundle job first to seed data, then paste the printed
+  # GENIE_SPACE_ID here and redeploy.
+  - name: GENIE_SPACE_ID
+    value: "01f14ba20d4418d280e60f29772adfe6"
+  - name: LLM_ENDPOINT
+    value: "databricks-meta-llama-3-3-70b-instruct"
+  # ── Gold layer (supplychain_solutionstudio) ──────────────────────────────────
+  - name: SC_CATALOG
+    value: "solution_studio_catalog"
+  - name: SC_SCHEMA
+    value: "supplychain_solutionstudio"
+  - name: SQL_WAREHOUSE_HTTP_PATH
+    value: "/sql/1.0/warehouses/17e5cb93c5f1758e"
+  - name: LAKEBASE_DATABRICKS_TOKEN
+    value: ""  # Set via Railway/Databricks environment variables
+  - name: LAKEBASE_HOST
+    value: "ep-fragrant-resonance-d2ojfexl.database.us-east-1.cloud.databricks.com"
+  - name: LAKEBASE_PORT
+    value: "5432"
+  - name: LAKEBASE_DB
+    value: "databricks_postgres"
+  - name: LAKEBASE_USER
+    value: "noel.hoxie@databricks.com"
+  - name: LAKEBASE_ENDPOINT
+    value: "projects/solution-studio-analytics/branches/production/endpoints/primary"
