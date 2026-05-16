@@ -373,6 +373,9 @@ def contact():
 def index():
     if not session.get("authenticated"):
         return redirect("/login")
+    # Launched from portal → go straight to the supply chain app
+    if request.args.get("auto_user") or request.args.get("auto_token"):
+        return send_from_directory("static", "index.html")
     return redirect("/portal")
 
 @app.route("/static/<path:path>")
