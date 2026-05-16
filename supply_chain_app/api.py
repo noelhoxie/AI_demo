@@ -201,16 +201,21 @@ def _ensure_page_log_table():
                     CREATE TABLE IF NOT EXISTS page_time_log (
                         id            SERIAL PRIMARY KEY,
                         username      TEXT,
+                        company_name  TEXT,
                         page          TEXT,
                         seconds_spent INTEGER,
                         app_name      TEXT,
                         recorded_at   TIMESTAMPTZ DEFAULT NOW()
                     )
                 """)
-                # Migrate existing table — add app_name if not present
+                # Migrate existing table — add columns if not present
                 cur.execute("""
                     ALTER TABLE page_time_log
                     ADD COLUMN IF NOT EXISTS app_name TEXT
+                """)
+                cur.execute("""
+                    ALTER TABLE page_time_log
+                    ADD COLUMN IF NOT EXISTS company_name TEXT
                 """)
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS contact_submissions (
@@ -1180,6 +1185,7 @@ def log_page_time():
     seconds = int(data.get("seconds_spent", 0))
     user    = (request.headers.get("X-Forwarded-User")
                or session.get("username", "anonymous"))
+    company = session.get("company_name", "")
 
     if not _LAKEBASE_OK:
         return jsonify({"status": "skipped", "reason": "no database configured"})
@@ -1188,8 +1194,8 @@ def log_page_time():
         with _db_connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "INSERT INTO page_time_log (username, page, seconds_spent, app_name) VALUES (%s, %s, %s, %s)",
-                    (user, page, seconds, "Supply Chain Intelligence"),
+                    "INSERT INTO page_time_log (username, company_name, page, seconds_spent, app_name) VALUES (%s, %s, %s, %s, %s)",
+                    (user, company, page, seconds, "Supply Chain Intelligence"),
                 )
             conn.commit()
         return jsonify({"status": "ok"})

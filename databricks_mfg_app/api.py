@@ -150,6 +150,7 @@ def _ensure_page_log_table():
                     CREATE TABLE IF NOT EXISTS page_time_log (
                         id            SERIAL PRIMARY KEY,
                         username      TEXT,
+                        company_name  TEXT,
                         page          TEXT,
                         seconds_spent INTEGER,
                         app_name      TEXT,
@@ -159,6 +160,10 @@ def _ensure_page_log_table():
                 cur.execute("""
                     ALTER TABLE page_time_log
                     ADD COLUMN IF NOT EXISTS app_name TEXT
+                """)
+                cur.execute("""
+                    ALTER TABLE page_time_log
+                    ADD COLUMN IF NOT EXISTS company_name TEXT
                 """)
             conn.commit()
         print(f"[Lakebase] page_time_log ready ({APP_NAME})", flush=True)
@@ -1652,6 +1657,7 @@ def log_page_time():
     seconds = int(data.get("seconds_spent", 0))
     user    = (request.headers.get("X-Forwarded-User")
                or session.get("username", "anonymous"))
+    company = session.get("company_name", "")
 
     if not _LAKEBASE_OK:
         return jsonify({"status": "skipped", "reason": "no database configured"})
@@ -1660,8 +1666,8 @@ def log_page_time():
         with _db_connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "INSERT INTO page_time_log (username, page, seconds_spent, app_name) VALUES (%s, %s, %s, %s)",
-                    (user, page, seconds, APP_NAME),
+                    "INSERT INTO page_time_log (username, company_name, page, seconds_spent, app_name) VALUES (%s, %s, %s, %s, %s)",
+                    (user, company, page, seconds, APP_NAME),
                 )
             conn.commit()
         return jsonify({"status": "ok"})
