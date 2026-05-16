@@ -323,9 +323,10 @@ def contact():
 # ── Static Routes ───────────────────────────────────────────────────────────────
 
 @app.route("/")
-@login_required
 def index():
-    return send_from_directory("static", "index.html")
+    if APP_PASSWORD and not session.get("authenticated"):
+        return redirect("/login")
+    return redirect("/portal")
 
 @app.route("/static/<path:path>")
 def static_files(path):
