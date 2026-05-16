@@ -26,7 +26,9 @@ GOLD_SCHEMA      = os.environ.get("GOLD_SCHEMA",       "finance_gold")
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app = Flask(__name__, static_folder=str(STATIC_DIR), static_url_path="")
-app.secret_key = os.getenv("SECRET_KEY", os.urandom(32))
+import hashlib as _hl
+_sk = os.getenv("SECRET_KEY") or os.getenv("DATABRICKS_TOKEN", "")
+app.secret_key = _sk if _sk else _hl.sha256(b"solution-studio-finance-2024").hexdigest()
 
 # ── Auth ────────────────────────────────────────────────────────────────────────
 _COMPANY_NAME = os.getenv("COMPANY_NAME", "")

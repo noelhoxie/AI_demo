@@ -12,15 +12,27 @@ resources:
   - name: sql-warehouse
     description: SQL Warehouse for querying finance gold tables
     sql_warehouse:
-      id: 23720e4bb845c623
+      id: 17e5cb93c5f1758e
       permission: CAN_USE
 
 env:
   - name: DATABRICKS_HOST
-    value: https://fevm-demo-nah.cloud.databricks.com
+    value: https://fevm-solution-studio.cloud.databricks.com
   - name: DATABRICKS_WAREHOUSE_ID
-    value: 23720e4bb845c623
+    value: 17e5cb93c5f1758e
   - name: CATALOG
-    value: demo_nah_catalog
+    value: solution_studio_catalog
   - name: GOLD_SCHEMA
     value: duracell_finance_gold
+  - name: LAKEBASE_DATABRICKS_TOKEN
+    value: ""
+  - name: LAKEBASE_HOST
+    value: "ep-fragrant-resonance-d2ojfexl.database.us-east-1.cloud.databricks.com"
+  - name: LAKEBASE_PORT
+    value: "5432"
+  - name: LAKEBASE_DB
+    value: "databricks_postgres"
+  - name: LAKEBASE_USER
+    value: "noel.hoxie@databricks.com"
+  - name: LAKEBASE_ENDPOINT
+    value: "projects/solution-studio-analytics/branches/production/endpoints/primary"

@@ -1226,74 +1226,88 @@ function closePdmDetail() {
 
 const TALK_TRACKS = {
   floor: {
-    pain: 'Blind Spots on the Shop Floor',
-    body: `The Live Floor tab gives operations teams real-time visibility into every machine's health — powered by a continuous IoT pipeline streaming sensor data into Databricks Delta Lake every 30 seconds.
+    overview: `You are on Live Floor: a plant-layout map where each asset shows state at a glance (running, idle, fault) with live IoT metrics and alarm codes. A 30-second Delta pipeline keeps machine health, temperature bands, and OEE inputs current so supervisors see the same picture the lakehouse uses for downstream analytics.
 
-For manufacturers, a single undetected line fault can cascade into a full shift loss before anyone knows what happened. Here, faults surface the moment they occur — machine state, temperature, OEE, and alarm codes — so supervisors can respond in minutes, not hours.
-
-The interactive floor map mirrors your actual plant layout. Clicking any machine reveals its live sensor readings and active alarm codes. Color-coding makes the floor state readable at a glance: green is running, amber is idle, red is fault.
-
-The key value: turning reactive firefighting into proactive floor management — grounded in live data from your own Delta Lake, not a separate monitoring silo.`,
+Click any station to open its live sensor strip and active faults—this mirrors how tier-1 plants tie SCADA/MES signals to a governed Unity Catalog layer instead of a disconnected historian UI.`,
+    insights: [
+      'Databricks pattern: land high-frequency telemetry in Bronze, aggregate to machine-state Silver jobs, and serve the app from Gold—keeps the UI fast without losing raw fidelity for root-cause work later.',
+      'Automotive ops best practice: standardize fault codes and color semantics across shifts so Andon responses do not depend on tribal knowledge.',
+      'Use this view in daily tiered accountability—start with red assets, drill to top alarm contributors, then open the same machine context in OEE and Downtime tabs without re-querying.',
+      'IoT + UC: store device identity and line mapping as dimensions in Unity Catalog so every alert is traceable to customer program and shift.',
+      'Latency discipline: if refresh exceeds one minute, treat it as a data product SLO breach—this demo targets sub-minute refresh to match real escalation clocks.',
+    ],
   },
   oee: {
-    pain: 'OEE Degradation Without Root Cause',
-    body: `OEE is the single most important metric in automotive manufacturing — but a number without context is just noise. This tab surfaces Availability, Performance, and Quality for every machine, calculated in real time from the same Delta tables that feed your MES.
+    overview: `OEE Analytics breaks each asset into Availability, Performance, and Quality with drill-down from the bar chart. Numbers are computed from the same Delta facts as your MES reconciliation, so finance and operations are not arguing over different denominators.
 
-Clicking any bar in the OEE by Machine chart drills down into the three factors driving that machine's score, with AI-generated improvement suggestions specific to its operating profile.
-
-For plants targeting 88% OEE, the gap is rarely mysterious — it's a handful of machines pulling the average down. This view makes that gap visible and actionable in seconds, not at end-of-shift when the opportunity to recover has passed.
-
-The key value: moving from lagging indicators to live OEE intelligence, with prescriptive actions tied to each machine's actual failure mode.`,
+Use the machine list to spot who is pulling the line below target OEE before end-of-shift reporting buries the signal.`,
+    insights: [
+      'World-class automotive assembly lines often anchor executive targets around ~85–92% OEE depending on mix and changeovers—use this tab to show which leg (A, P, or Q) is the real lever.',
+      'Databricks practice: materialize OEE aggregates in Delta tables keyed by shift and work center, then let the UI read narrow slices—cheaper than recomputing from raw cycles on every page load.',
+      'Pair OEE drops with the AI suggestions surfaced per machine—treat them as hypotheses that must be validated against the last 24–48 hours of faults and speed loss events.',
+      'APQP mindset: when launching a new model year, freeze baseline OEE curves by program so continuous improvement teams can prove uplift versus launch maturity.',
+      'Avoid “OEE vanity”: insist on verified downtime reason codes; otherwise Performance looks artificially high while Availability tells the truth.',
+    ],
   },
   downtime: {
-    pain: 'Reactive Maintenance Draining Shift Capacity',
-    body: `Every minute of unplanned downtime in automotive manufacturing represents vehicles not built and delivery commitments at risk. The Downtime tab surfaces your top fault contributors using Pareto analysis on event data stored in Unity Catalog — giving maintenance supervisors the data they need to shift from reactive to planned interventions.
+    overview: `Downtime combines a Pareto of top faults, MTBF versus baseline, and trend lines so maintenance planners see what is chronic versus new. Everything is sourced from Unity Catalog event history, not a one-off spreadsheet export.
 
-The MTBF table shows which machines are degrading faster than their historical baseline, flagging them before the next failure rather than after. Fault frequency trends identify whether a machine is getting worse over time or holding steady.
-
-For a typical tier-1 supplier, shifting 20% of reactive maintenance to planned maintenance recovers 2-4 hours of production capacity per shift.
-
-The key value: replacing gut-feel maintenance scheduling with data-driven prioritization, all on the same Databricks platform as your production analytics.`,
+This is the screen you use to defend tomorrow’s wrench time: which three faults earned the next PM window.`,
+    insights: [
+      'Maintenance excellence: run Pareto reviews weekly at minimum; daily during launch or heavy model-mix periods when fault taxonomy churns fastest.',
+      'Data model tip: keep fault timestamps in UTC with plant offset as a dimension—eliminates “missing hour” debates across sites.',
+      'Databricks job pattern: incremental merges for fault events, late-arriving correction workflow, and slowly changing dimensions for asset hierarchy so MTBF denominators stay honest.',
+      'Bridge to SAP/Maximo: export the top fault cluster IDs as structured work packages so CMMS backlogs mirror what analytics prioritized.',
+      'KPI guardrail: MTBF without operating-hours context misleads—always normalize by runtime when comparing presses to conveyors.',
+    ],
   },
   maintenance: {
-    pain: 'Unplanned Failures Costing $35K+ Per Event',
-    body: `This tab shows Databricks' predictive maintenance capability in production — a GradientBoosting classifier trained on 6,500 historical sensor readings, scoring every machine in real time for failure probability.
+    overview: `Predictive Maintenance shows a GradientBoosting model scoring each asset with CRITICAL/WARN bands, top contributing sensors, and a 24-hour trace when you open a card. FAL-ASM-01 and BDY-WLD-01 illustrate how vibration and thermal drift precede hard failures.
 
-CRITICAL machines like FAL-ASM-01 and BDY-WLD-01 are already showing failure signatures in vibration, temperature, and fault frequency before they fail. The model identifies not just that a machine is at risk, but which sensor is driving the prediction — click any card to see the 24-hour time series with the failure zone shaded.
-
-For automotive plants, catching one unplanned transfer car failure prevents $35,000 in lost production. The ROI on predictive maintenance typically pays back the entire analytics platform within a single quarter.
-
-The key value: moving from time-based PM schedules to risk-based intervention — using the same sensor data you already collect, now running through a model registered in Unity Catalog.`,
+This is the Databricks ML + governance story: training data, features, and the served model all live beside operational tables.`,
+    insights: [
+      'Register the production model in Unity Catalog with version, owner, and refresh SLA—auditors and customer SQE teams increasingly ask for ML lineage, not just accuracy metrics.',
+      'Reliability engineering rule: convert model scores into risk tiers with explicit maintenance playbooks (inspect, tighten window, immediate swap) instead of raw probabilities on the shop floor.',
+      'Feature hygiene: align sensor sampling rates before blending signals; mismatched windows are the top cause of false positives in industrial GBM models.',
+      'Business case framing used in this demo: one avoided unplanned transfer-car event ≈ tens of thousands of dollars in lost production—use it to fund the lakehouse incrementally.',
+      'MLOps on Databricks: schedule retrains when drift detectors show AUC or calibration slipping, and shadow-deploy challengers before flipping production scores.',
+    ],
   },
   quality: {
-    pain: 'Defects Escaping to Final Assembly',
-    body: `Paint and body defects caught at the E-Coat stage cost 10× less to fix than defects discovered at final assembly or, worse, by the customer. This tab uses Databricks Vision AI to inspect each body panel for blistering, pinholes, and cratering — automatically flagging failures and preventing them from advancing in the production flow.
+    overview: `Quality is the Vision AI gate for body and paint: each panel inspection lands defect classes (blistering, pinholes, cratering) with image evidence, a pareto of defect mix, and dollarized scrap versus rework impact.
 
-The defect pareto pinpoints which defect types are driving first-pass yield loss, so process engineers can target chemistry adjustments with precision. The impact analysis calculates the actual cost of each defect — scrap vs. rework — so quality teams can prioritize response by financial impact, not just defect count.
-
-For a paint shop running 200 panels per shift, catching 2% more defects before the clear coat stage eliminates $180K+ in annual rework costs.
-
-The key value: replacing manual visual inspection with AI-driven quality gates, with all inspection results stored and auditable in Unity Catalog.`,
+Process engineers use this to decide chemistry or robot path tweaks before defects reach final assembly.`,
+    insights: [
+      'Early containment ROI: defects found before clear coat and bake-out typically cost an order of magnitude less than rework at trim—prioritize cameras and lighting stability over marginal model gains.',
+      'Store labeled images and model version in Delta + UC Volumes so customer PPAP evidence and internal retrospectives share one repository.',
+      'Vision ops: run weekly label audits on edge cases; automotive surface defects change with humidity and batch chemistry.',
+      'Databricks serving tip: batch score high-volume lines, stream-score only for rework loops or low-latency gates to balance cost and throughput.',
+      'Quality analytics hygiene: tie every defect record to VIN or body serial when allowed—enables recall-simulation exercises without rebuilding joins.',
+    ],
   },
   shift: {
-    pain: 'Decisions Made on Stale End-of-Shift Reports',
-    body: `SHIFT Intelligence is your always-on AI analyst, connected directly to your Delta Lake through Databricks Genie. Instead of waiting for end-of-shift reports, production managers can ask natural language questions and get answers grounded in live operational data.
+    overview: `Ask SHIFT is Genie on your manufacturing lakehouse: a conversational panel where production leaders ask natural-language questions against live OEE, downtime, quality, and throughput tables—no SQL notebook in the loop.
 
-"What's causing the most downtime on Line A?" — answered in seconds from fault event data. "What's our projected output if we resolve the top 2 faults?" — calculated from current OEE and remaining shift time. "Which defect type is driving FPY loss on the paint shop?" — correlated across inspection and process data.
-
-This is the difference between managing your plant from a spreadsheet updated at shift change versus having an AI analyst who can query your entire operational history in real time.
-
-The key value: democratizing data access for every production manager and shift supervisor — no SQL required, no waiting for the analytics team, decisions made on live facts.`,
+Demo prompts tie cross-domain answers (“top downtime drivers on Line A”, “output if top faults clear”, “FPY loss by defect type”) to the same metrics rendered in the other tabs.`,
+    insights: [
+      'Genie deployment practice: curate a UC-backed instruction set with approved metrics definitions (OEE formulas, shift boundaries) so answers stay numerically aligned with BI.',
+      'Change management: start with three approved questions per role (shift manager, quality engineer, maintenance lead) before opening a free-form chat to avoid hallucinated KPIs.',
+      'Security: enforce row filters by plant and program; manufacturing data mixes customer IP and pricing-sensitive throughput.',
+      'Latency expectation: market the assistant as “minutes-fresh,” not “PLC-real-time,” unless you wire streaming inference—sets the right trust bar.',
+      'Feedback loop: log unanswered or low-confidence prompts weekly; they become the backlog for new curated datasets or semantic views.',
+    ],
   },
   manuals: {
-    pain: 'Technicians Losing Hours Searching Paper Manuals',
-    body: `When a machine faults at 2am, a technician needs the right procedure immediately — not 30 minutes of searching through binders or waiting for an engineer to arrive. The Equipment Manual Assistant gives every maintenance technician instant, natural language access to all equipment documentation stored in Databricks Unity Catalog.
+    overview: `Equipment Manuals is a RAG assistant over ten PDF manuals (robots, presses, E-coat, vision, etc.) stored in a Unity Catalog Volume with Vector Search chunks and citations back to page and document.
 
-Ten equipment manuals — covering welding robots, stamping presses, E-Coat systems, vision inspection, and more — are stored as PDFs in a Unity Catalog Volume, chunked and embedded using Databricks Vector Search, and served through a RAG chain backed by Meta Llama 3.3.
-
-Ask "How do I fix fault E-047?" and the system retrieves the exact encoder replacement procedure from the Transfer Car manual, with the source document cited. Ask "What is the PM interval for the welding robot?" and it surfaces the exact specification from the FANUC manual.
-
-The key value: converting tribal knowledge locked in paper manuals into an always-available AI assistant — reducing MTTR by putting the right procedure in front of the right technician in seconds.`,
+Technicians ask maintenance questions in plain language and get procedures grounded in the actual OEM PDF, not an unofficial wiki.`,
+    insights: [
+      'Chunking strategy matters for torque tables and wiring diagrams—use structure-aware parsing and preserve tables as Markdown/HTML chunks so numbers do not get split across embeddings.',
+      'Operationalize citations: every answer should link to the source PDF path in UC so safety reviewers can audit responses after incidents.',
+      'Access control: separate volumes by OEM license terms; some manuals prohibit redistribution even internally.',
+      'Update workflow: when a PM bulletin arrives, ingest, re-embed, and bump a “manual version” tag so the model stops quoting superseded torque values.',
+      'Reduce MTTR: integrate suggested procedures with work-order creation so the CMMS captures what the tech actually executed, feeding future training data.',
+    ],
   },
 };
 
@@ -1311,12 +1325,19 @@ function closeTalkTrack() {
 function renderTalkTrack(tab) {
   const track = TALK_TRACKS[tab] || TALK_TRACKS.floor;
   document.getElementById('talk-tab-badge').textContent = TAB_LABELS[tab] || tab;
+  const insightsHtml =
+    track.insights && track.insights.length
+      ? `<div class="talk-insights">
+        <div class="talk-insights-title">Key insights</div>
+        <ul class="talk-insights-list">${track.insights.map((li) => `<li>${li}</li>`).join('')}</ul>
+      </div>`
+      : '';
   document.getElementById('talk-modal-body').innerHTML = `
-    <div class="talk-pain-point">
-      <div class="talk-pain-label">Pain Point Addressed</div>
-      <div class="talk-pain-title">${track.pain}</div>
+    <div class="talk-overview-block">
+      <div class="talk-section-label">Page overview</div>
+      <div class="talk-body-text">${track.overview.split('\n\n').map((p) => `<p>${p}</p>`).join('')}</div>
     </div>
-    <div class="talk-body-text">${track.body.split('\n\n').map(p => `<p>${p}</p>`).join('')}</div>
+    ${insightsHtml}
   `;
 }
 

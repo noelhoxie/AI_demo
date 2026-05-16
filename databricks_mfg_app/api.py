@@ -21,7 +21,9 @@ except ImportError:
     _PSYCOPG2_OK = False
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
-app.secret_key = os.getenv("SECRET_KEY", os.urandom(32))
+import hashlib as _hl
+_sk = os.getenv("SECRET_KEY") or os.getenv("DATABRICKS_TOKEN", "")
+app.secret_key = _sk if _sk else _hl.sha256(b"solution-studio-manufacturing-2024").hexdigest()
 
 # ── Auth ────────────────────────────────────────────────────────────────────────
 COMPANY_NAME    = os.getenv("COMPANY_NAME", "")
