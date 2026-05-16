@@ -333,7 +333,6 @@ function renderCards(apps) {
       <div class="app-card" style="--card-color:${esc(color)}">
         <div class="card-top">
           <div class="card-icon">${icon}</div>
-          ${app.badge ? `<span class="card-badge ${badgeClass}">${esc(app.badge)}</span>` : ''}
         </div>
         <div class="card-name">${esc(app.name)}</div>
         ${app.tagline ? `<div class="card-tagline">${esc(app.tagline)}</div>` : ''}
@@ -356,16 +355,17 @@ function renderCards(apps) {
 
 let _portalUser    = '';
 let _portalCompany = '';
+let _portalToken   = '';
 
 function launch(url) {
   // Append auto-auth params so the target app logs the user in automatically
   let target = url;
-  if (_portalUser && _portalCompany) {
-    const sep = url.includes('?') ? '&' : '?';
-    target = url + sep
-      + 'auto_user='    + encodeURIComponent(_portalUser)
-      + '&auto_company=' + encodeURIComponent(_portalCompany);
-  }
+  const sep = url.includes('?') ? '&' : '?';
+  let params = '';
+  if (_portalUser)    params += 'auto_user='    + encodeURIComponent(_portalUser);
+  if (_portalCompany) params += (params ? '&' : '') + 'auto_company=' + encodeURIComponent(_portalCompany);
+  if (_portalToken)   params += (params ? '&' : '') + 'auto_token='   + encodeURIComponent(_portalToken);
+  if (params) target = url + sep + params;
   if (target.startsWith('http')) {
     window.open(target, '_blank', 'noopener');
   } else {
@@ -382,6 +382,7 @@ async function init() {
     const username = d.username || '';
     _portalUser    = username;
     _portalCompany = company;
+    _portalToken   = d.launch_token || '';
     document.title = 'Solution Studio' + (company ? ' — ' + company : '');
     if (username) document.getElementById('header-username').textContent = username + (company ? ' · ' + company : '');
 

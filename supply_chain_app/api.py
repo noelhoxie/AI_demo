@@ -41,9 +41,17 @@ def _auto_auth():
     """
     if session.get("authenticated"):
         return
-    # 1. Launched from portal with identity params in URL
-    auto_user    = request.args.get("auto_user", "").strip()
+    auto_user    = request.args.get("auto_user",    "").strip()
     auto_company = request.args.get("auto_company", "").strip()
+    auto_token   = request.args.get("auto_token",   "").strip()
+    expected_tok = os.getenv("DATABRICKS_TOKEN", "")
+    # 1a. Token-verified launch from portal (most reliable)
+    if auto_token and expected_tok and auto_token == expected_tok:
+        session["authenticated"] = True
+        session["username"]       = auto_user or "Portal User"
+        session["company_name"]   = auto_company or COMPANY_NAME or "Databricks"
+        return
+    # 1b. Basic URL params launch (fallback)
     if auto_user and auto_company:
         session["authenticated"] = True
         session["username"]       = auto_user
@@ -322,6 +330,7 @@ def config():
     return jsonify({
         "company_name": session.get("company_name", COMPANY_NAME),
         "username":     session.get("username", ""),
+        "launch_token": os.getenv("DATABRICKS_TOKEN", ""),
         "apps":         apps,
     })
 
