@@ -533,8 +533,7 @@ def log_page_time():
     data    = request.get_json(silent=True) or {}
     page    = str(data.get("page", ""))[:64]
     seconds = int(data.get("seconds_spent", 0))
-    user    = (request.headers.get("X-Forwarded-User")
-               or session.get("username", "anonymous"))
+    user    = session.get("username") or request.headers.get("X-Forwarded-User") or "anonymous"
     company = session.get("company_name", "")
 
     print(f"[PageLog] app={APP_NAME} user={user} company={company} page={page} seconds={seconds}", flush=True)
