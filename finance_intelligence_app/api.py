@@ -32,17 +32,30 @@ app.secret_key = os.getenv("SECRET_KEY", os.urandom(32))
 _COMPANY_NAME = os.getenv("COMPANY_NAME", "")
 
 @app.before_request
-def _auto_auth_from_databricks():
-    """When running as a Databricks App the platform forwards the user identity.
-    Use it to silently authenticate the session so users never see the login form."""
+def _auto_auth():
+    """Silently authenticate the session when credentials are already known.
+
+    Priority:
+    1. Databricks App — platform injects X-Forwarded-User on every request.
+    2. Railway / standalone — if DATABRICKS_TOKEN is set the deployment is
+       trusted; use AUTO_USERNAME / AUTO_COMPANY (or sensible defaults) so
+       visitors skip the login form entirely.
+    """
     if session.get("authenticated"):
         return
+    # 1. Databricks Apps SSO
     fwd_user = (request.headers.get("X-Forwarded-User")
                 or request.headers.get("X-Forwarded-Email", ""))
     if fwd_user:
         session["authenticated"] = True
         session["username"]       = fwd_user
-        session["company_name"]   = session.get("company_name") or _COMPANY_NAME or "Databricks"
+        session["company_name"]   = _COMPANY_NAME or "Databricks"
+        return
+    # 2. Token-configured deployment (Railway, local with .env, etc.)
+    if os.getenv("DATABRICKS_TOKEN"):
+        session["authenticated"] = True
+        session["username"]       = os.getenv("AUTO_USERNAME", "Demo User")
+        session["company_name"]   = os.getenv("AUTO_COMPANY", _COMPANY_NAME or "Solution Studio")
 
 def login_required(f):
     @wraps(f)
