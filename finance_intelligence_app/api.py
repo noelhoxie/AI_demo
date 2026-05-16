@@ -58,10 +58,11 @@ def _auto_auth():
         session["username"]       = auto_user
         session["company_name"]   = auto_company
         return
-    # 2. Databricks Apps SSO header
+    # 2. Databricks Apps SSO header (skip service-principal IDs like 79146032@74746552)
     fwd_user = (request.headers.get("X-Forwarded-User")
                 or request.headers.get("X-Forwarded-Email", ""))
-    if fwd_user:
+    import re as _re
+    if fwd_user and not _re.match(r'^\d+@\d+$', fwd_user):
         session["authenticated"] = True
         session["username"]       = fwd_user
         session["company_name"]   = _COMPANY_NAME or "Databricks"
@@ -533,7 +534,10 @@ def log_page_time():
     data    = request.get_json(silent=True) or {}
     page    = str(data.get("page", ""))[:64]
     seconds = int(data.get("seconds_spent", 0))
-    user    = session.get("username") or request.headers.get("X-Forwarded-User") or "anonymous"
+    import re as _re
+    _fwd = request.headers.get("X-Forwarded-User", "")
+    _fwd_clean = _fwd if _fwd and not _re.match(r'^\d+@\d+$', _fwd) else ""
+    user = session.get("username") or _fwd_clean or "anonymous"
     company = session.get("company_name", "")
 
     print(f"[PageLog] app={APP_NAME} user={user} company={company} page={page} seconds={seconds}", flush=True)
