@@ -22,23 +22,56 @@ except ImportError:
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 
 # ── Session secret ─────────────────────────────────────────────────────────────
-app.secret_key = os.getenv("SECRET_KEY", os.urandom(32))
+import hashlib as _hl
+_sk = os.getenv("SECRET_KEY") or os.getenv("DATABRICKS_TOKEN", "")
+app.secret_key = _sk if _sk else _hl.sha256(b"solution-studio-supply-chain-2024").hexdigest()
 
 # ── Auth config ────────────────────────────────────────────────────────────────
-# APP_PASSWORD   — shared password all users enter (required)
-# ALLOWED_DOMAINS — comma-separated email domains e.g. "databricks.com,acme.com"
-#                   leave blank to allow any email domain
-APP_PASSWORD     = os.getenv("APP_PASSWORD", "")   # empty = no auth (Databricks handles it)
-# COMPANY_NAME: set explicitly, or falls back to APP_PASSWORD so the
-# password itself doubles as the company display name (e.g. APP_PASSWORD=Ernest Packaging)
-COMPANY_NAME     = os.getenv("COMPANY_NAME") or APP_PASSWORD
-_raw_domains     = os.getenv("ALLOWED_DOMAINS", "")
-ALLOWED_DOMAINS  = {d.strip().lower() for d in _raw_domains.split(",") if d.strip()}
+COMPANY_NAME    = os.getenv("COMPANY_NAME", "")
+APP_PASSWORD    = os.getenv("APP_PASSWORD", "")   # kept for backwards-compat but not used for gate
+_raw_domains    = os.getenv("ALLOWED_DOMAINS", "")
+ALLOWED_DOMAINS = {d.strip().lower() for d in _raw_domains.split(",") if d.strip()}
+
+@app.before_request
+def _auto_auth():
+    """Silently authenticate the session when identity is already known.
+
+    Priority:
+    1. Portal launch — ?auto_user=&auto_company= params in the URL.
+    2. Databricks App — platform injects X-Forwarded-User on every request.
+    Login form is always shown for direct / unauthenticated visits.
+    """
+    if session.get("authenticated"):
+        return
+    auto_user    = request.args.get("auto_user",    "").strip()
+    auto_company = request.args.get("auto_company", "").strip()
+    auto_token   = request.args.get("auto_token",   "").strip()
+    expected_tok = os.getenv("DATABRICKS_TOKEN", "")
+    # 1a. Token-verified launch from portal (most reliable)
+    if auto_token and expected_tok and auto_token == expected_tok:
+        session["authenticated"] = True
+        session["username"]       = auto_user or "Portal User"
+        session["company_name"]   = auto_company or COMPANY_NAME or "Databricks"
+        return
+    # 1b. Basic URL params launch (fallback)
+    if auto_user and auto_company:
+        session["authenticated"] = True
+        session["username"]       = auto_user
+        session["company_name"]   = auto_company
+        return
+    # 2. Databricks Apps SSO header (skip service-principal IDs like 79146032@74746552)
+    fwd_user = (request.headers.get("X-Forwarded-User")
+                or request.headers.get("X-Forwarded-Email", ""))
+    import re as _re
+    if fwd_user and not _re.match(r'^\d+@\d+$', fwd_user):
+        session["authenticated"] = True
+        session["username"]       = fwd_user
+        session["company_name"]   = COMPANY_NAME or "Databricks"
 
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if APP_PASSWORD and not session.get("authenticated"):
+        if not session.get("authenticated"):
             if request.path.startswith("/api/"):
                 return jsonify({"error": "not authenticated"}), 401
             return redirect("/login")
@@ -179,16 +212,21 @@ def _ensure_page_log_table():
                     CREATE TABLE IF NOT EXISTS page_time_log (
                         id            SERIAL PRIMARY KEY,
                         username      TEXT,
+                        company_name  TEXT,
                         page          TEXT,
                         seconds_spent INTEGER,
                         app_name      TEXT,
                         recorded_at   TIMESTAMPTZ DEFAULT NOW()
                     )
                 """)
-                # Migrate existing table — add app_name if not present
+                # Migrate existing table — add columns if not present
                 cur.execute("""
                     ALTER TABLE page_time_log
                     ADD COLUMN IF NOT EXISTS app_name TEXT
+                """)
+                cur.execute("""
+                    ALTER TABLE page_time_log
+                    ADD COLUMN IF NOT EXISTS company_name TEXT
                 """)
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS contact_submissions (
@@ -221,22 +259,28 @@ def _j(base, pct=0.02):
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    # Auto-auth via URL params (launched from portal)
+    if request.method == "GET":
+        auto_user    = request.args.get("auto_user", "").strip()
+        auto_company = request.args.get("auto_company", "").strip()
+        if auto_user and auto_company:
+            session["authenticated"] = True
+            session["username"]       = auto_user
+            session["company_name"]   = auto_company
+            return redirect("/portal")
+
     error = None
     if request.method == "POST":
-        email    = (request.form.get("email") or "").strip().lower()
-        password = (request.form.get("password") or "").strip()
-        domain   = email.split("@")[-1] if "@" in email else ""
+        username     = (request.form.get("username") or "").strip()
+        company_name = (request.form.get("password") or "").strip()
 
-        domain_ok = (not ALLOWED_DOMAINS) or (domain in ALLOWED_DOMAINS)
-        if "@" in email and domain_ok:
-            session["authenticated"] = True
-            session["email"] = email
-            session["company_name"] = COMPANY_NAME
+        if username and company_name:
+            session["authenticated"]  = True
+            session["username"]        = username
+            session["company_name"]    = company_name
             return redirect("/portal")
-        elif not domain_ok:
-            error = f"Email domain @{domain} is not authorised for this application."
         else:
-            error = "Invalid email or password. Please try again."
+            error = "Please enter your name and company to continue."
 
     return send_from_directory("static", "login.html"), 200 if not error else 401
 
@@ -262,33 +306,34 @@ def config():
             "name":     os.getenv("APP_1_NAME", "Supply Chain Intelligence"),
             "tagline":  os.getenv("APP_1_TAGLINE", "IBP · Inventory · Demand · Orders"),
             "desc":     os.getenv("APP_1_DESC",  "End-to-end supply chain visibility — integrated business planning, inventory optimisation, AI demand forecasting, and order automation in one platform."),
-            "url":      os.getenv("APP_1_URL",   "/"),
-            "features": os.getenv("APP_1_FEATURES", "Integrated Business Planning,Inventory & Logistics,Demand Forecasting AI,Order Automation").split(","),
+            "url":      os.getenv("APP_1_URL",   ""),
+            "features": os.getenv("APP_1_FEATURES", "Integrated Business Planning,Inventory Optimization,Demand Forecasting AI,Order Automation").split(","),
             "badge":    os.getenv("APP_1_BADGE", "Supply Chain"),
             "color":    os.getenv("APP_1_COLOR", "#1B6FEB"),
         },
         {
-            "name":     os.getenv("APP_2_NAME", "SKU Rationalization"),
-            "tagline":  os.getenv("APP_2_TAGLINE", "Cluster · Score · Retire · Commit"),
-            "desc":     os.getenv("APP_2_DESC",  "Identify and retire near-duplicate SKUs in SAP. Four-stage Databricks pipeline with human-in-the-loop review and SAP change-request output."),
+            "name":     os.getenv("APP_2_NAME", "Manufacturing Intelligence"),
+            "tagline":  os.getenv("APP_2_TAGLINE", "OEE · Quality · Predictive Maintenance"),
+            "desc":     os.getenv("APP_2_DESC",  "AI-powered manufacturing operations — real-time OEE monitoring, defect detection, predictive maintenance alerts, and production quality analytics."),
             "url":      os.getenv("APP_2_URL",   ""),
-            "features": os.getenv("APP_2_FEATURES", "Dimensional Clustering,Confidence Scoring,Match Rules Engine,SAP Change Requests").split(","),
+            "features": os.getenv("APP_2_FEATURES", "OEE Monitoring,Predictive Maintenance,Defect Detection AI,Quality Analytics").split(","),
             "badge":    os.getenv("APP_2_BADGE", "Manufacturing"),
             "color":    os.getenv("APP_2_COLOR", "#10b981"),
         },
         {
-            "name":     os.getenv("APP_3_NAME", "Coming Soon"),
-            "tagline":  os.getenv("APP_3_TAGLINE", ""),
-            "desc":     os.getenv("APP_3_DESC",  "A third Databricks-powered application will appear here. Set APP_3_NAME, APP_3_URL, and APP_3_DESC in your environment variables."),
+            "name":     os.getenv("APP_3_NAME", "Finance Intelligence"),
+            "tagline":  os.getenv("APP_3_TAGLINE", "P&L · Cash Flow · Forecasting · Risk"),
+            "desc":     os.getenv("APP_3_DESC",  "Unified financial intelligence — real-time P&L visibility, cash flow forecasting, variance analysis, and AI-driven risk detection across your enterprise."),
             "url":      os.getenv("APP_3_URL",   ""),
-            "features": os.getenv("APP_3_FEATURES", "").split(",") if os.getenv("APP_3_FEATURES") else [],
-            "badge":    os.getenv("APP_3_BADGE", ""),
-            "color":    os.getenv("APP_3_COLOR", "#8b5cf6"),
+            "features": os.getenv("APP_3_FEATURES", "P&L Visibility,Cash Flow Forecasting,Variance Analysis,Risk Detection AI").split(",") if os.getenv("APP_3_FEATURES") else ["P&L Visibility", "Cash Flow Forecasting", "Variance Analysis", "Risk Detection AI"],
+            "badge":    os.getenv("APP_3_BADGE", "Finance"),
+            "color":    os.getenv("APP_3_COLOR", "#f59e0b"),
         },
     ]
     return jsonify({
         "company_name": session.get("company_name", COMPANY_NAME),
-        "email":        session.get("email", ""),
+        "username":     session.get("username", ""),
+        "launch_token": os.getenv("DATABRICKS_TOKEN", ""),
         "apps":         apps,
     })
 
@@ -327,9 +372,13 @@ def contact():
 # ── Static Routes ───────────────────────────────────────────────────────────────
 
 @app.route("/")
-@login_required
 def index():
-    return send_from_directory("static", "index.html")
+    if not session.get("authenticated"):
+        return redirect("/login")
+    # Launched from portal → go straight to the supply chain app
+    if request.args.get("auto_user") or request.args.get("auto_token"):
+        return send_from_directory("static", "index.html")
+    return redirect("/portal")
 
 @app.route("/static/<path:path>")
 def static_files(path):
@@ -1149,8 +1198,11 @@ def log_page_time():
     data    = request.get_json(silent=True) or {}
     page    = str(data.get("page", ""))[:64]
     seconds = int(data.get("seconds_spent", 0))
-    user    = (request.headers.get("X-Forwarded-User")
-               or session.get("email", "anonymous"))
+    import re as _re
+    _fwd = request.headers.get("X-Forwarded-User", "")
+    _fwd_clean = _fwd if _fwd and not _re.match(r'^\d+@\d+$', _fwd) else ""
+    user = session.get("username") or _fwd_clean or "anonymous"
+    company = session.get("company_name", "")
 
     if not _LAKEBASE_OK:
         return jsonify({"status": "skipped", "reason": "no database configured"})
@@ -1159,8 +1211,8 @@ def log_page_time():
         with _db_connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "INSERT INTO page_time_log (username, page, seconds_spent, app_name) VALUES (%s, %s, %s, %s)",
-                    (user, page, seconds, "Supply Chain Intelligence"),
+                    "INSERT INTO page_time_log (username, company_name, page, seconds_spent, app_name) VALUES (%s, %s, %s, %s, %s)",
+                    (user, company, page, seconds, "Supply Chain Intelligence"),
                 )
             conn.commit()
         return jsonify({"status": "ok"})

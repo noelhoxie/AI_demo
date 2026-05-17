@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>App Portal — Databricks</title>
+  <title>Solution Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -243,31 +244,22 @@
 <!-- ── Header ──────────────────────────────────────────────────────────────── -->
 <header class="header">
   <div class="header-brand">
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="26" height="26">
-      <rect width="48" height="48" rx="10" fill="#1A0500"/>
-      <path d="M24 8L8 17v8l16 9 16-9v-8L24 8z" fill="#FF3621"/>
-      <path d="M8 25v8l16 9 16-9v-8l-16 9-16-9z" fill="#FF6B35" opacity="0.8"/>
+    <svg viewBox="0 0 300 331" fill="none" xmlns="http://www.w3.org/2000/svg" width="26" height="26">
+      <path d="M283.923 136.449L150.144 213.624L6.88995 131.168L0 134.982V194.844L150.144 281.115L283.923 204.234V235.926L150.144 313.1L6.88995 230.644L0 234.458V244.729L150.144 331L300 244.729V184.867L293.11 181.052L150.144 263.215L16.0766 186.334V154.643L150.144 231.524L300 145.253V86.2713L292.536 81.8697L150.144 163.739L22.9665 90.9663L150.144 17.8998L254.641 78.055L263.828 72.773V65.4371L150.144 0L0 86.2713V95.6613L150.144 181.933L283.923 104.758V136.449Z" fill="#FF3621"/>
     </svg>
-    <span class="header-brand-name" id="header-company">App Portal</span>
+    <span class="header-brand-name">Solution Studio</span>
     <span class="header-brand-sub">Powered by Databricks</span>
   </div>
   <div class="header-right">
-    <span class="header-email" id="header-email"></span>
+    <span class="header-email" id="header-username"></span>
     <a href="/logout"><button class="logout-btn">Sign out</button></a>
   </div>
 </header>
 
 <!-- ── Hero ────────────────────────────────────────────────────────────────── -->
 <section class="hero">
-  <div class="hero-eyebrow">
-    <span class="hero-eyebrow-dot"></span>
-    Databricks Data Intelligence Platform
-  </div>
-  <h1 class="hero-title">
-    Welcome to <span id="hero-company">your portal</span>
-  </h1>
   <p class="hero-sub">
-    Select an application below. Each is powered by Databricks — Delta Lake, SQL Warehouse, and AI — built for your data.
+    All data is synthetic and none of your changes are persistent so feel free to click around and check out these 3 applications. The information icon located in the bottom right hand corner of each page provides further details about the app.
   </p>
 </section>
 
@@ -310,22 +302,18 @@
 
 <!-- ── Footer ──────────────────────────────────────────────────────────────── -->
 <footer class="footer">
-  <svg width="14" height="14" viewBox="0 0 48 48" fill="none">
-    <rect width="48" height="48" rx="8" fill="#1A0500"/>
-    <path d="M24 8L8 17v8l16 9 16-9v-8L24 8z" fill="#FF3621"/>
-    <path d="M8 25v8l16 9 16-9v-8l-16 9-16-9z" fill="#FF6B35" opacity="0.8"/>
+  <svg width="14" height="14" viewBox="0 0 300 331" fill="none">
+    <path d="M283.923 136.449L150.144 213.624L6.88995 131.168L0 134.982V194.844L150.144 281.115L283.923 204.234V235.926L150.144 313.1L6.88995 230.644L0 234.458V244.729L150.144 331L300 244.729V184.867L293.11 181.052L150.144 263.215L16.0766 186.334V154.643L150.144 231.524L300 145.253V86.2713L292.536 81.8697L150.144 163.739L22.9665 90.9663L150.144 17.8998L254.641 78.055L263.828 72.773V65.4371L150.144 0L0 86.2713V95.6613L150.144 181.933L283.923 104.758V136.449Z" fill="#FF3621"/>
   </svg>
   <span>Powered by <strong>Databricks</strong> — Delta Lake · SQL Warehouse · Genie AI · Lakebase</span>
 </footer>
 
 <script>
-// ── App icons (inline SVG per category) ────────────────────────────────────
+// ── App icons (inline SVG per badge/category) ───────────────────────────────
 const ICONS = {
-  '#1B6FEB': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B6FEB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
-  '#10b981': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
-  '#8b5cf6': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
-  '#f59e0b': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
-  '#f97316': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+  'Supply Chain': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B6FEB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
+  'Manufacturing': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 1 21 12a10 10 0 0 1-2.93 7.07"/><path d="M4.93 4.93A10 10 0 0 0 3 12a10 10 0 0 0 2.93 7.07"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>`,
+  'Finance': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
 };
 const DEFAULT_ICON = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`;
 
@@ -338,7 +326,7 @@ function renderCards(apps) {
   grid.innerHTML = apps.map(app => {
     const color   = app.color || '#1B6FEB';
     const hasUrl  = app.url && app.url.trim() !== '';
-    const icon    = ICONS[color] || DEFAULT_ICON;
+    const icon    = ICONS[app.badge] || DEFAULT_ICON;
     const badgeClass = hasUrl ? 'active' : '';
     const features = (app.features || []).filter(f => f.trim());
 
@@ -346,7 +334,6 @@ function renderCards(apps) {
       <div class="app-card" style="--card-color:${esc(color)}">
         <div class="card-top">
           <div class="card-icon">${icon}</div>
-          ${app.badge ? `<span class="card-badge ${badgeClass}">${esc(app.badge)}</span>` : ''}
         </div>
         <div class="card-name">${esc(app.name)}</div>
         ${app.tagline ? `<div class="card-tagline">${esc(app.tagline)}</div>` : ''}
@@ -367,12 +354,23 @@ function renderCards(apps) {
   }).join('');
 }
 
+let _portalUser    = '';
+let _portalCompany = '';
+let _portalToken   = '';
+
 function launch(url) {
-  // Internal URLs open in same tab; external Databricks Apps open in new tab
-  if (url.startsWith('http')) {
-    window.open(url, '_blank', 'noopener');
+  // Append auto-auth params so the target app logs the user in automatically
+  let target = url;
+  const sep = url.includes('?') ? '&' : '?';
+  let params = '';
+  if (_portalUser)    params += 'auto_user='    + encodeURIComponent(_portalUser);
+  if (_portalCompany) params += (params ? '&' : '') + 'auto_company=' + encodeURIComponent(_portalCompany);
+  if (_portalToken)   params += (params ? '&' : '') + 'auto_token='   + encodeURIComponent(_portalToken);
+  if (params) target = url + sep + params;
+  if (target.startsWith('http')) {
+    window.open(target, '_blank', 'noopener');
   } else {
-    window.location.href = url;
+    window.location.href = target;
   }
 }
 
@@ -381,11 +379,13 @@ async function init() {
     const d = await (await fetch('/api/config')).json();
 
     // Update branding
-    const company = d.company_name || 'Your Portal';
-    document.title = company + ' — App Portal';
-    document.getElementById('header-company').textContent = company;
-    document.getElementById('hero-company').textContent   = company;
-    if (d.email) document.getElementById('header-email').textContent = d.email;
+    const company  = d.company_name || '';
+    const username = d.username || '';
+    _portalUser    = username;
+    _portalCompany = company;
+    _portalToken   = d.launch_token || '';
+    document.title = 'Solution Studio' + (company ? ' — ' + company : '');
+    if (username) document.getElementById('header-username').textContent = username + (company ? ' · ' + company : '');
 
     // Render app cards
     if (d.apps && d.apps.length) renderCards(d.apps);

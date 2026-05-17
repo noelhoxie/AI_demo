@@ -1,5 +1,5 @@
 flask>=3.0
-gunicorn>=21.0
-requests
+gunicorn>=22.0
+requests>=2.32
 databricks-sql-connector>=3.0
 psycopg2-binary>=2.9

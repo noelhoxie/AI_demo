@@ -1,0 +1,38 @@
+command:
+  - "sh"
+  - "-c"
+  - "gunicorn --bind 0.0.0.0:$DATABRICKS_APP_PORT --workers 2 --worker-class gthread --threads 4 --timeout 180 api:app"
+
+env:
+  - name: GENIE_SPACE_ID
+    value: ""
+  - name: LLM_ENDPOINT
+    value: "databricks-meta-llama-3-3-70b-instruct"
+  - name: DATABRICKS_HOST
+    value: "https://fevm-solution-studio.cloud.databricks.com"
+  - name: SQL_WAREHOUSE_HTTP_PATH
+    value: "/sql/1.0/warehouses/17e5cb93c5f1758e"
+  - name: VISION_MODEL_ENDPOINT
+    value: "vision"
+  - name: PDM_ENDPOINT
+    value: "predictive-maintenance"
+  - name: MANUALS_ENDPOINT
+    value: "mfg-manuals-rag"
+  - name: UC_CATALOG
+    value: "solution_studio_catalog"
+  - name: UC_SCHEMA
+    value: "mfg_vision"
+  - name: UC_VOLUME
+    value: "inspection_images"
+  - name: LAKEBASE_DATABRICKS_TOKEN
+    value: ""
+  - name: LAKEBASE_HOST
+    value: "ep-fragrant-resonance-d2ojfexl.database.us-east-1.cloud.databricks.com"
+  - name: LAKEBASE_PORT
+    value: "5432"
+  - name: LAKEBASE_DB
+    value: "databricks_postgres"
+  - name: LAKEBASE_USER
+    value: "noel.hoxie@databricks.com"
+  - name: LAKEBASE_ENDPOINT
+    value: "projects/solution-studio-analytics/branches/production/endpoints/primary"

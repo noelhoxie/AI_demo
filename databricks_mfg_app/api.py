@@ -10,7 +10,8 @@ import math
 import os
 import time
 import requests
-from flask import Flask, jsonify, request, send_from_directory
+from functools import wraps
+from flask import Flask, jsonify, request, send_from_directory, session, redirect
 
 try:
     import psycopg2
@@ -20,6 +21,58 @@ except ImportError:
     _PSYCOPG2_OK = False
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
+import hashlib as _hl
+_sk = os.getenv("SECRET_KEY") or os.getenv("DATABRICKS_TOKEN", "")
+app.secret_key = _sk if _sk else _hl.sha256(b"solution-studio-manufacturing-2024").hexdigest()
+
+# ── Auth ────────────────────────────────────────────────────────────────────────
+COMPANY_NAME    = os.getenv("COMPANY_NAME", "")
+
+@app.before_request
+def _auto_auth():
+    """Silently authenticate the session when identity is already known.
+
+    Priority:
+    1. Portal launch — ?auto_user=&auto_company= params in the URL.
+    2. Databricks App — platform injects X-Forwarded-User on every request.
+    Login form is always shown for direct / unauthenticated visits.
+    """
+    if session.get("authenticated"):
+        return
+    auto_user    = request.args.get("auto_user",    "").strip()
+    auto_company = request.args.get("auto_company", "").strip()
+    auto_token   = request.args.get("auto_token",   "").strip()
+    expected_tok = os.getenv("DATABRICKS_TOKEN", "")
+    # 1a. Token-verified launch from portal (most reliable)
+    if auto_token and expected_tok and auto_token == expected_tok:
+        session["authenticated"] = True
+        session["username"]       = auto_user or "Portal User"
+        session["company_name"]   = auto_company or COMPANY_NAME or "Databricks"
+        return
+    # 1b. Basic URL params launch (fallback)
+    if auto_user and auto_company:
+        session["authenticated"] = True
+        session["username"]       = auto_user
+        session["company_name"]   = auto_company
+        return
+    # 2. Databricks Apps SSO header (skip service-principal IDs like 79146032@74746552)
+    fwd_user = (request.headers.get("X-Forwarded-User")
+                or request.headers.get("X-Forwarded-Email", ""))
+    import re as _re
+    if fwd_user and not _re.match(r'^\d+@\d+$', fwd_user):
+        session["authenticated"] = True
+        session["username"]       = fwd_user
+        session["company_name"]   = COMPANY_NAME or "Databricks"
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("authenticated"):
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "not authenticated"}), 401
+            return redirect("/login")
+        return f(*args, **kwargs)
+    return decorated
 
 # ── Credentials ────────────────────────────────────────────────────────────────
 
@@ -56,10 +109,10 @@ _LAKEBASE_OK = bool(LAKEBASE_HOST) and _PSYCOPG2_OK
 
 def _lakebase_token():
     try:
-        host = os.getenv("DATABRICKS_HOST", "").rstrip("/")
+        host = (os.getenv("LAKEBASE_DATABRICKS_HOST") or os.getenv("DATABRICKS_HOST", "")).rstrip("/")
         if host and not host.startswith("http"):
             host = f"https://{host}"
-        pat           = os.getenv("DATABRICKS_TOKEN", "")
+        pat           = os.getenv("LAKEBASE_DATABRICKS_TOKEN") or os.getenv("DATABRICKS_TOKEN", "")
         client_id     = os.getenv("DATABRICKS_CLIENT_ID", "")
         client_secret = os.getenv("DATABRICKS_CLIENT_SECRET", "")
         if not host:
@@ -108,6 +161,7 @@ def _ensure_page_log_table():
                     CREATE TABLE IF NOT EXISTS page_time_log (
                         id            SERIAL PRIMARY KEY,
                         username      TEXT,
+                        company_name  TEXT,
                         page          TEXT,
                         seconds_spent INTEGER,
                         app_name      TEXT,
@@ -117,6 +171,10 @@ def _ensure_page_log_table():
                 cur.execute("""
                     ALTER TABLE page_time_log
                     ADD COLUMN IF NOT EXISTS app_name TEXT
+                """)
+                cur.execute("""
+                    ALTER TABLE page_time_log
+                    ADD COLUMN IF NOT EXISTS company_name TEXT
                 """)
             conn.commit()
         print(f"[Lakebase] page_time_log ready ({APP_NAME})", flush=True)
@@ -877,7 +935,40 @@ def _extract_answer(msg):
 
 @app.route("/")
 def index():
+    if not session.get("authenticated"):
+        return redirect("/login")
     return send_from_directory("static", "index.html")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    # Auto-auth via URL params (launched from portal)
+    if request.method == "GET":
+        auto_user    = request.args.get("auto_user", "").strip()
+        auto_company = request.args.get("auto_company", "").strip()
+        if auto_user and auto_company:
+            session["authenticated"] = True
+            session["username"]       = auto_user
+            session["company_name"]   = auto_company
+            return redirect("/")
+
+    error = None
+    if request.method == "POST":
+        username     = (request.form.get("username") or "").strip()
+        company_name = (request.form.get("password") or "").strip()
+        if username and company_name:
+            session["authenticated"] = True
+            session["username"]       = username
+            session["company_name"]   = company_name
+            return redirect("/")
+        else:
+            error = "Please enter your name and company to continue."
+
+    return send_from_directory("static", "login.html"), 200 if not error else 401
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
 
 
 @app.route("/api/live")
@@ -1575,8 +1666,11 @@ def log_page_time():
     data    = request.get_json(silent=True) or {}
     page    = str(data.get("page", ""))[:64]
     seconds = int(data.get("seconds_spent", 0))
-    user    = (request.headers.get("X-Forwarded-User")
-               or request.headers.get("X-Forwarded-Email", "anonymous"))
+    import re as _re
+    _fwd = request.headers.get("X-Forwarded-User", "")
+    _fwd_clean = _fwd if _fwd and not _re.match(r'^\d+@\d+$', _fwd) else ""
+    user = session.get("username") or _fwd_clean or "anonymous"
+    company = session.get("company_name", "")
 
     if not _LAKEBASE_OK:
         return jsonify({"status": "skipped", "reason": "no database configured"})
@@ -1585,8 +1679,8 @@ def log_page_time():
         with _db_connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "INSERT INTO page_time_log (username, page, seconds_spent, app_name) VALUES (%s, %s, %s, %s)",
-                    (user, page, seconds, APP_NAME),
+                    "INSERT INTO page_time_log (username, company_name, page, seconds_spent, app_name) VALUES (%s, %s, %s, %s, %s)",
+                    (user, company, page, seconds, APP_NAME),
                 )
             conn.commit()
         return jsonify({"status": "ok"})
