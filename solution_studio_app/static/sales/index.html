@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/sales/favicon.svg"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sales Intelligence</title>
+  <link rel="stylesheet" href="/sales/css/styles.css?v=20260525c" />
+  <style>
+    @keyframes genie-fab-pulse {
+      0%,100% { box-shadow: 0 4px 20px rgba(255,54,33,0.42), 0 0 0 2px rgba(255,54,33,0.12); }
+      50%     { box-shadow: 0 4px 28px rgba(255,54,33,0.68), 0 0 0 6px rgba(255,54,33,0.06); }
+    }
+    .genie-fab { position:fixed; bottom:28px; right:28px; width:52px; height:52px; border-radius:16px; background:#fff; border:1.5px solid rgba(255,54,33,0.3); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:500; animation:genie-fab-pulse 2.2s ease-in-out infinite; transition:transform .15s; }
+    .genie-fab:hover  { transform:scale(1.07); animation:none; box-shadow:0 6px 24px rgba(255,54,33,0.55); }
+    .genie-fab:active { transform:scale(0.93); animation:none; }
+    .genie-panel-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,0.42); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .22s; }
+    .genie-panel-overlay.open { opacity:1; pointer-events:all; }
+    .genie-chat-panel { position:fixed; top:0; right:-460px; bottom:0; width:440px; z-index:501; background:#0d0d0d; border-left:1px solid rgba(255,54,33,0.12); display:flex; flex-direction:column; overflow:hidden; transition:right .28s cubic-bezier(0.32,0.72,0,1); box-shadow:-8px 0 32px rgba(0,0,0,0.45); }
+    .genie-chat-panel.open { right:0; }
+    .genie-chat-panel-hdr { display:flex; align-items:center; gap:11px; padding:15px 15px 13px; border-bottom:1px solid rgba(255,255,255,0.07); flex-shrink:0; }
+    .genie-chat-panel-icon { width:34px; height:34px; border-radius:9px; background:rgba(255,54,33,0.08); border:1px solid rgba(255,54,33,0.18); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .genie-chat-panel-title { font-size:13.5px; font-weight:700; color:#f0f0f0; }
+    .genie-chat-panel-sub   { font-size:11px; color:#6b7280; margin-top:1px; }
+    .genie-chat-panel-close { margin-left:auto; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:7px; color:#9ca3af; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; transition:all .15s; }
+    .genie-chat-panel-close:hover { background:rgba(255,255,255,0.12); color:#f0f0f0; }
+    .genie-chat-panel-body { flex:1; overflow:hidden; display:flex; flex-direction:column; padding:0; }
+    /* ── Tutorial overlay ── */
+    .tut-overlay{position:fixed;inset:0;z-index:8500;background:rgba(0,0,0,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;}
+    .tut-overlay.hidden{display:none;}
+    .tut-card{background:#111;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:34px 38px;max-width:560px;width:90vw;box-shadow:0 24px 60px rgba(0,0,0,.65);}
+    .tut-hdr{display:flex;align-items:center;gap:13px;margin-bottom:26px;}
+    .tut-hdr-icon{width:46px;height:46px;border-radius:12px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.22);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .tut-title{font-size:18px;font-weight:800;color:#f0f0f0;line-height:1.2;}
+    .tut-sub{font-size:11.5px;color:#6b7280;margin-top:2px;}
+    .tut-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:26px;}
+    .tut-feat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:13px;}
+    .tut-feat-name{font-size:12px;font-weight:700;color:#f0f0f0;margin-bottom:3px;}
+    .tut-feat-desc{font-size:11px;color:#9ca3af;line-height:1.5;}
+    .tut-footer{display:flex;align-items:center;justify-content:space-between;}
+    .tut-footer-note{font-size:11px;color:#4b5563;}
+    .tut-btn{background:#6366f1;border:none;border-radius:8px;color:#fff;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;font-family:inherit;}
+    .tut-btn:hover{opacity:.88;}
+  </style>
+</head>
+<body style="display:flex;flex-direction:column;height:100vh;">
+
+<!-- ── Tutorial overlay ──────────────────────────────────────────────────── -->
+<div id="tut-overlay" class="tut-overlay hidden">
+  <div class="tut-card">
+    <div class="tut-hdr">
+      <div class="tut-hdr-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      </div>
+      <div>
+        <div class="tut-title">Welcome to Sales Intelligence</div>
+        <div class="tut-sub">Powered by Databricks · Commercial performance analytics</div>
+      </div>
+    </div>
+    <div class="tut-grid">
+      <div class="tut-feat">
+        <div class="tut-feat-name">💰 Dynamic Pricing</div>
+        <div class="tut-feat-desc">AI-driven price gap analysis and revenue recovery opportunities — by SKU and product line.</div>
+      </div>
+      <div class="tut-feat">
+        <div class="tut-feat-name">📋 Configure Price Quote</div>
+        <div class="tut-feat-desc">Open pipeline, approval queue, discount trends, and win probability across all active deals.</div>
+      </div>
+      <div class="tut-feat">
+        <div class="tut-feat-name">🎯 Next Best Offer</div>
+        <div class="tut-feat-desc">ML-ranked expansion opportunities and churn risk predictions by account and ARR at stake.</div>
+      </div>
+      <div class="tut-feat">
+        <div class="tut-feat-name">✦ Ask Genie</div>
+        <div class="tut-feat-desc">Click the Genie icon (bottom-right) to ask natural language questions about your sales data.</div>
+      </div>
+    </div>
+    <div class="tut-footer">
+      <span class="tut-footer-note">Press Esc to dismiss · won't show again</span>
+      <button class="tut-btn" onclick="dismissTutorial()">Get Started</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Navigation ────────────────────────────────────────────────────────── -->
+<nav class="sales-nav">
+  <div class="nav-brand">
+    <div class="nav-brand-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+      </svg>
+    </div>
+    <div class="nav-brand-texts">
+      <span class="nav-brand-name">Sales Intelligence</span>
+      <span class="nav-brand-sub">Powered by Databricks</span>
+    </div>
+  </div>
+
+  <div class="nav-div"></div>
+  <button class="nav-tab active" data-tab="pricing"  onclick="switchTab('pricing')">Dynamic Pricing</button>
+  <button class="nav-tab"        data-tab="cpq"      onclick="switchTab('cpq')">Configure Price Quote</button>
+  <button class="nav-tab"        data-tab="nbco"     onclick="switchTab('nbco')">Next Best Offer</button>
+  <button class="nav-tab"        data-tab="accounts" onclick="switchTab('accounts')">Account Service</button>
+  <div class="nav-div"></div>
+
+  <a href="/portal" class="nav-link" style="margin-left:auto;">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    All Apps
+  </a>
+  <a href="/logout" class="nav-link" onmouseover="this.style.borderColor='rgba(239,68,68,0.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Sign Out
+  </a>
+</nav>
+
+<!-- ── Global KPI Strip ───────────────────────────────────────────────────── -->
+<div class="global-kpi-strip">
+  <div class="gkpi"><div class="gkpi-label">Pipeline Value</div><div class="gkpi-val" id="gkpi-pipeline">—</div></div>
+  <div class="gkpi-div"></div>
+  <div class="gkpi"><div class="gkpi-label">Win Rate</div><div class="gkpi-val positive" id="gkpi-winrate">—</div></div>
+  <div class="gkpi-div"></div>
+  <div class="gkpi"><div class="gkpi-label">Avg Deal Size</div><div class="gkpi-val" id="gkpi-deal">—</div></div>
+  <div class="gkpi-div"></div>
+  <div class="gkpi"><div class="gkpi-label">Price Realization</div><div class="gkpi-val" id="gkpi-price-real">—</div></div>
+  <div class="gkpi-div"></div>
+  <div class="gkpi"><div class="gkpi-label">Quota Attainment</div><div class="gkpi-val" id="gkpi-quota">—</div></div>
+  <div class="gkpi-div"></div>
+  <div class="gkpi"><div class="gkpi-label">Revenue Opportunity</div><div class="gkpi-val positive" id="gkpi-rev-opp">—</div></div>
+  <div class="gkpi-div"></div>
+  <div class="gkpi"><div class="gkpi-label">CSAT</div><div class="gkpi-val" id="gkpi-csat">—</div></div>
+</div>
+
+<!-- ── Main Content ───────────────────────────────────────────────────────── -->
+<main class="app-main">
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       TAB 1: DYNAMIC PRICING
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-pricing" class="tab-panel">
+
+    <div class="tab-info-bar">
+      <span class="tab-info-desc">AI price optimization engine — compares internal pricing against market index and elasticity models to surface margin recovery opportunities across your product catalog.</span>
+      <button class="tab-info-btn" onclick="openInfoPanel('pricing')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        How data drives this
+      </button>
+    </div>
+
+    <!-- Metric tiles -->
+    <div class="metrics-row">
+      <div class="metric-tile">
+        <div class="metric-label">Revenue Opportunity</div>
+        <div class="metric-val" id="pr-rev-opp">—</div>
+        <div class="metric-delta pos" id="pr-rev-opp-d">—</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Avg Price Gap</div>
+        <div class="metric-val" id="pr-gap">—</div>
+        <div class="metric-delta neu">vs. market index</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Items Underpriced</div>
+        <div class="metric-val" id="pr-under">—</div>
+        <div class="metric-delta neg" id="pr-under-d">—</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Model Accuracy</div>
+        <div class="metric-val" id="pr-accuracy">—</div>
+        <div class="metric-delta pos">price elasticity model</div>
+      </div>
+    </div>
+
+    <!-- Price Elasticity Simulator -->
+    <div class="ml-runner-card" style="margin-bottom:16px;">
+      <div class="ml-runner-header" style="margin-bottom:8px;">
+        <div>
+          <div class="ml-runner-title">Price Elasticity Simulator</div>
+          <div class="ml-runner-sub">Select a product and drag the price to see projected demand and revenue impact from the elasticity model</div>
+        </div>
+        <select class="form-select" id="elas-product-sel" style="font-size:12px;max-width:220px;" onchange="initElasticity()">
+          <option value="">— Select a Product —</option>
+          <option value="pump">Industrial Pump Series A</option>
+          <option value="hydraulic">Hydraulic Manifold Pro</option>
+          <option value="valve">Precision Valve Kit</option>
+          <option value="filter">Filter Assembly Bundle</option>
+          <option value="actuator">Actuator Control Module</option>
+          <option value="sensor">Sensor Array Unit</option>
+        </select>
+      </div>
+      <div id="elas-panel" style="display:none;">
+        <div class="elasticity-slider-row">
+          <span class="elasticity-label">Price Point</span>
+          <input type="range" style="flex:1;cursor:pointer;" id="elas-price-slider" min="50" max="200" value="100" oninput="updateElasticity()">
+          <span class="elasticity-val" id="elas-price-val">$—</span>
+        </div>
+        <div class="elasticity-impact" id="elas-impact">
+          <div class="elas-kpi"><div class="elas-kpi-label">Demand Index</div><div class="elas-kpi-val" id="elas-demand">—</div></div>
+          <div class="elas-kpi"><div class="elas-kpi-label">Revenue Impact</div><div class="elas-kpi-val" id="elas-revenue">—</div></div>
+          <div class="elas-kpi"><div class="elas-kpi-label">Margin %</div><div class="elas-kpi-val" id="elas-margin">—</div></div>
+          <div class="elas-kpi"><div class="elas-kpi-label">Win Probability</div><div class="elas-kpi-val" id="elas-winprob">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product pricing table + chart -->
+    <div class="two-col-60-40">
+      <div class="card">
+        <div class="card-hdr">
+          <div>
+            <div class="card-title">Product Price Optimization</div>
+            <div class="card-sub">AI-recommended prices vs. current — click Apply to stage for approval</div>
+          </div>
+          <button class="info-icon-btn" onclick="openInfoPanel('pricing-table')" title="How data drives this">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Current</th>
+                <th>AI Recommended</th>
+                <th>Variance</th>
+                <th>Elasticity</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="pricing-tbody">
+              <tr><td colspan="6"><span class="skel-block" style="height:12px;width:80%;margin:8px 0;"></span></td></tr>
+              <tr><td colspan="6"><span class="skel-block" style="height:12px;width:70%;margin:8px 0;"></span></td></tr>
+              <tr><td colspan="6"><span class="skel-block" style="height:12px;width:85%;margin:8px 0;"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hdr">
+          <div>
+            <div class="card-title">Pricing Rule Triggers</div>
+            <div class="card-sub">Active conditions driving recommendations</div>
+          </div>
+        </div>
+        <div id="pricing-rules" style="display:flex;flex-direction:column;gap:10px;">
+          <span class="skel-block" style="height:52px;"></span>
+          <span class="skel-block" style="height:52px;"></span>
+          <span class="skel-block" style="height:52px;"></span>
+        </div>
+        <div style="margin-top:20px;">
+          <div class="card-title" style="margin-bottom:10px;font-size:12px;">Market vs. Internal — Last 6 Months</div>
+          <div class="sparkline-wrap" id="price-sparkline"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       TAB 2: CONFIGURE PRICE QUOTE (CPQ)
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-cpq" class="tab-panel hidden">
+
+    <div class="tab-info-bar">
+      <span class="tab-info-desc">AI-assisted quoting engine — configure product, volume, and segment parameters to generate real-time quotes with dynamic discount guidance and approval routing.</span>
+      <button class="tab-info-btn" onclick="openInfoPanel('cpq')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        How data drives this
+      </button>
+    </div>
+
+    <div class="cpq-layout">
+
+      <!-- Builder -->
+      <div class="card" style="flex-shrink:0;">
+        <div class="card-hdr">
+          <div>
+            <div class="card-title">Quote Builder</div>
+            <div class="card-sub">Configure parameters — AI applies discount guidance</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Account</label>
+          <select class="form-select" id="cpq-account">
+            <option value="">— Select Account —</option>
+            <option>TechDyn Corporation</option>
+            <option>Vertex Manufacturing</option>
+            <option>Apex Systems</option>
+            <option>CoreMfg Inc.</option>
+            <option>Horizon Industrial</option>
+            <option>Summit Fabrication</option>
+            <option>PacificWest Industries</option>
+            <option>Allied Engineering Group</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Product Line</label>
+          <select class="form-select" id="cpq-product">
+            <option value="">— Select Product —</option>
+            <option value="pump">Industrial Pump Series A ($4,250/unit)</option>
+            <option value="hydraulic">Hydraulic Manifold Pro ($1,890/unit)</option>
+            <option value="valve">Precision Valve Kit ($340/unit)</option>
+            <option value="filter">Filter Assembly Bundle ($890/unit)</option>
+            <option value="actuator">Actuator Control Module ($2,100/unit)</option>
+            <option value="sensor">Sensor Array Unit ($560/unit)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Quantity</label>
+          <div class="slider-wrap">
+            <input type="range" class="form-range" id="cpq-qty" min="1" max="500" value="25"
+              oninput="cpqUpdate()" style="--pct:4.8%">
+            <span class="slider-val" id="cpq-qty-val">25</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Customer Segment</label>
+          <select class="form-select" id="cpq-segment">
+            <option value="enterprise">Enterprise</option>
+            <option value="midmarket">Mid-Market</option>
+            <option value="smb">SMB</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Region</label>
+          <select class="form-select" id="cpq-region">
+            <option>Americas</option>
+            <option>EMEA</option>
+            <option>APAC</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Discount Override</label>
+          <div class="slider-wrap">
+            <input type="range" class="form-range" id="cpq-discount" min="0" max="25" value="0"
+              oninput="cpqUpdate()" style="--pct:0%">
+            <span class="slider-val" id="cpq-discount-val">0%</span>
+          </div>
+        </div>
+
+        <button class="btn-primary" style="width:100%;margin-top:4px;" onclick="generateQuote()" id="cpq-generate-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Generate Quote
+        </button>
+      </div>
+
+      <!-- Right column: Quote output + pipeline -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Quote output -->
+        <div class="card">
+          <div class="card-hdr">
+            <div>
+              <div class="card-title" id="cpq-quote-id">Quote Output</div>
+              <div class="card-sub" id="cpq-quote-status">Configure parameters and generate a quote</div>
+            </div>
+            <span class="pill pill-grey" id="cpq-approval-badge" style="display:none">Pending</span>
+          </div>
+          <div id="cpq-quote-body">
+            <div class="quote-empty">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(99,102,241,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 12px;display:block;"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/></svg>
+              Select an account and product, then click<br><strong style="color:rgba(130,140,248,0.7)">Generate Quote</strong> to build a real-time quote.
+            </div>
+          </div>
+          <div id="cpq-quote-actions" style="display:none;gap:8px;margin-top:14px;flex-wrap:wrap;"></div>
+
+          <!-- Win Probability Scorer -->
+          <div class="ml-runner-card" id="win-prob-card" style="display:none;margin-top:14px;">
+            <div class="ml-runner-header">
+              <div>
+                <div class="ml-runner-title">Win Probability Scorer</div>
+                <div class="ml-runner-sub">XGBoost model — 3 years of CRM deal outcomes</div>
+              </div>
+              <button class="btn-run-model" id="win-score-btn" onclick="scoreThisDeal()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C12 7.8 7.8 12 2 12C7.8 12 12 16.2 12 22C12 16.2 16.2 12 22 12C16.2 12 12 7.8 12 2Z"/></svg>
+                Score This Deal
+              </button>
+            </div>
+            <div class="ml-thinking" id="win-thinking"><div class="typing-ind"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div><span id="win-step">Loading deal parameters…</span></div>
+            <div class="ml-results" id="win-results"></div>
+          </div>
+        </div>
+
+        <!-- Open quotes pipeline -->
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">Open Quote Pipeline</div>
+            <span class="pill pill-blue" id="cpq-pipeline-count">—</span>
+          </div>
+          <div class="tbl-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Quote #</th>
+                  <th>Account</th>
+                  <th>Product</th>
+                  <th>Value</th>
+                  <th>Stage</th>
+                  <th>Close</th>
+                </tr>
+              </thead>
+              <tbody id="cpq-pipeline-tbody">
+                <tr><td colspan="6"><span class="skel-block" style="height:12px;width:90%;margin:8px 0;"></span></td></tr>
+                <tr><td colspan="6"><span class="skel-block" style="height:12px;width:75%;margin:8px 0;"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       TAB 3: NEXT BEST COMMERCIAL OFFER (NBCO)
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-nbco" class="tab-panel hidden">
+
+    <div class="tab-info-bar">
+      <span class="tab-info-desc">ML-driven commercial offer recommendations — analyzes account usage patterns, product adoption gaps, renewal proximity, and churn signals to surface the highest-value next action for each account.</span>
+      <button class="tab-info-btn" onclick="openInfoPanel('nbco')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        How data drives this
+      </button>
+    </div>
+
+    <!-- Summary metrics -->
+    <div class="metrics-row">
+      <div class="metric-tile">
+        <div class="metric-label">Expansion Opportunities</div>
+        <div class="metric-val" id="nbco-opps">—</div>
+        <div class="metric-delta pos">across active accounts</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Total Uplift Potential</div>
+        <div class="metric-val" id="nbco-uplift">—</div>
+        <div class="metric-delta pos">identified this quarter</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Churn Risk Accounts</div>
+        <div class="metric-val" id="nbco-churn">—</div>
+        <div class="metric-delta neg">require immediate action</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Model Confidence</div>
+        <div class="metric-val" id="nbco-confidence">—</div>
+        <div class="metric-delta neu">avg recommendation score</div>
+      </div>
+    </div>
+
+    <!-- Top 3 priority recommendation cards -->
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div>
+          <div class="card-title">Priority Recommendations</div>
+          <div class="card-sub" style="margin-top:2px;">Top expansion opportunities — ranked by confidence × uplift</div>
+        </div>
+        <button class="btn-primary" id="nbco-run-btn" onclick="runNbcoAnalysis()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          Run AI Analysis
+        </button>
+      </div>
+      <div id="nbco-thinking" style="display:none;" class="card" style="padding:12px 16px;">
+        <div style="display:flex;align-items:center;gap:10px;color:rgba(130,140,248,0.8);font-size:13px;">
+          <div class="typing-ind"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+          <span id="nbco-thinking-txt">Analyzing account signals and opportunity patterns…</span>
+        </div>
+      </div>
+      <div id="nbco-alert" style="display:none;" class="card" style="background:rgba(76,175,125,0.05);border-color:rgba(76,175,125,0.2);padding:12px 16px;margin-bottom:12px;">
+        <div style="font-size:13px;color:#4CAF7D;" id="nbco-alert-txt"></div>
+      </div>
+      <div class="reco-grid" id="nbco-cards">
+        <div class="reco-card skel" style="min-height:200px;"></div>
+        <div class="reco-card skel" style="min-height:200px;"></div>
+        <div class="reco-card skel" style="min-height:200px;"></div>
+      </div>
+    </div>
+
+    <!-- Full recommendations table -->
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <div class="card-title">All Account Recommendations</div>
+          <div class="card-sub">Sorted by opportunity score · refreshed daily by ML pipeline</div>
+        </div>
+        <button class="info-icon-btn" onclick="openInfoPanel('nbco-table')" title="How data drives this">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </button>
+      </div>
+      <div class="tbl-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Tier</th>
+              <th>Current ARR</th>
+              <th>Recommended Offer</th>
+              <th>Uplift</th>
+              <th>Confidence</th>
+              <th>Churn Risk</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="nbco-tbody">
+            <tr><td colspan="8"><span class="skel-block" style="height:12px;width:85%;margin:8px 0;"></span></td></tr>
+            <tr><td colspan="8"><span class="skel-block" style="height:12px;width:70%;margin:8px 0;"></span></td></tr>
+            <tr><td colspan="8"><span class="skel-block" style="height:12px;width:78%;margin:8px 0;"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       TAB 4: ACCOUNT SERVICE DASHBOARD
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-accounts" class="tab-panel hidden">
+
+    <div class="tab-info-bar">
+      <span class="tab-info-desc">Real-time account health monitoring — aggregates CSAT, ticket data, SLA compliance, and engagement signals into a unified customer success view for CSMs and sales leadership.</span>
+      <button class="tab-info-btn" onclick="openInfoPanel('accounts')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        How data drives this
+      </button>
+    </div>
+
+    <!-- Service KPI tiles -->
+    <div class="metrics-row">
+      <div class="metric-tile">
+        <div class="metric-label">CSAT Score</div>
+        <div class="metric-val positive" id="svc-csat">—</div>
+        <div class="metric-delta neu">/ 5.0 target</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Open Tickets</div>
+        <div class="metric-val" id="svc-tickets">—</div>
+        <div class="metric-delta" id="svc-tickets-d">—</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">SLA Compliance</div>
+        <div class="metric-val positive" id="svc-sla">—</div>
+        <div class="metric-delta neu">of commitments met</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Avg Resolution</div>
+        <div class="metric-val" id="svc-resolution">—</div>
+        <div class="metric-delta pos">days to close</div>
+      </div>
+    </div>
+
+    <div class="two-col-60-40">
+
+    <!-- Churn Risk Scanner -->
+    <div class="ml-runner-card" style="margin-bottom:16px;">
+      <div class="ml-runner-header">
+        <div>
+          <div class="ml-runner-title">Churn Risk Scanner</div>
+          <div class="ml-runner-sub">Gradient boosting churn propensity model — scores accounts by 90-day churn probability with top signals</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <select class="form-select" id="churn-tier-filter" style="font-size:12px;max-width:160px;">
+            <option value="all">All Tiers</option>
+            <option value="enterprise">Enterprise Only</option>
+            <option value="strategic">Strategic Only</option>
+            <option value="high">High-Risk Only</option>
+          </select>
+          <button class="btn-run-model" id="churn-scan-btn" onclick="runChurnScan()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C12 7.8 7.8 12 2 12C7.8 12 12 16.2 12 22C12 16.2 16.2 12 22 12C16.2 12 12 7.8 12 2Z"/></svg>
+            Run Churn Model
+          </button>
+        </div>
+      </div>
+      <div class="ml-thinking" id="churn-thinking"><div class="typing-ind"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div><span id="churn-step">Loading account usage signals and engagement data…</span></div>
+      <div class="ml-results" id="churn-results"></div>
+    </div>
+
+      <!-- Account health table -->
+      <div class="card">
+        <div class="card-hdr">
+          <div>
+            <div class="card-title">Account Health Scorecard</div>
+            <div class="card-sub">Health = composite of CSAT, engagement, ticket volume, and renewal proximity</div>
+          </div>
+          <button class="info-icon-btn" onclick="openInfoPanel('acct-health')" title="How data drives this">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Tier</th>
+                <th>Health</th>
+                <th>ARR</th>
+                <th>Tickets</th>
+                <th>Renewal</th>
+                <th>CSM</th>
+                <th>Risk</th>
+              </tr>
+            </thead>
+            <tbody id="acct-tbody">
+              <tr><td colspan="8"><span class="skel-block" style="height:12px;width:90%;margin:8px 0;"></span></td></tr>
+              <tr><td colspan="8"><span class="skel-block" style="height:12px;width:75%;margin:8px 0;"></span></td></tr>
+              <tr><td colspan="8"><span class="skel-block" style="height:12px;width:80%;margin:8px 0;"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right: Alerts + ticket queue -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">Active Escalations</div>
+            <span class="pill pill-red" id="svc-escalation-count">—</span>
+          </div>
+          <div id="svc-tickets-list" style="display:flex;flex-direction:column;">
+            <span class="skel-block" style="height:48px;margin-bottom:8px;"></span>
+            <span class="skel-block" style="height:48px;margin-bottom:8px;"></span>
+            <span class="skel-block" style="height:48px;"></span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">Ticket Priority Breakdown</div>
+          </div>
+          <div id="svc-priority-bars" style="display:flex;flex-direction:column;gap:10px;">
+            <span class="skel-block" style="height:28px;"></span>
+            <span class="skel-block" style="height:28px;"></span>
+            <span class="skel-block" style="height:28px;"></span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div id="tab-genie" class="tab-panel hidden"></div>
+
+</main>
+
+<!-- ── Genie FAB ────────────────────────────────────────────────────────────── -->
+<button class="genie-fab" id="genie-fab" onclick="toggleGeniePanel()" title="Ask Genie">
+  <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+    <path d="M14 1 L15.1 5.9 L20 7 L15.1 8.1 L14 13 L12.9 8.1 L8 7 L12.9 5.9 Z" fill="#FF3621"/>
+    <path d="M8 16 Q2.5 14.5 2.5 11.5 Q2.5 9 5 9 Q7 9 7.5 11.5 L8.5 14.5Z" fill="#F9A090"/>
+    <ellipse cx="16" cy="17.5" rx="8.5" ry="4.5" fill="#F9A090"/>
+    <path d="M24.5 15.5 Q27.5 16 27.5 18 Q27.5 20 24.5 20.5" stroke="#F9A090" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <rect x="10" y="21" width="12" height="3.5" rx="1.8" fill="#FF3621"/>
+  </svg>
+</button>
+<div class="genie-panel-overlay" id="genie-panel-overlay" onclick="closeGeniePanel()"></div>
+<div class="genie-chat-panel" id="genie-chat-panel">
+  <div class="genie-chat-panel-hdr">
+    <div class="genie-chat-panel-icon">
+      <svg width="20" height="20" viewBox="0 0 28 28" fill="none">
+        <path d="M14 1 L15.1 5.9 L20 7 L15.1 8.1 L14 13 L12.9 8.1 L8 7 L12.9 5.9 Z" fill="#FF3621"/>
+        <path d="M8 16 Q2.5 14.5 2.5 11.5 Q2.5 9 5 9 Q7 9 7.5 11.5 L8.5 14.5Z" fill="#F9A090"/>
+        <ellipse cx="16" cy="17.5" rx="8.5" ry="4.5" fill="#F9A090"/>
+        <path d="M24.5 15.5 Q27.5 16 27.5 18 Q27.5 20 24.5 20.5" stroke="#F9A090" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <rect x="10" y="21" width="12" height="3.5" rx="1.8" fill="#FF3621"/>
+      </svg>
+    </div>
+    <div>
+      <div class="genie-chat-panel-title">Ask Genie</div>
+      <div class="genie-chat-panel-sub">AI analytics · Databricks Sales Intelligence</div>
+    </div>
+    <button class="genie-chat-panel-close" onclick="closeGeniePanel()">✕</button>
+  </div>
+  <div class="genie-chat-panel-body">
+    <div class="genie-outer" style="border-radius:0;border:none;box-shadow:none;flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div class="genie-msgs-area" id="genie-msgs"></div>
+      <div class="genie-input-bar">
+        <input class="genie-input" id="genie-input" placeholder="Ask about pricing opportunities, quote status, churn risk…"
+          onkeydown="genieKeydown(event)" autocomplete="off"/>
+        <button class="genie-send" id="genie-send" onclick="sendGenieMsg()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Info Panel Overlay ─────────────────────────────────────────────────── -->
+<div class="info-overlay hidden" id="info-overlay" onclick="closeInfoPanel(event)">
+  <div class="info-panel">
+    <div class="info-panel-hdr">
+      <div class="info-panel-hdr-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      </div>
+      <div class="info-panel-hdr-text">
+        <div class="info-panel-badge">Sales Intelligence · Databricks</div>
+        <div class="info-panel-title" id="info-panel-title">How Data Drives This</div>
+      </div>
+      <button class="info-panel-close" onclick="closeInfoPanel()">✕</button>
+    </div>
+    <div class="info-panel-body" id="info-panel-body"></div>
+  </div>
+</div>
+
+<!-- ── Email Quote Modal ──────────────────────────────────────────────────── -->
+<div class="email-modal-overlay hidden" id="email-modal-overlay" onclick="closeEmailModal()">
+  <div class="email-modal" onclick="event.stopPropagation()">
+    <div class="email-modal-hdr">
+      <div class="email-modal-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg>
+        Send Quote via Email
+      </div>
+      <button class="email-modal-close" onclick="closeEmailModal()">✕</button>
+    </div>
+    <div class="email-modal-body">
+      <div class="email-field-row">
+        <label class="email-field-label">To</label>
+        <input class="email-field-input" id="email-to" type="text">
+      </div>
+      <div class="email-field-row">
+        <label class="email-field-label">Subject</label>
+        <input class="email-field-input" id="email-subject" type="text">
+      </div>
+      <div class="email-field-row email-field-col">
+        <label class="email-field-label">Message</label>
+        <textarea class="email-field-textarea" id="email-body" rows="14"></textarea>
+      </div>
+    </div>
+    <div class="email-modal-footer">
+      <button class="btn-primary" id="email-send-btn" onclick="sendQuoteEmail()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Send Email
+      </button>
+      <button class="btn-secondary" onclick="closeEmailModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="/sales/js/app.js?v=20260529"></script>
+</body>
+</html>

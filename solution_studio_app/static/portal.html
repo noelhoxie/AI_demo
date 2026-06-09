@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Solution Studio</title>
+  <title>Design Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -125,11 +125,11 @@
 
     .cards-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 20px;
     }
-    @media (max-width: 900px) { .cards-grid { grid-template-columns: 1fr; } }
-    @media (max-width: 1100px) and (min-width: 901px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 700px) { .cards-grid { grid-template-columns: 1fr; } }
+    @media (min-width: 1300px) { .cards-grid { grid-template-columns: repeat(4, 1fr); } }
 
     .app-card {
       background: var(--bg-card);
@@ -159,10 +159,8 @@
       margin-bottom: 16px;
     }
     .card-icon {
-      width: 44px; height: 44px; border-radius: 10px;
+      width: 32px; height: 32px;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
       flex-shrink: 0;
     }
     .card-badge {
@@ -244,10 +242,10 @@
 <!-- ── Header ──────────────────────────────────────────────────────────────── -->
 <header class="header">
   <div class="header-brand">
-    <svg viewBox="0 0 300 331" fill="none" xmlns="http://www.w3.org/2000/svg" width="26" height="26">
+    <svg viewBox="0 0 300 331" fill="none" xmlns="http://www.w3.org/2000/svg" width="26" height="26" style="display:none">
       <path d="M283.923 136.449L150.144 213.624L6.88995 131.168L0 134.982V194.844L150.144 281.115L283.923 204.234V235.926L150.144 313.1L6.88995 230.644L0 234.458V244.729L150.144 331L300 244.729V184.867L293.11 181.052L150.144 263.215L16.0766 186.334V154.643L150.144 231.524L300 145.253V86.2713L292.536 81.8697L150.144 163.739L22.9665 90.9663L150.144 17.8998L254.641 78.055L263.828 72.773V65.4371L150.144 0L0 86.2713V95.6613L150.144 181.933L283.923 104.758V136.449Z" fill="#FF3621"/>
     </svg>
-    <span class="header-brand-name">Solution Studio</span>
+    <span class="header-brand-name">Design Studio</span>
     <span class="header-brand-sub">Powered by Databricks</span>
   </div>
   <div class="header-right">
@@ -258,8 +256,9 @@
 
 <!-- ── Hero ────────────────────────────────────────────────────────────────── -->
 <section class="hero">
+  <h2 id="portal-headline" style="font-size:clamp(18px,2.8vw,26px);font-weight:800;color:#f0f0f0;letter-spacing:-0.5px;margin-bottom:10px;display:none"></h2>
   <p class="hero-sub">
-    All data is synthetic and none of your changes are persistent so feel free to click around and check out these 3 applications. The information icon located in the bottom right hand corner of each page provides further details about the app.
+    All data is synthetic and no changes are persistent. Explore all four apps freely — the <strong style="color:rgba(255,255,255,0.5)">ⓘ</strong> icon in each app provides additional context.
   </p>
 </section>
 
@@ -297,6 +296,16 @@
       <span class="skel-block" style="width:100%;height:60px;margin-bottom:20px;"></span>
       <span class="skel-block" style="width:100%;height:40px;border-radius:9px;"></span>
     </div>
+    <div class="app-card skeleton">
+      <div style="display:flex;justify-content:space-between;margin-bottom:20px;">
+        <span class="skel-block" style="width:44px;height:44px;border-radius:10px;"></span>
+        <span class="skel-block" style="width:80px;height:22px;border-radius:999px;"></span>
+      </div>
+      <span class="skel-block" style="width:58%;height:18px;margin-bottom:8px;"></span>
+      <span class="skel-block" style="width:42%;height:12px;margin-bottom:16px;"></span>
+      <span class="skel-block" style="width:100%;height:60px;margin-bottom:20px;"></span>
+      <span class="skel-block" style="width:100%;height:40px;border-radius:9px;"></span>
+    </div>
   </div>
 </section>
 
@@ -314,6 +323,7 @@ const ICONS = {
   'Supply Chain': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B6FEB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
   'Manufacturing': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 1 21 12a10 10 0 0 1-2.93 7.07"/><path d="M4.93 4.93A10 10 0 0 0 3 12a10 10 0 0 0 2.93 7.07"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>`,
   'Finance': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+  'Sales': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>`,
 };
 const DEFAULT_ICON = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`;
 
@@ -328,7 +338,6 @@ function renderCards(apps) {
     const hasUrl  = app.url && app.url.trim() !== '';
     const icon    = ICONS[app.badge] || DEFAULT_ICON;
     const badgeClass = hasUrl ? 'active' : '';
-    const features = (app.features || []).filter(f => f.trim());
 
     return `
       <div class="app-card" style="--card-color:${esc(color)}">
@@ -338,10 +347,6 @@ function renderCards(apps) {
         <div class="card-name">${esc(app.name)}</div>
         ${app.tagline ? `<div class="card-tagline">${esc(app.tagline)}</div>` : ''}
         <div class="card-desc">${esc(app.desc)}</div>
-        ${features.length ? `
-          <div class="card-features">
-            ${features.map(f => `<span class="card-feature">${esc(f)}</span>`).join('')}
-          </div>` : ''}
         <button class="card-launch"
           ${hasUrl ? `onclick="launch('${esc(app.url)}')"` : 'disabled'}
           style="${hasUrl ? `background:${esc(color)}` : ''}">
@@ -384,24 +389,35 @@ async function init() {
     _portalUser    = username;
     _portalCompany = company;
     _portalToken   = d.launch_token || '';
-    document.title = 'Solution Studio' + (company ? ' — ' + company : '');
+    document.title = 'Design Studio' + (company ? ' — ' + company : '');
     if (username) document.getElementById('header-username').textContent = username + (company ? ' · ' + company : '');
 
-    // Show company logo — fetch domain from Clearbit autocomplete (browser-side, free, no key)
+    // Show company logo — replace Databricks icon in header brand
     if (company) {
       fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(company)}`)
         .then(r => r.json())
         .then(results => {
           if (!results || !results[0] || !results[0].domain) return;
           const img = document.createElement('img');
-          img.src = `https://logo.clearbit.com/${results[0].domain}`;
           img.alt = company;
-          img.style.cssText = 'width:26px;height:26px;border-radius:5px;object-fit:contain;background:#fff;padding:2px;margin-right:6px;vertical-align:middle;flex-shrink:0;';
-          img.onerror = () => img.remove();
-          const userEl = document.getElementById('header-username');
-          userEl.parentNode.insertBefore(img, userEl);
+          img.style.cssText = 'width:28px;height:28px;border-radius:6px;object-fit:contain;flex-shrink:0;';
+          img.onload = () => {
+            const brand = document.querySelector('.header-brand');
+            const brandSvg = brand ? brand.querySelector('svg') : null;
+            if (brandSvg) brandSvg.replaceWith(img);
+            else if (brand) brand.prepend(img);
+          };
+          img.onerror = () => {};
+          img.src = `https://cdn.brandfetch.io/domain/${results[0].domain}?c=1idGdcDDyuPmwhnhURl`;
         })
         .catch(() => {});
+    }
+
+    // Show vertical-specific headline
+    if (d.portal_headline) {
+      const hl = document.getElementById('portal-headline');
+      hl.textContent = d.portal_headline;
+      hl.style.display = 'block';
     }
 
     // Render app cards

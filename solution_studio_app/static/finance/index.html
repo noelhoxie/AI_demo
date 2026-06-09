@@ -5,14 +5,178 @@
   <link rel="icon" type="image/svg+xml" href="/finance/favicon.svg"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Finance Intelligence</title>
-  <link rel="stylesheet" href="/finance/css/styles.css" />
+  <link rel="stylesheet" href="/finance/css/styles.css?v=20260525c" />
+  <style>
+    @keyframes genie-fab-pulse {
+      0%,100% { box-shadow: 0 4px 20px rgba(255,54,33,0.42), 0 0 0 2px rgba(255,54,33,0.12); }
+      50%     { box-shadow: 0 4px 28px rgba(255,54,33,0.68), 0 0 0 6px rgba(255,54,33,0.06); }
+    }
+    .genie-fab { position:fixed; bottom:28px; right:28px; width:52px; height:52px; border-radius:16px; background:#fff; border:1.5px solid rgba(255,54,33,0.3); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:500; animation:genie-fab-pulse 2.2s ease-in-out infinite; transition:transform .15s; }
+    .genie-fab:hover  { transform:scale(1.07); animation:none; box-shadow:0 6px 24px rgba(255,54,33,0.55); }
+    .genie-fab:active { transform:scale(0.93); animation:none; }
+    .genie-panel-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,0.42); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .22s; }
+    .genie-panel-overlay.open { opacity:1; pointer-events:all; }
+    .genie-chat-panel { position:fixed; top:0; right:-460px; bottom:0; width:440px; z-index:501; background:#0d0d0d; border-left:1px solid rgba(255,54,33,0.12); display:flex; flex-direction:column; overflow:hidden; transition:right .28s cubic-bezier(0.32,0.72,0,1); box-shadow:-8px 0 32px rgba(0,0,0,0.45); }
+    .genie-chat-panel.open { right:0; }
+    .genie-chat-panel-hdr { display:flex; align-items:center; gap:11px; padding:15px 15px 13px; border-bottom:1px solid rgba(255,255,255,0.07); flex-shrink:0; }
+    .genie-chat-panel-icon { width:34px; height:34px; border-radius:9px; background:rgba(255,54,33,0.08); border:1px solid rgba(255,54,33,0.18); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .genie-chat-panel-title { font-size:13.5px; font-weight:700; color:#f0f0f0; }
+    .genie-chat-panel-sub   { font-size:11px; color:#6b7280; margin-top:1px; }
+    .genie-chat-panel-close { margin-left:auto; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:7px; color:#9ca3af; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; transition:all .15s; }
+    .genie-chat-panel-close:hover { background:rgba(255,255,255,0.12); color:#f0f0f0; }
+    .genie-chat-panel-body { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+  </style>
+  <style>
+    /* ── Info icon button (card-level) ─────────────── */
+    .info-icon-btn {
+      width: 24px; height: 24px; border-radius: 6px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #6b7280;
+      display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0;
+      transition: all .15s;
+    }
+    .info-icon-btn:hover { background: rgba(212,160,23,0.1); border-color: rgba(212,160,23,0.35); color: rgba(212,160,23,0.9); }
+    /* ── Tab info bar ───────────────────────────────── */
+    .tab-info-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 6px 0 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      margin-bottom: 16px;
+    }
+    .tab-info-desc { font-size: 12px; color: #6b7280; flex: 1; line-height: 1.5; }
+    .tab-info-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px;
+      background: rgba(212,160,23,0.07);
+      border: 1px solid rgba(212,160,23,0.2);
+      border-radius: 6px;
+      color: rgba(212,160,23,0.8); font-size: 11px; font-weight: 600;
+      font-family: inherit; cursor: pointer; white-space: nowrap;
+      transition: all .15s;
+    }
+    .tab-info-btn:hover { background: rgba(212,160,23,0.14); color: rgba(212,160,23,1); }
+    /* ── Info panel overlay ─────────────────────────── */
+    .info-overlay {
+      position: fixed; inset: 0; z-index: 600;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      display: flex; align-items: flex-start; justify-content: flex-end;
+    }
+    .info-overlay.hidden { display: none; }
+    .info-panel {
+      width: 390px; max-width: 92vw; height: 100vh;
+      background: #121212;
+      border-left: 1px solid rgba(212,160,23,0.18);
+      display: flex; flex-direction: column; overflow: hidden;
+      animation: infoSlideIn .25s cubic-bezier(0.32,0.72,0,1);
+    }
+    @keyframes infoSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    .info-panel-hdr {
+      display: flex; align-items: center; gap: 12px;
+      padding: 18px 18px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      flex-shrink: 0;
+    }
+    .info-panel-hdr-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: rgba(212,160,23,0.1);
+      border: 1px solid rgba(212,160,23,0.25);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .info-panel-hdr-text { flex: 1; min-width: 0; }
+    .info-panel-badge { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: rgba(212,160,23,0.65); margin-bottom: 2px; }
+    .info-panel-title { font-size: 15px; font-weight: 700; color: #f0f0f0; line-height: 1.2; }
+    .info-panel-close {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 7px; color: #9ca3af;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 15px; flex-shrink: 0; transition: all .15s;
+    }
+    .info-panel-close:hover { background: rgba(255,255,255,0.12); color: #f0f0f0; }
+    .info-panel-body { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 18px; }
+    .info-what { font-size: 13px; color: #c8c8c8; line-height: 1.75; }
+    .info-sec-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #6b7280; }
+    .info-sec-block { margin-bottom: 20px; }
+    .info-sec-ai { color: #f59e0b; }
+    .info-sec-bench { color: #d97706; }
+    .info-data-list { display: flex; flex-direction: column; gap: 7px; }
+    .info-data-item { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 10px 12px; }
+    .info-data-label { font-size: 11.5px; font-weight: 700; color: #f0f0f0; margin-bottom: 3px; }
+    .info-data-source { font-size: 11px; color: #9ca3af; font-family: 'SF Mono','Fira Code',monospace; line-height: 1.6; }
+    .info-process { font-size: 13px; color: #c8c8c8; line-height: 1.75; background: rgba(27,111,235,0.05); border: 1px solid rgba(27,111,235,0.12); border-radius: 8px; padding: 12px 14px; }
+    .info-db-badge {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: rgba(255,54,33,0.06); border: 1px solid rgba(255,54,33,0.14);
+      border-radius: 8px; padding: 11px 14px;
+      font-size: 11.5px; color: #9ca3af; line-height: 1.6;
+    }
+    .info-db-badge svg { flex-shrink: 0; margin-top: 1px; }
+    /* ── Tutorial overlay ── */
+    .tut-overlay{position:fixed;inset:0;z-index:8500;background:rgba(0,0,0,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;}
+    .tut-overlay.hidden{display:none;}
+    .tut-card{background:#111;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:34px 38px;max-width:560px;width:90vw;box-shadow:0 24px 60px rgba(0,0,0,.65);}
+    .tut-hdr{display:flex;align-items:center;gap:13px;margin-bottom:26px;}
+    .tut-hdr-icon{width:46px;height:46px;border-radius:12px;background:rgba(212,160,23,.1);border:1px solid rgba(212,160,23,.22);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .tut-title{font-size:18px;font-weight:800;color:#f0f0f0;line-height:1.2;}
+    .tut-sub{font-size:11.5px;color:#6b7280;margin-top:2px;}
+    .tut-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:26px;}
+    .tut-feat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:13px;}
+    .tut-feat-name{font-size:12px;font-weight:700;color:#f0f0f0;margin-bottom:3px;}
+    .tut-feat-desc{font-size:11px;color:#9ca3af;line-height:1.5;}
+    .tut-footer{display:flex;align-items:center;justify-content:space-between;}
+    .tut-footer-note{font-size:11px;color:#4b5563;}
+    .tut-btn{background:#D4A017;border:none;border-radius:8px;color:#000;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;font-family:inherit;}
+    .tut-btn:hover{opacity:.88;}
+  </style>
 </head>
 <body>
+
+<!-- ── Tutorial overlay ──────────────────────────────────────────────────── -->
+<div id="tut-overlay" class="tut-overlay hidden">
+  <div class="tut-card">
+    <div class="tut-hdr">
+      <div class="tut-hdr-icon">
+        <svg width="24" height="24" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="#1A1A2E"/><path d="M24 10L10 18v8l14 8 14-8v-8L24 10z" fill="#D4A017"/></svg>
+      </div>
+      <div>
+        <div class="tut-title">Welcome to Finance Intelligence</div>
+        <div class="tut-sub">Powered by Databricks · Financial performance analytics</div>
+      </div>
+    </div>
+    <div class="tut-grid">
+      <div class="tut-feat">
+        <div class="tut-feat-name">📊 P&amp;L Overview</div>
+        <div class="tut-feat-desc">Revenue, EBITDA, and margin performance vs. budget — by region and business unit.</div>
+      </div>
+      <div class="tut-feat">
+        <div class="tut-feat-name">💵 Working Capital</div>
+        <div class="tut-feat-desc">DSO, cash flow, AR aging, and inventory turns to track liquidity health.</div>
+      </div>
+      <div class="tut-feat">
+        <div class="tut-feat-name">📋 Cost Management</div>
+        <div class="tut-feat-desc">GL spend by cost center with budget variance analysis — identify overruns early.</div>
+      </div>
+      <div class="tut-feat">
+        <div class="tut-feat-name">✦ Ask Genie</div>
+        <div class="tut-feat-desc">Click the Genie icon (bottom-right) to ask plain English finance questions over your data.</div>
+      </div>
+    </div>
+    <div class="tut-footer">
+      <span class="tut-footer-note">Press Esc to dismiss · won't show again</span>
+      <button class="tut-btn" onclick="dismissTutorial()">Get Started</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Nav ────────────────────────────────────────────────────────────────── -->
 <nav class="fin-nav">
   <div class="nav-brand">
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="26" height="26">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="26" height="26" style="display:none">
       <rect width="48" height="48" rx="10" fill="#1A1A2E"/>
       <path d="M24 10L10 18v8l14 8 14-8v-8L24 10z" fill="#D4A017"/>
       <path d="M10 26v8l14 8 14-8v-8l-14 8-14-8z" fill="#8B6914" opacity="0.8"/>
@@ -23,11 +187,7 @@
 
   <button class="nav-tab active" data-tab="pl"              onclick="switchTab('pl')">P&amp;L Overview</button>
   <button class="nav-tab"        data-tab="working-capital" onclick="switchTab('working-capital')">Working Capital</button>
-  <button class="nav-tab"        data-tab="cashflow"        onclick="switchTab('cashflow')">Cash Flow</button>
   <button class="nav-tab"        data-tab="cost"            onclick="switchTab('cost')">Cost Management</button>
-  <button class="nav-tab"        data-tab="genie"           onclick="switchTab('genie')">
-    Ask AI <span class="ai-pip"></span>
-  </button>
 
   <div class="page-timer-wrap" id="page-timer-wrap" style="display:none">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -35,12 +195,22 @@
     </svg>
     <span id="page-timer">0:00</span>
   </div>
+
+  <!-- AI Actions — left of All Apps -->
+  <button class="nav-agent-btn" id="nav-agent-btn" onclick="openAgentPanel()" style="margin-left:auto;">AI Actions</button>
+
   <!-- Back to portal -->
   <a href="/portal" style="font-size:11.5px;color:rgba(255,255,255,0.35);text-decoration:none;display:flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid rgba(255,255,255,0.08);border-radius:6px;margin-left:8px;transition:all .15s;white-space:nowrap;"
      onmouseover="this.style.color='#f0f0f0';this.style.borderColor='rgba(255,255,255,0.2)'"
      onmouseout="this.style.color='rgba(255,255,255,0.35)';this.style.borderColor='rgba(255,255,255,0.08)'">
     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     All Apps
+  </a>
+  <a href="/logout" style="font-size:11.5px;color:rgba(255,255,255,0.35);text-decoration:none;display:flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid rgba(255,255,255,0.08);border-radius:6px;margin-left:8px;transition:all .15s;white-space:nowrap;"
+     onmouseover="this.style.color='#f0f0f0';this.style.borderColor='rgba(239,68,68,0.4)'"
+     onmouseout="this.style.color='rgba(255,255,255,0.35)';this.style.borderColor='rgba(255,255,255,0.08)'">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Sign Out
   </a>
 </nav>
 
@@ -65,11 +235,35 @@
     <div class="gkpi-label">vs Budget</div>
     <div class="gkpi-val" id="gkpi-vs-budget">—</div>
   </div>
-  <div class="gkpi-div"></div>
-  <div class="gkpi">
-    <div class="gkpi-label">Free Cash Flow</div>
-    <div class="gkpi-val" id="gkpi-fcf">—</div>
-  </div>
+</div>
+
+<!-- ── Filter Bar ────────────────────────────────────────────────────────── -->
+<div class="filter-bar" id="filter-bar">
+  <svg class="filter-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+  </svg>
+  <select class="filter-select" id="f-period" onchange="applyFilters()">
+    <option value="">All Periods</option>
+    <option value="q1-25">Q1 2025</option>
+    <option value="q4-24">Q4 2024</option>
+    <option value="ytd">YTD 2025</option>
+    <option value="fy24">FY 2024</option>
+  </select>
+  <select class="filter-select" id="f-bu" onchange="applyFilters()">
+    <option value="">All Business Units</option>
+    <option value="amer">Americas</option>
+    <option value="emea">EMEA</option>
+    <option value="apac">APAC</option>
+    <option value="corp">Corporate</option>
+  </select>
+  <select class="filter-select" id="f-costtype" onchange="applyFilters()">
+    <option value="">All Cost Types</option>
+    <option value="opex">OpEx</option>
+    <option value="capex">CapEx</option>
+    <option value="ga">G&amp;A</option>
+  </select>
+  <button class="filter-clear hidden" id="filter-clear" onclick="clearFilters()">✕ Clear</button>
+  <span class="filter-count hidden" id="filter-count"></span>
 </div>
 
 <!-- ── Main Content ────────────────────────────────────────────────────────── -->
@@ -78,6 +272,14 @@
   <!-- ── P&L Overview Tab ─────────────────────────────────────────────────── -->
   <div id="tab-pl" class="tab-panel">
 
+    <div class="tab-info-bar">
+      <span class="tab-info-desc">Revenue, EBITDA, and budget variance for Q1 2025 — sourced live from Delta Lake financial tables</span>
+      <button class="tab-info-btn" onclick="openInfoPanel('pl-overview')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        How data drives this
+      </button>
+    </div>
+
     <div class="tab-kpi-row">
       <div class="kpi-card"><div class="kpi-label">Revenue</div><div class="kpi-val" id="kpi-revenue">—</div><div class="kpi-sub">Q1 2025</div></div>
       <div class="kpi-card"><div class="kpi-label">EBITDA</div><div class="kpi-val" id="kpi-ebitda">—</div><div class="kpi-sub">Q1 2025</div></div>
@@ -85,43 +287,86 @@
       <div class="kpi-card"><div class="kpi-label">vs Budget</div><div class="kpi-val" id="kpi-vs-budget">—</div><div class="kpi-sub">revenue variance</div></div>
     </div>
 
-    <div class="two-col">
-      <!-- Gemini Executive Briefing -->
-      <div class="card briefing-card">
-        <div class="card-header">
-          <div class="card-title-row">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="gemini-icon">
-              <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5Z" fill="#D4A017"/>
-            </svg>
-            <span class="card-title">Executive Briefing</span>
-            <span class="card-sub">Gemini 2.0 Flash · Live data</span>
-          </div>
-          <button class="btn-refresh" id="btn-refresh-briefing" title="Regenerate">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>
-            </svg>
-          </button>
-        </div>
-        <div class="briefing-body" id="briefing-text">
-          <div class="skeleton-lines">
-            <div class="skel"></div><div class="skel w80"></div>
-            <div class="skel w90"></div><div class="skel w70"></div>
-          </div>
+    <!-- P&L Scenario Modeler -->
+    <div class="ml-runner-card">
+      <div class="ml-runner-header" style="margin-bottom:8px;">
+        <div>
+          <div class="ml-runner-title">P&amp;L Scenario Modeler</div>
+          <div class="ml-runner-sub">Adjust revenue growth, COGS, and OpEx to see projected EBITDA impact in real time</div>
         </div>
       </div>
-
-      <!-- Revenue & EBITDA Trend -->
-      <div class="card chart-card">
-        <div class="card-header">
-          <span class="card-title">Revenue &amp; EBITDA Trend</span>
-          <span class="card-sub">Q1 2023 – Q1 2025</span>
-        </div>
-        <div class="chart-wrap">
-          <svg id="trend-chart" width="100%" height="130" viewBox="0 0 460 130" preserveAspectRatio="none"></svg>
-          <div class="chart-legend">
-            <span class="leg-item"><span class="leg-dot gold"></span>Revenue</span>
-            <span class="leg-item"><span class="leg-dot green"></span>EBITDA</span>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+        <div style="flex:1;min-width:220px;">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="scenario-row">
+              <span class="scenario-label">Revenue Growth</span>
+              <input type="range" style="flex:1;cursor:pointer;" id="scen-rev-slider" min="-20" max="20" value="0" oninput="updatePlScenario()">
+              <span class="scenario-val" id="scen-rev-val" style="color:#4CAF7D;">+0%</span>
+            </div>
+            <div class="scenario-row">
+              <span class="scenario-label">COGS Change</span>
+              <input type="range" style="flex:1;cursor:pointer;" id="scen-cogs-slider" min="-15" max="15" value="0" oninput="updatePlScenario()">
+              <span class="scenario-val" id="scen-cogs-val">+0%</span>
+            </div>
+            <div class="scenario-row">
+              <span class="scenario-label">OpEx Change</span>
+              <input type="range" style="flex:1;cursor:pointer;" id="scen-opex-slider" min="-15" max="15" value="0" oninput="updatePlScenario()">
+              <span class="scenario-val" id="scen-opex-val">+0%</span>
+            </div>
           </div>
+        </div>
+        <div class="scenario-impact-card" style="flex:1;min-width:220px;margin-top:0;">
+          <div class="scenario-impact-title">Projected Impact</div>
+          <div class="scenario-impact-row"><span>Revenue</span><span class="scenario-impact-val" id="scen-out-rev">$509.0M</span></div>
+          <div class="scenario-impact-row"><span>Gross Margin</span><span class="scenario-impact-val" id="scen-out-gm">38.4%</span></div>
+          <div class="scenario-impact-row"><span>EBITDA</span><span class="scenario-impact-val" id="scen-out-ebitda">$121.2M</span></div>
+          <div class="scenario-impact-row"><span style="font-weight:700;color:#f0f0f0;">EBITDA Margin</span><span class="scenario-impact-val positive-text" id="scen-out-margin">23.8%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gemini Executive Briefing -->
+    <div class="card briefing-card">
+      <div class="card-header">
+        <div class="card-title-row">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="gemini-icon">
+            <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5Z" fill="#D4A017"/>
+          </svg>
+          <span class="card-title">Executive Briefing</span>
+          <span class="card-sub">Gemini 2.0 Flash · Live data</span>
+          <button class="info-icon-btn" onclick="openInfoPanel('executive-briefing')" title="How data drives this">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </button>
+        </div>
+        <button class="btn-refresh" id="btn-refresh-briefing" title="Regenerate">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>
+          </svg>
+        </button>
+      </div>
+      <div class="briefing-body" id="briefing-text">
+        <div class="skeleton-lines">
+          <div class="skel"></div><div class="skel w80"></div>
+          <div class="skel w90"></div><div class="skel w70"></div>
+          <div class="skel w80"></div><div class="skel w90"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue & EBITDA Trend -->
+    <div class="card chart-card">
+      <div class="card-header">
+        <span class="card-title">Revenue &amp; EBITDA Trend</span>
+        <span class="card-sub">Q1 2023 – Q1 2025</span>
+        <button class="info-icon-btn" onclick="openInfoPanel('revenue-trend')" title="How data drives this">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </button>
+      </div>
+      <div class="chart-wrap">
+        <svg id="trend-chart" width="100%" height="130" viewBox="0 0 460 130" preserveAspectRatio="none"></svg>
+        <div class="chart-legend">
+          <span class="leg-item"><span class="leg-dot gold"></span>Revenue</span>
+          <span class="leg-item"><span class="leg-dot green"></span>EBITDA</span>
         </div>
       </div>
     </div>
@@ -131,6 +376,14 @@
   <!-- ── Working Capital Tab ──────────────────────────────────────────────── -->
   <div id="tab-working-capital" class="tab-panel hidden">
 
+    <div class="tab-info-bar">
+      <span class="tab-info-desc">DSO, DPO, CCC, and AR aging by region — calculated daily from AR/AP subledger data in the Lakehouse</span>
+      <button class="tab-info-btn" onclick="openInfoPanel('wc-overview')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        How data drives this
+      </button>
+    </div>
+
     <div class="tab-kpi-row">
       <div class="kpi-card"><div class="kpi-label">Avg DSO</div><div class="kpi-val" id="wc-k1">—</div><div class="kpi-sub">days sales outstanding</div></div>
       <div class="kpi-card"><div class="kpi-label">Avg DPO</div><div class="kpi-val" id="wc-k2">—</div><div class="kpi-sub">days payable outstanding</div></div>
@@ -138,11 +391,61 @@
       <div class="kpi-card"><div class="kpi-label">AR 90+ Days</div><div class="kpi-val" id="wc-k4">—</div><div class="kpi-sub">past due · avg across regions</div></div>
     </div>
 
+    <!-- Working Capital Impact Calculator -->
+    <div class="ml-runner-card" style="margin-bottom:16px;">
+      <div class="ml-runner-header" style="margin-bottom:12px;">
+        <div>
+          <div class="ml-runner-title">Working Capital Impact Calculator</div>
+          <div class="ml-runner-sub">Select an improvement scenario to see projected cash release — model factors in collection patterns and payment terms</div>
+        </div>
+      </div>
+      <div class="wc-scenario-grid">
+        <button class="wc-scen-card active" data-dso="0" data-dpo="0" onclick="selectWcScenario(this)">
+          <div class="wc-scen-tier">Baseline</div>
+          <div class="wc-scen-targets">DSO ±0d &nbsp;·&nbsp; DPO ±0d</div>
+          <div class="wc-scen-release">$0M</div>
+          <div class="wc-scen-label">no change</div>
+        </button>
+        <button class="wc-scen-card" data-dso="5" data-dpo="5" onclick="selectWcScenario(this)">
+          <div class="wc-scen-tier">Conservative</div>
+          <div class="wc-scen-targets">DSO −5d &nbsp;·&nbsp; DPO +5d</div>
+          <div class="wc-scen-release">~$11M</div>
+          <div class="wc-scen-label">cash released</div>
+        </button>
+        <button class="wc-scen-card" data-dso="10" data-dpo="10" onclick="selectWcScenario(this)">
+          <div class="wc-scen-tier">Moderate</div>
+          <div class="wc-scen-targets">DSO −10d &nbsp;·&nbsp; DPO +10d</div>
+          <div class="wc-scen-release">~$23M</div>
+          <div class="wc-scen-label">cash released</div>
+        </button>
+        <button class="wc-scen-card" data-dso="20" data-dpo="15" onclick="selectWcScenario(this)">
+          <div class="wc-scen-tier">Aggressive</div>
+          <div class="wc-scen-targets">DSO −20d &nbsp;·&nbsp; DPO +15d</div>
+          <div class="wc-scen-release">~$41M</div>
+          <div class="wc-scen-label">cash released</div>
+        </button>
+      </div>
+      <div class="scenario-impact-card" style="margin-top:12px;">
+        <div class="scenario-impact-title">Projected Cash Release Breakdown</div>
+        <div class="scenario-impact-row"><span>AR Collection Improvement (DSO)</span><span class="scenario-impact-val positive-text" id="wc-out-ar">$0M</span></div>
+        <div class="scenario-impact-row"><span>AP Float Extension (DPO)</span><span class="scenario-impact-val positive-text" id="wc-out-ap">$0M</span></div>
+        <div class="scenario-impact-row" style="border-top:1px solid rgba(255,255,255,0.07);padding-top:6px;margin-top:4px;">
+          <span style="font-weight:700;color:#f0f0f0;">Total Cash Released</span>
+          <span class="scenario-impact-val positive-text" style="font-size:16px;" id="wc-out-total">$0M</span>
+        </div>
+      </div>
+      <input type="hidden" id="wc-dso-slider" value="0">
+      <input type="hidden" id="wc-dpo-slider" value="0">
+    </div>
+
     <div class="card">
       <div class="card-header">
         <div>
           <div class="card-title">Working Capital by Region</div>
           <div class="card-sub">DSO · DPO · CCC · AR Aging · Q1 2025</div>
+          <button class="info-icon-btn" onclick="openInfoPanel('wc-table')" title="How data drives this">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </button>
         </div>
       </div>
       <div id="wc-table-wrap">
@@ -157,51 +460,16 @@
 
   </div><!-- /working-capital -->
 
-  <!-- ── Cash Flow Tab ────────────────────────────────────────────────────── -->
-  <div id="tab-cashflow" class="tab-panel hidden">
-
-    <div class="tab-kpi-row">
-      <div class="kpi-card"><div class="kpi-label">Operating CF</div><div class="kpi-val" id="cf-k1">—</div><div class="kpi-sub">Q1 2025</div></div>
-      <div class="kpi-card"><div class="kpi-label">Capex</div><div class="kpi-val" id="cf-k2">—</div><div class="kpi-sub">Q1 2025</div></div>
-      <div class="kpi-card"><div class="kpi-label">Free Cash Flow</div><div class="kpi-val" id="cf-k3">—</div><div class="kpi-sub">Q1 2025</div></div>
-      <div class="kpi-card"><div class="kpi-label">YoY FCF Change</div><div class="kpi-val" id="cf-k4">—</div><div class="kpi-sub">vs Q1 2024</div></div>
-    </div>
-
-    <div class="two-col">
-      <!-- FCF Trend Chart -->
-      <div class="card chart-card">
-        <div class="card-header">
-          <span class="card-title">Cash Flow Trend</span>
-          <span class="card-sub">Q1 2023 – Q1 2025</span>
-        </div>
-        <div class="chart-wrap">
-          <svg id="cf-trend-chart" width="100%" height="130" viewBox="0 0 460 130" preserveAspectRatio="none"></svg>
-          <div class="chart-legend">
-            <span class="leg-item"><span class="leg-dot" style="background:#1B6FEB"></span>Operating CF</span>
-            <span class="leg-item"><span class="leg-dot green"></span>Free CF</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- CF Breakdown Table -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Cash Flow by Quarter</div>
-          <div class="card-sub">$M · Operating · Capex · FCF</div>
-        </div>
-        <table class="wc-table" id="cf-table">
-          <thead><tr><th>Period</th><th>Operating CF</th><th>Capex</th><th>Free CF</th></tr></thead>
-          <tbody id="cf-tbody">
-            <tr><td colspan="4" class="loading-cell">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-  </div><!-- /cashflow -->
-
   <!-- ── Cost Management Tab ──────────────────────────────────────────────── -->
   <div id="tab-cost" class="tab-panel hidden">
+
+    <div class="tab-info-bar">
+      <span class="tab-info-desc">GL-level cost center spend vs budget — ingested nightly from SAP CO via Delta Live Tables into the finance_gold schema</span>
+      <button class="tab-info-btn" onclick="openInfoPanel('cost-overview')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        How data drives this
+      </button>
+    </div>
 
     <div class="tab-kpi-row">
       <div class="kpi-card"><div class="kpi-label">Total OpEx</div><div class="kpi-val" id="cost-k1">—</div><div class="kpi-sub">Q1 2025 actual</div></div>
@@ -210,11 +478,30 @@
       <div class="kpi-card"><div class="kpi-label">Total Variance</div><div class="kpi-val" id="cost-k4">—</div><div class="kpi-sub">budget vs actual</div></div>
     </div>
 
+    <!-- Spend Anomaly Detector -->
+    <div class="ml-runner-card" style="margin-bottom:16px;">
+      <div class="ml-runner-header">
+        <div>
+          <div class="ml-runner-title">Spend Anomaly Detector</div>
+          <div class="ml-runner-sub">Isolation Forest model — flags cost centers with unusual spending patterns vs. historical baseline</div>
+        </div>
+        <button class="btn-run-model" id="anomaly-btn" onclick="runAnomalyDetect()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C12 7.8 7.8 12 2 12C7.8 12 12 16.2 12 22C12 16.2 16.2 12 22 12C16.2 12 12 7.8 12 2Z"/></svg>
+          Detect Anomalies
+        </button>
+      </div>
+      <div class="ml-thinking" id="anomaly-thinking"><div class="spinner sm"></div><span id="anomaly-step">Loading 24 months of cost center history from finance_gold…</span></div>
+      <div class="ml-results" id="anomaly-results"></div>
+    </div>
+
     <div class="card">
       <div class="card-header">
         <div>
           <div class="card-title">Cost Center Spend — Q1 2025</div>
           <div class="card-sub">Budget vs Actual · Variance · All Departments</div>
+          <button class="info-icon-btn" onclick="openInfoPanel('cost-table')" title="How data drives this">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </button>
         </div>
       </div>
       <table class="wc-table" id="cost-cc-table">
@@ -228,10 +515,40 @@
   </div><!-- /cost -->
 
   <!-- ── Finance Genie Tab ────────────────────────────────────────────────── -->
-  <div id="tab-genie" class="tab-panel hidden">
-    <div class="genie-panel">
+  <div id="tab-genie" class="tab-panel hidden"></div>
 
-      <!-- Suggested chips -->
+</div><!-- /fin-main -->
+
+<!-- ── Genie FAB ────────────────────────────────────────────────────────────── -->
+<button class="genie-fab" id="genie-fab" onclick="toggleGeniePanel()" title="Ask Genie">
+  <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+    <path d="M14 1 L15.1 5.9 L20 7 L15.1 8.1 L14 13 L12.9 8.1 L8 7 L12.9 5.9 Z" fill="#FF3621"/>
+    <path d="M8 16 Q2.5 14.5 2.5 11.5 Q2.5 9 5 9 Q7 9 7.5 11.5 L8.5 14.5Z" fill="#F9A090"/>
+    <ellipse cx="16" cy="17.5" rx="8.5" ry="4.5" fill="#F9A090"/>
+    <path d="M24.5 15.5 Q27.5 16 27.5 18 Q27.5 20 24.5 20.5" stroke="#F9A090" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <rect x="10" y="21" width="12" height="3.5" rx="1.8" fill="#FF3621"/>
+  </svg>
+</button>
+<div class="genie-panel-overlay" id="genie-panel-overlay" onclick="closeGeniePanel()"></div>
+<div class="genie-chat-panel" id="genie-chat-panel">
+  <div class="genie-chat-panel-hdr">
+    <div class="genie-chat-panel-icon">
+      <svg width="20" height="20" viewBox="0 0 28 28" fill="none">
+        <path d="M14 1 L15.1 5.9 L20 7 L15.1 8.1 L14 13 L12.9 8.1 L8 7 L12.9 5.9 Z" fill="#FF3621"/>
+        <path d="M8 16 Q2.5 14.5 2.5 11.5 Q2.5 9 5 9 Q7 9 7.5 11.5 L8.5 14.5Z" fill="#F9A090"/>
+        <ellipse cx="16" cy="17.5" rx="8.5" ry="4.5" fill="#F9A090"/>
+        <path d="M24.5 15.5 Q27.5 16 27.5 18 Q27.5 20 24.5 20.5" stroke="#F9A090" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <rect x="10" y="21" width="12" height="3.5" rx="1.8" fill="#FF3621"/>
+      </svg>
+    </div>
+    <div>
+      <div class="genie-chat-panel-title">Ask Genie</div>
+      <div class="genie-chat-panel-sub">AI analytics · Databricks Finance Intelligence</div>
+    </div>
+    <button class="genie-chat-panel-close" onclick="closeGeniePanel()">✕</button>
+  </div>
+  <div class="genie-chat-panel-body">
+    <div class="genie-panel" style="border-radius:0;border:none;box-shadow:none;flex:1;display:flex;flex-direction:column;overflow:hidden;">
       <div class="chip-row" id="chip-row">
         <button class="chip" data-q="What is EBITDA vs. budget by business unit this quarter?">EBITDA vs. budget</button>
         <button class="chip" data-q="Show me revenue growth year-over-year by region">Revenue YoY</button>
@@ -240,8 +557,6 @@
         <button class="chip" data-q="Which cost centers are over budget this quarter?">Over-budget CCs</button>
         <button class="chip" data-q="Show gross margin trend by business unit">Gross margin trend</button>
       </div>
-
-      <!-- Messages -->
       <div class="messages" id="messages">
         <div class="msg msg-system">
           <div class="msg-avatar system-avatar">
@@ -251,13 +566,11 @@
             </svg>
           </div>
           <div class="msg-bubble">
-            <p>Hello. I'm connected to the <strong>Finance Intelligence</strong> AI — 9 quarters of financial data (Q1 2023–Q1 2025) including P&amp;L, cash flow, working capital, and GL spend by cost center.</p>
+            <p>Hello. I'm connected to the <strong>Finance Intelligence</strong> AI — 9 quarters of financial data including P&amp;L, cash flow, working capital, and GL spend by cost center.</p>
             <p>Ask me anything about financial performance, or use the quick questions above.</p>
           </div>
         </div>
       </div>
-
-      <!-- Input bar -->
       <div class="chat-input-row">
         <input type="text" id="chat-input" class="chat-input"
                placeholder="Ask a finance question… e.g. What is our G&amp;A as % of revenue?" />
@@ -267,11 +580,9 @@
           </svg>
         </button>
       </div>
-
     </div>
-  </div><!-- /genie -->
-
-</div><!-- /fin-main -->
+  </div>
+</div>
 
 <!-- ── Footer ─────────────────────────────────────────────────────────────── -->
 <div class="fin-footer">
@@ -282,6 +593,129 @@
   <span>Powered by <strong>Databricks</strong> — Delta Lake · SQL Warehouse · Gemini 2.0 · Lakebase</span>
 </div>
 
-<script src="/finance/js/app.js"></script>
+<!-- ── Actions Drawer ──────────────────────────────────────────────────── -->
+<div id="agent-overlay" class="agent-overlay hidden" onclick="closeAgentPanel()"></div>
+<div id="agent-panel" class="agent-panel hidden">
+  <div class="agent-panel-header">
+    <div class="agent-panel-title">
+      AI Actions
+      <span class="agent-tab-badge" id="agent-tab-badge">P&amp;L</span>
+    </div>
+    <button class="agent-panel-close" onclick="closeAgentPanel()">✕</button>
+  </div>
+  <div class="agent-panel-sub" id="agent-panel-sub">AI-powered actions · approve to execute</div>
+  <div class="agent-actions-list" id="agent-actions-list"></div>
+</div>
+
+<!-- ── Info Panel ─────────────────────────────────────────────────────────── -->
+<div class="info-overlay hidden" id="info-overlay" onclick="closeInfoPanel(event)">
+  <div class="info-panel" id="info-panel">
+    <div class="info-panel-hdr">
+      <div class="info-panel-hdr-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(212,160,23,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </div>
+      <div class="info-panel-hdr-text">
+        <div class="info-panel-badge">Financial Intelligence · Databricks</div>
+        <div class="info-panel-title" id="info-panel-title">About This View</div>
+      </div>
+      <button class="info-panel-close" onclick="closeInfoPanel()">✕</button>
+    </div>
+    <div class="info-panel-body" id="info-panel-body"></div>
+  </div>
+</div>
+
+<script>
+// ── Info Panel ─────────────────────────────────────────────────────────────────
+const INFO_SECTIONS = {
+  'pl-overview': {
+    title: 'P&L Overview',
+    what: 'Quarterly P&L performance showing Revenue, EBITDA, Gross Margin, and budget variance for the current period — sourced live from the finance lakehouse to give the CFO and FP&A team a single source of truth for period performance versus plan and prior year, without waiting for a manual close process.',
+    aiml: 'AI generates on-demand executive P&L commentary using a large language model grounded in live KPI data — replacing hours of manual CFO narrative preparation before board meetings and investor calls. Variance detection algorithms automatically surface material deviations above threshold for executive attention and push real-time alerts to finance leadership.',
+    benchmark: 'Gartner and APQC consistently identify real-time P&L visibility as a top-5 CFO priority for finance transformation. Top-quartile FP&A organizations benchmarked by APQC close within 3 business days and publish performance dashboards within 24 hours of period end. McKinsey research shows that leading finance functions spend 70% of their time on analysis and decision support versus data gathering — enabled by automated pipelines like those powering this view.',
+  },
+  'executive-briefing': {
+    title: 'Executive Briefing',
+    what: 'An AI-generated natural language P&L summary produced on demand using live financial KPIs from the lakehouse — designed to replace manually prepared CFO commentary for Board presentations, QBRs, and investor calls, ensuring the narrative always reflects the latest numbers.',
+    aiml: 'A large language model synthesizes revenue, EBITDA, margin, and variance data into a structured executive narrative — identifying material deviations, explaining likely drivers, and recommending management actions in a format calibrated to board and investor expectations. The AI generates this in seconds from a structured prompt that injects live KPI data at runtime.',
+    benchmark: 'Deloitte and PwC have published extensively on AI-generated financial commentary as a top emerging capability in CFO advisory. JPMorgan has publicly reported deploying AI for internal financial reporting and documentation automation. Gartner predicts that by 2026, a significant share of large-enterprise finance teams will use AI-generated commentary as a standard part of their reporting workflow.',
+  },
+  'revenue-trend': {
+    title: 'Revenue & EBITDA Trend',
+    what: 'A 9-quarter time-series of Revenue and EBITDA showing growth trajectory, seasonality patterns, and margin compression or expansion — giving FP&A a verified historical baseline for annual forecasting, board presentations, and capital allocation decisions.',
+    aiml: 'Trend decomposition models automatically separate seasonal, cyclical, and structural signals in revenue data — identifying whether a quarterly dip reflects normal seasonality or a structural shift requiring management action. Anomaly detection flags quarters with unusual variance from the trend for immediate FP&A investigation before the narrative is presented to executives.',
+    benchmark: 'APQC benchmarks show top-quartile FP&A organizations maintain multi-year revenue trend analysis in near-real time and achieve forecast accuracy above 95% at the 30-day horizon. Companies like Microsoft and Alphabet are widely recognized for transparent quarterly financial trend reporting. The CFO Council and McKinsey both cite dynamic financial trend visualization as a leading indicator of FP&A maturity.',
+  },
+  'wc-overview': {
+    title: 'Working Capital',
+    what: 'Key operating capital efficiency metrics — Days Sales Outstanding (DSO), Days Payable Outstanding (DPO), Cash Conversion Cycle (CCC), and AR over 90 days past due — calculated from live AR and AP subledger data in the lakehouse, giving Treasury and Finance real-time visibility into the operating cash cycle.',
+    aiml: 'AI-powered AR aging models identify accounts at highest risk of becoming uncollectable based on payment history, invoice dispute patterns, and customer segment signals. Predictive DPO optimization recommends payment timing that maximizes working capital without damaging supplier relationships or early-payment discount capture.',
+    benchmark: 'The Hackett Group’s World Class Finance benchmarks show top-performing companies achieve cash conversion cycles 20–30 days better than industry average. McKinsey estimates every 1-day reduction in CCC releases approximately $150 million in cash for a $10B revenue company. Amazon’s structurally negative cash conversion cycle is a frequently cited reference for working capital best practice in financial and strategy literature.',
+  },
+  'wc-table': {
+    title: 'Working Capital by Region',
+    what: 'DSO, DPO, CCC, and AR aging disaggregated by business region — Americas, EMEA, APAC, Corporate — exposing regional collection performance differences and giving CFOs the data to hold regional finance teams accountable to working capital targets.',
+    aiml: 'Regional anomaly detection flags outlier DSO trends that may indicate systemic collection issues versus one-off disputes, enabling targeted intervention before they distort the quarterly CCC. AI-drafted collection notices can be triggered for high-value 90+ day AR accounts, reducing manual AR team workload while accelerating cash conversion.',
+    benchmark: 'The Hackett Group consistently reports EMEA carrying 15–25% higher DSO than APAC counterparts due to payment culture and term norms. Siemens and Philips have published on regional AR optimization programs using data-driven collection prioritization to reduce overdue balances. APQC benchmarks show top-quartile companies resolve AR disputes within 5 days versus an industry average exceeding 15 days.',
+  },
+  'cf-overview': {
+    title: 'Cash Flow',
+    what: 'Core cash flow metrics for the current quarter — Operating Cash Flow (OCF), Capital Expenditure (CapEx), Free Cash Flow (FCF), and year-over-year FCF comparison — giving the CFO and Treasurer real-time visibility into cash generation capacity and debt covenant headroom.',
+    aiml: 'ML models forecast short-term cash flow at the 30, 60, and 90-day horizon using AR aging, AP payment schedules, and revenue pipeline data as inputs. Anomaly detection flags unexpected cash movements for immediate Treasury investigation. AI-generated cash flow commentary is automatically embedded in the executive briefing without requiring manual preparation.',
+    benchmark: 'The Association for Financial Professionals (AFP) annual survey consistently ranks cash flow forecasting accuracy as a top-3 treasury priority. Top-quartile companies in AFP benchmarks achieve 95%+ forecast accuracy at 30 days. Apple and Microsoft are widely cited for maintaining significant free cash flow generation as a competitive advantage, enabled in part by rigorous real-time treasury management programs.',
+  },
+  'cf-trend': {
+    title: 'Cash Flow Trend',
+    what: 'A 9-quarter trend of Operating Cash Flow and Free Cash Flow showing seasonal cash generation patterns, FCF conversion rates, and CapEx intensity over time — supporting the annual capital allocation process and debt covenant compliance analysis.',
+    aiml: 'Seasonal adjustment models separate structural FCF trends from calendar-driven patterns (quarter-end tax payments, seasonal revenue concentrations) to give the CFO a clean view of underlying cash generation capacity. Trend forecasting models project FCF over the next 2–4 quarters using current AR aging, deal pipeline, and cost center run rates.',
+    benchmark: 'APQC and Deloitte research consistently show that leading CFO organizations model cash flow on a rolling 12-month basis with monthly updates. McKinsey cites companies with real-time FCF visibility as achieving lower cost of capital due to reduced refinancing risk and improved investor confidence. Large industrials including Honeywell and 3M publish detailed FCF trend analysis as part of investor relations, setting benchmarks for transparency.',
+  },
+  'cf-table': {
+    title: 'Cash Flow by Quarter',
+    what: 'A quarterly breakdown of Operating CF, CapEx, and Free CF for the past 9 quarters, enabling period-over-period trend comparison and variance identification — feeding directly into Board cash flow presentations and debt covenant compliance reporting.',
+    aiml: 'Automated variance flagging identifies quarters where FCF deviates from trend by more than a configurable threshold, surfacing them for CFO review before board materials are finalized. Delta Lake time-travel ensures each quarter reflects its period-close snapshot, enabling auditable year-over-year comparisons without data overwrites.',
+    benchmark: 'APQC benchmarks show top-quartile finance organizations produce auditable cash flow statements with full quarter-over-quarter variance analysis within 2 business days of period close. The SEC and major accounting frameworks require multi-year cash flow disclosures, making quarterly CF trend analysis a governance standard for public companies. Leading FP&A platforms used by Fortune 500 companies cite 9-quarter rolling cash flow views as a baseline planning requirement.',
+  },
+  'cost-overview': {
+    title: 'Cost Management',
+    what: 'Operational cost efficiency metrics — Total OpEx, G&A as a percentage of revenue, over-budget cost centers, and total budget variance for the current period — sourced from SAP Cost Object Controlling via Delta Live Tables, giving Finance and department heads real-time spend visibility without spreadsheet exports.',
+    aiml: 'AI-generated variance commentary automatically explains over-budget cost centers to department heads within minutes of the nightly data refresh, eliminating hours of manual analysis per period close. Predictive spend models flag cost centers trending toward overage before month-end close, enabling corrective action while departments still have time to adjust discretionary spend.',
+    benchmark: 'APQC benchmarks show leading finance organizations process over-budget alerts within 24 hours and deliver variance explanations within 48 hours of period end. McKinsey cites G&A optimization as generating 15–25% cost reduction at companies that shift from reactive to predictive cost management. Nestlé and Unilever have published on intelligent cost center monitoring programs that combine ERP data with predictive analytics for real-time spend governance.',
+  },
+  'cost-table': {
+    title: 'Cost Center Spend',
+    what: 'A GL-level view of every cost center showing budget, actual spend, variance amount and percentage, and period status — giving controllers and department heads a complete picture of spend discipline sourced directly from SAP CO without requiring manual ERP extracts.',
+    aiml: 'Anomaly detection models identify cost centers with spending patterns that deviate from historical norms, potentially indicating budget misalignment, procurement policy violations, or data entry errors before they distort period-close results. AI-drafted variance commentary is automatically emailed to department heads for over-budget items above threshold, eliminating manual analyst follow-up.',
+    benchmark: 'The Hackett Group’s World Class Finance benchmarks show top-performing finance organizations complete cost center variance explanations in under 4 hours versus an industry average of 2–3 days. Companies like Siemens and GE have published on intelligent cost management platforms that use ERP data combined with predictive analytics to move from reactive period reporting to continuous cost governance.',
+  },
+};
+
+function openInfoPanel(key) {
+  const info = INFO_SECTIONS[key];
+  if (!info) return;
+  document.getElementById('info-panel-title').textContent = info.title;
+  document.getElementById('info-panel-body').innerHTML = `
+    <div class="info-sec-block">
+      <div class="info-sec-title">What This Page Shows</div>
+      <div class="info-what"><p>${info.what || ''}</p></div>
+    </div>
+    <div class="info-sec-block">
+      <div class="info-sec-title info-sec-ai">How AI &amp; ML Is Applied</div>
+      <div class="info-what"><p>${info.aiml || ''}</p></div>
+    </div>
+    <div class="info-sec-block">
+      <div class="info-sec-title info-sec-bench">Industry Benchmarks</div>
+      <div class="info-what"><p>${info.benchmark || ''}</p></div>
+    </div>
+  `;
+  document.getElementById('info-overlay').classList.remove('hidden');
+}
+
+function closeInfoPanel(e) {
+  if (!e || e.target === document.getElementById('info-overlay'))
+    document.getElementById('info-overlay').classList.add('hidden');
+}
+</script>
+
+<script src="/finance/js/app.js?v=20260525c"></script>
 </body>
 </html>

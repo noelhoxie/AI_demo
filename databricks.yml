@@ -1,415 +1,729 @@
-# Databricks Asset Bundle — Supply Chain Control Tower
-# Deploys to https://fevm-serverless-hadnqm.cloud.databricks.com/
-# Catalog: serverless_hadnqm_catalog, Schema: ai_sc_test
-# See: https://docs.databricks.com/en/dev-tools/bundles/
-
 bundle:
-  name: supply-chain-control-tower
+  name: wabash-flask-dashboard
 
 variables:
   catalog:
-    default: serverless_hadnqm_catalog
+    default: demo_nah_catalog
   schema:
-    default: ai_sc_test
-  # SQL warehouse ID for Lakeview dashboards. Set in target (e.g. dev.variables.warehouse_id) or use lookup.
+    default: wabash
   warehouse_id:
-    default: ""
-
-resources:
-  jobs:
-    SAP_bronze_ingest:
-      name: SAP_bronze_ingest
-      queue:
-        enabled: true
-      tasks:
-        - task_key: bronze_ekko
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_ekko.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-        - task_key: bronze_ekpo
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_ekpo.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-        - task_key: bronze_vbak
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_vbak.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-        - task_key: bronze_vbap
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_vbap.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-        - task_key: bronze_likp
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_likp.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-        - task_key: bronze_lips
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_lips.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-        - task_key: bronze_mard
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_mard.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-        - task_key: bronze_aufk
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_aufk.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-        - task_key: silver_procurement
-          notebook_task:
-            notebook_path: data_pipeline/sap/silver_procurement.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: bronze_ekko
-            - task_key: bronze_ekpo
-        - task_key: silver_orders
-          notebook_task:
-            notebook_path: data_pipeline/sap/silver_orders.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: bronze_vbak
-            - task_key: bronze_vbap
-        - task_key: silver_delivery
-          notebook_task:
-            notebook_path: data_pipeline/sap/silver_delivery.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: bronze_likp
-            - task_key: bronze_lips
-        - task_key: silver_inventory
-          notebook_task:
-            notebook_path: data_pipeline/sap/silver_inventory.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: bronze_mard
-        - task_key: gold_orders
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_orders.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: silver_orders
-        - task_key: gold_procurement
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_procurement.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: silver_procurement
-        - task_key: gold_inventory
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_inventory.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: silver_inventory
-        - task_key: gold_kpi_orders
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_kpi_orders.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: gold_orders
-        - task_key: gold_kpi_procurement
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_kpi_procurement.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: gold_procurement
-        - task_key: gold_kpi_inventory
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_kpi_inventory.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: gold_inventory
-        - task_key: gold_kpi_delivery
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_kpi_delivery.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: silver_delivery
-    repopulate_ai_sc_test:
-      name: repopulate_ai_sc_test
-      queue:
-        enabled: true
-      tasks:
-        - task_key: cleanup_schema
-          notebook_task:
-            notebook_path: data_pipeline/cleanup_schema.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-        - task_key: bronze_ekko
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_ekko.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: cleanup_schema
-        - task_key: bronze_ekpo
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_ekpo.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: cleanup_schema
-        - task_key: bronze_vbak
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_vbak.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: cleanup_schema
-        - task_key: bronze_vbap
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_vbap.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: cleanup_schema
-        - task_key: bronze_likp
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_likp.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: cleanup_schema
-        - task_key: bronze_lips
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_lips.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: cleanup_schema
-        - task_key: bronze_mard
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_mard.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: cleanup_schema
-        - task_key: bronze_aufk
-          notebook_task:
-            notebook_path: data_pipeline/sap/bronze_aufk.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: cleanup_schema
-        - task_key: silver_procurement
-          notebook_task:
-            notebook_path: data_pipeline/sap/silver_procurement.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: bronze_ekko
-            - task_key: bronze_ekpo
-        - task_key: silver_orders
-          notebook_task:
-            notebook_path: data_pipeline/sap/silver_orders.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: bronze_vbak
-            - task_key: bronze_vbap
-        - task_key: silver_delivery
-          notebook_task:
-            notebook_path: data_pipeline/sap/silver_delivery.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: bronze_likp
-            - task_key: bronze_lips
-        - task_key: silver_inventory
-          notebook_task:
-            notebook_path: data_pipeline/sap/silver_inventory.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: bronze_mard
-        - task_key: gold_orders
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_orders.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: silver_orders
-        - task_key: gold_procurement
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_procurement.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: silver_procurement
-        - task_key: gold_inventory
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_inventory.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: silver_inventory
-        - task_key: gold_kpi_orders
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_kpi_orders.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: gold_orders
-        - task_key: gold_kpi_procurement
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_kpi_procurement.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: gold_procurement
-        - task_key: gold_kpi_inventory
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_kpi_inventory.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: gold_inventory
-        - task_key: gold_kpi_delivery
-          notebook_task:
-            notebook_path: data_pipeline/sap/gold_kpi_delivery.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: silver_delivery
-        - task_key: qad_bronze_ingest
-          notebook_task:
-            notebook_path: data_pipeline/qad/01_qad_bronze_ingest.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: cleanup_schema
-        - task_key: qad_silver_production
-          notebook_task:
-            notebook_path: data_pipeline/qad/02_qad_silver_production.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: qad_bronze_ingest
-        - task_key: qad_gold_oee
-          notebook_task:
-            notebook_path: data_pipeline/qad/03_qad_gold_oee.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: qad_silver_production
-    qad_bronze_ingest:
-      name: qad_bronze_ingest
-      queue:
-        enabled: true
-      tasks:
-        - task_key: qad_bronze_ingest
-          notebook_task:
-            notebook_path: data_pipeline/qad/01_qad_bronze_ingest.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-        - task_key: qad_silver_production
-          notebook_task:
-            notebook_path: data_pipeline/qad/02_qad_silver_production.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: qad_bronze_ingest
-        - task_key: qad_gold_oee
-          notebook_task:
-            notebook_path: data_pipeline/qad/03_qad_gold_oee.py
-            base_parameters:
-              catalog: ${var.catalog}
-              schema: ${var.schema}
-          depends_on:
-            - task_key: qad_silver_production
-  dashboards:
-    sap_orders_delivery:
-      display_name: SAP Orders and Delivery
-      file_path: resources/dashboards/sap_orders_delivery.lvdash.json
-      warehouse_id: ${var.warehouse_id}
-      dataset_catalog: ${var.catalog}
-      dataset_schema: ${var.schema}
-    sap_procurement_inventory:
-      display_name: SAP Procurement and Inventory
-      file_path: resources/dashboards/sap_procurement_inventory.lvdash.json
-      warehouse_id: ${var.warehouse_id}
-      dataset_catalog: ${var.catalog}
-      dataset_schema: ${var.schema}
-    qad_oee:
-      display_name: QAD OEE
-      file_path: resources/dashboards/qad_oee.lvdash.json
-      warehouse_id: ${var.warehouse_id}
-      dataset_catalog: ${var.catalog}
-      dataset_schema: ${var.schema}
-  apps:
-    novelis_dashboard:
-      name: novelis-sc-oee-dashboard
-      source_code_path: app/novelis_dashboard
-      description: Supply chain and production OEE dashboard from gold tables (serverless_hadnqm_catalog / ai_sc_test)
+    default: "23720e4bb845c623"
+  csx_catalog:
+    default: serverless_hadnqm_catalog
+  csx_schema:
+    default: csx
+  ernest_catalog:
+    default: demo_nah_catalog
+  ernest_schema:
+    default: Ernest_Demo
+  capex_catalog:
+    default: demo_nah_catalog
+  capex_schema:
+    default: Capital_Budget
 
 targets:
   dev:
     default: true
+    mode: development
     workspace:
-      host: https://fevm-serverless-hadnqm.cloud.databricks.com/
-    variables:
-      catalog: serverless_hadnqm_catalog
-      schema: ai_sc_test
-      # Set your SQL warehouse ID for Lakeview dashboards (SQL > Warehouses > copy ID).
-      warehouse_id: ""
+      host: https://fevm-demo-nah.cloud.databricks.com
+
+  solution_studio:
+    mode: production
+    workspace:
+      host: https://fevm-solution-studio.cloud.databricks.com
+      profile: fevm-solution-studio
+      root_path: /Workspace/Users/noel.hoxie@databricks.com/.bundle/${bundle.name}/${bundle.target}
+
+resources:
+  apps:
+    solution_studio:
+      name: solution-studio
+      source_code_path: solution_studio_app
+      description: >
+        Solution Studio — Supply Chain, Manufacturing, and Finance Intelligence
+        consolidated into a single Databricks App with shared login and portal.
+
+    wabash_dashboard:
+      name: wabash-dashboard
+      source_code_path: app/databricks-flask-app
+      description: >
+        Flask data dashboard for Wabash — browse Unity Catalog tables
+        and run SQL queries against demo_nah_catalog.wabash
+
+      config:
+        env:
+          - name: DATABRICKS_WAREHOUSE_ID
+            value: ${var.warehouse_id}
+          - name: DEFAULT_CATALOG
+            value: ${var.catalog}
+          - name: DEFAULT_SCHEMA
+            value: ${var.schema}
+          - name: QUERY_ROW_LIMIT
+            value: "500"
+
+    # Ernest Profit Planning — SAC-style GM bridge + LE planning
+    ernest_profit_planning:
+      name: ernest-profit-planning
+      source_code_path: ernest_profit_planning
+      description: >
+        Ernest Packaging profit planning — SAP SAC-style bill-to/ship-to P&L planning
+        with editable Latest Estimate, GM bridge waterfall, and Price/Volume/Mix/COGS decomposition.
+
+    # Expro ALEC-Sim — Asset Life Extension & Carbon Interface Simulator
+    expro_alec_sim:
+      name: expro-alec-sim
+      source_code_path: expro_alec_sim
+      description: >
+        Expro ALEC-Sim — physics-informed well integrity, IUI scoring, CCS caprock assessment,
+        and carbon intensity monitoring for Well Completion, Intervention & Well Flow Management engineers.
+
+    # Expro Field Kit Management Platform
+    expro_field_kit_mgmt:
+      name: expro-field-kit-mgmt
+      source_code_path: expro_materials_app
+      description: >
+        Expro Field Kit Management Platform — job register, kit catalog, Gantt schedule,
+        check-out/in workflows, inspection records, and AI agentic actions.
+
+    # Expro Operations Command Center
+    expro_operations_command:
+      name: expro-operations-command
+      source_code_path: expro_operations_app
+      description: >
+        Expro Operations Command Center — unified rig intelligence and HSE monitor with global rig map,
+        predictive maintenance, prescriptive analytics, safety CV simulation, and safety events pipeline.
+
+    # MDAudit Document Intelligence Demo
+    mdaudit_document_demo:
+      name: mdaudit-document-demo
+      source_code_path: mdaudit_demo
+      description: >
+        MDAudit × Databricks document intelligence demo — ai_extract(), ai_classify(),
+        and compliance dashboard showing healthcare audit document parsing in SQL.
+
+    # Supply chain Wabash app — deploys to https://fevm-demo-nah.cloud.databricks.com/apps/supply-chain-wabash
+    supply_chain_wabash:
+      name: supply-chain-wabash
+      source_code_path: wabash_app
+      description: >
+        Wabash supply chain app — sales orders, BOM, customers, Genie, Postgres, forecasting.
+        Uses demo_nah_catalog.wabash and supply_chain_app schema; env from wabash_app/app.yaml.
+
+    # PODS CLV Intelligence — deploys to https://fevm-demo-nah.cloud.databricks.com/apps/pods-clv
+    pods_clv:
+      name: pods-clv
+      source_code_path: pods_clv_app
+      description: >
+        PODS Customer Lifetime Value Intelligence — survival ML model (Cox PH), CLV predictions,
+        campaign effectiveness, AI consumer insights, and model performance dashboard.
+
+    # Databricks Manufacturing App — E-Coat Vision AI, OEE, Quality
+    databricks_mfg_app:
+      name: databricks-mfg-app
+      source_code_path: databricks_mfg_app
+      description: >
+        Automotive manufacturing control tower — plant OEE, machine health, Vision AI E-Coat
+        defect detection, production impact analysis, and Shift Intelligence chat.
+
+    # Vertex supply chain control tower — deploys to https://fevm-demo-nah.cloud.databricks.com/apps/vertex-scp
+    vertex_scp:
+      name: vertex-scp
+      source_code_path: vertex_scp_app
+      description: >
+        Vertex supply chain control tower — executive KPI dashboard, capacity planning, supply planning,
+        logistics, BOM, risks, Genie. Uses demo_nah_catalog.vertex schema; env from vertex_scp_app/app.yaml.
+
+    # Oil & Gas Intelligence — C-Suite Command Center
+    oil_gas_intelligence:
+      name: oil-gas-intelligence
+      source_code_path: oil_gas_intelligence_app
+      description: >
+        Energy Intelligence Platform — C-Suite Command Center for O&G executives.
+        Portfolio & Capital (CEO), Margin & Costs (CFO), Risk & ESG (CRO),
+        Commercial Strategy (CCO) with live KPIs, AI briefings, and scenario planning.
+
+    # Ernest SKU Rationalization — human-in-the-loop review app
+    ernest_sku_rationalization:
+      name: ernest-sku-rationalization
+      source_code_path: ernest_sku_app
+      description: >
+        Ernest Packaging SKU Rationalization — human-in-the-loop review app.
+        Confidence-scored candidates, custom match rules, approve/reject workflow,
+        and Delta commit for SAP change-request generation.
+
+  jobs:
+    supply_chain_studio_setup:
+      name: "Supply Chain Solution Studio — Schema Seed"
+      tasks:
+        - task_key: seed_schema
+          notebook_task:
+            notebook_path: supply_chain_bundle/notebooks/01_seed_schema.py
+            base_parameters:
+              catalog: demo_nah_catalog
+              schema: supplychain_solutionstudio
+
+        - task_key: create_genie_space
+          depends_on:
+            - task_key: seed_schema
+          notebook_task:
+            notebook_path: supply_chain_bundle/notebooks/02_create_genie_space.py
+            base_parameters:
+              catalog: demo_nah_catalog
+              schema: supplychain_solutionstudio
+              warehouse_id: ${var.warehouse_id}
+
+    vertex_setup:
+      name: "Vertex Schema Setup & Seed"
+      tasks:
+        - task_key: seed_vertex_schema
+          notebook_task:
+            notebook_path: vertex_bundle/notebooks/01_seed_vertex_schema.py
+
+    wabash_setup:
+      name: "Wabash Table Setup & Seed"
+      tasks:
+        - task_key: setup_schema
+          notebook_task:
+            notebook_path: wabash_bundle/notebooks/01_setup_schema.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+        - task_key: seed_customers
+          depends_on:
+            - task_key: setup_schema
+          notebook_task:
+            notebook_path: wabash_bundle/notebooks/02_seed_customers.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+        - task_key: seed_parts
+          depends_on:
+            - task_key: setup_schema
+          notebook_task:
+            notebook_path: wabash_bundle/notebooks/03_seed_parts.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+        - task_key: seed_sales
+          depends_on:
+            - task_key: seed_customers
+            - task_key: seed_parts
+          notebook_task:
+            notebook_path: wabash_bundle/notebooks/04_seed_sales.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+        - task_key: seed_procurement
+          depends_on:
+            - task_key: seed_customers
+            - task_key: seed_parts
+          notebook_task:
+            notebook_path: wabash_bundle/notebooks/06_seed_procurement.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+        - task_key: seed_production
+          depends_on:
+            - task_key: seed_sales
+            - task_key: seed_procurement
+          notebook_task:
+            notebook_path: wabash_bundle/notebooks/05_seed_production.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+    expro_setup:
+      name: "Expro Schema Setup & Seed"
+      tasks:
+        - task_key: seed_expro_schema
+          notebook_task:
+            notebook_path: expro_bundle/notebooks/01_seed_expro_schema.py
+
+        - task_key: seed_alec_schema
+          notebook_task:
+            notebook_path: expro_alec_sim/notebooks/00_seed_alec_schema.py
+
+        - task_key: create_genie_space
+          depends_on:
+            - task_key: seed_expro_schema
+            - task_key: seed_alec_schema
+          notebook_task:
+            notebook_path: expro_bundle/notebooks/02_create_genie_space.py
+
+    csx_pipeline:
+      name: "CSX Transportation — Silver + Gold Pipeline"
+      tasks:
+        # ── Schema setup ───────────────────────────────────────────────────────
+        - task_key: setup_schema
+          notebook_task:
+            notebook_path: csx_bundle/notebooks/01_setup_schema.py
+            base_parameters:
+              catalog: ${var.csx_catalog}
+              schema: ${var.csx_schema}
+
+        # ── Silver: unified ingest; infers csx_silver_* target from column signatures ─
+        - task_key: silver_unified_ingest
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: csx_bundle/pipeline/silver_unified_ingest.py
+            base_parameters:
+              catalog: ${var.csx_catalog}
+              schema: ${var.csx_schema}
+
+        # ── Gold layer (same Delta outputs as before) ───────────────────────────
+        - task_key: gold_operations
+          depends_on: [{task_key: silver_unified_ingest}]
+          notebook_task:
+            notebook_path: csx_bundle/pipeline/gold_operations.py
+            base_parameters:
+              catalog: ${var.csx_catalog}
+              schema: ${var.csx_schema}
+
+        - task_key: gold_asset_management
+          depends_on: [{task_key: silver_unified_ingest}]
+          notebook_task:
+            notebook_path: csx_bundle/pipeline/gold_asset_management.py
+            base_parameters:
+              catalog: ${var.csx_catalog}
+              schema: ${var.csx_schema}
+
+        - task_key: gold_logistics
+          depends_on: [{task_key: silver_unified_ingest}]
+          notebook_task:
+            notebook_path: csx_bundle/pipeline/gold_logistics.py
+            base_parameters:
+              catalog: ${var.csx_catalog}
+              schema: ${var.csx_schema}
+
+        - task_key: gold_workforce
+          depends_on: [{task_key: silver_unified_ingest}]
+          notebook_task:
+            notebook_path: csx_bundle/pipeline/gold_workforce.py
+            base_parameters:
+              catalog: ${var.csx_catalog}
+              schema: ${var.csx_schema}
+
+        - task_key: gold_safety
+          depends_on: [{task_key: silver_unified_ingest}]
+          notebook_task:
+            notebook_path: csx_bundle/pipeline/gold_safety.py
+            base_parameters:
+              catalog: ${var.csx_catalog}
+              schema: ${var.csx_schema}
+
+        - task_key: gold_fuel_efficiency
+          depends_on: [{task_key: silver_unified_ingest}]
+          notebook_task:
+            notebook_path: csx_bundle/pipeline/gold_fuel_efficiency.py
+            base_parameters:
+              catalog: ${var.csx_catalog}
+              schema: ${var.csx_schema}
+
+        - task_key: gold_network
+          depends_on: [{task_key: silver_unified_ingest}]
+          notebook_task:
+            notebook_path: csx_bundle/pipeline/gold_network.py
+            base_parameters:
+              catalog: ${var.csx_catalog}
+              schema: ${var.csx_schema}
+
+    pods_clv_pipeline:
+      name: "PODS CLV — Schema Setup & Data Seed"
+      tasks:
+        - task_key: setup_schema
+          notebook_task:
+            notebook_path: pods_clv_bundle/notebooks/01_setup_schema.py
+            base_parameters:
+              catalog: demo_nah_catalog
+              schema: pods_clv
+
+        - task_key: seed_customers
+          depends_on:
+            - task_key: setup_schema
+          notebook_task:
+            notebook_path: pods_clv_bundle/notebooks/02_seed_customers.py
+            base_parameters:
+              catalog: demo_nah_catalog
+              schema: pods_clv
+
+        - task_key: seed_transactions
+          depends_on:
+            - task_key: seed_customers
+          notebook_task:
+            notebook_path: pods_clv_bundle/notebooks/03_seed_transactions.py
+            base_parameters:
+              catalog: demo_nah_catalog
+              schema: pods_clv
+
+        - task_key: seed_churn_survival
+          depends_on:
+            - task_key: seed_transactions
+          notebook_task:
+            notebook_path: pods_clv_bundle/notebooks/04_seed_churn_survival.py
+            base_parameters:
+              catalog: demo_nah_catalog
+              schema: pods_clv
+
+        - task_key: seed_campaigns
+          depends_on:
+            - task_key: setup_schema
+          notebook_task:
+            notebook_path: pods_clv_bundle/notebooks/05_seed_campaigns.py
+            base_parameters:
+              catalog: demo_nah_catalog
+              schema: pods_clv
+
+        - task_key: seed_model_results
+          depends_on:
+            - task_key: seed_churn_survival
+          notebook_task:
+            notebook_path: pods_clv_bundle/notebooks/06_seed_model_results.py
+            base_parameters:
+              catalog: demo_nah_catalog
+              schema: pods_clv
+
+    box_sku_rationalization:
+      name: "Box SKU Rationalization Pipeline"
+      tasks:
+        - task_key: setup
+          notebook_task:
+            notebook_path: /Users/noel.hoxie@databricks.com/box_sku_rationalization/01_setup
+            base_parameters:
+              catalog: demo_nah_catalog
+              schema:  box_sku_rationalization
+
+        - task_key: silver_normalize
+          depends_on: [{task_key: setup}]
+          notebook_task:
+            notebook_path: /Users/noel.hoxie@databricks.com/box_sku_rationalization/02_silver_normalize
+            base_parameters:
+              catalog: demo_nah_catalog
+              schema:  box_sku_rationalization
+
+        - task_key: gold_clusters
+          depends_on: [{task_key: silver_normalize}]
+          notebook_task:
+            notebook_path: /Users/noel.hoxie@databricks.com/box_sku_rationalization/03_gold_clusters
+            base_parameters:
+              catalog:      demo_nah_catalog
+              schema:       box_sku_rationalization
+              tolerance_mm: "10"
+
+        - task_key: gold_rationalization
+          depends_on: [{task_key: gold_clusters}]
+          notebook_task:
+            notebook_path: /Users/noel.hoxie@databricks.com/box_sku_rationalization/04_gold_rationalization
+            base_parameters:
+              catalog: demo_nah_catalog
+              schema:  box_sku_rationalization
+
+    ernest_genie_pipeline:
+      name: "Ernest Packaging — Sales Genie Pipeline"
+      tasks:
+        # ── Schema setup ───────────────────────────────────────────────────────
+        - task_key: setup_schema
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/00_setup_schema.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        # ── Bronze layer (all in parallel) ─────────────────────────────────────
+        - task_key: bronze_kna1
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_kna1.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: bronze_knb1
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_knb1.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: bronze_knvv
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_knvv.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: bronze_mara
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_mara.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: bronze_makt
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_makt.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: bronze_mard
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_mard.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: bronze_vbak
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_vbak.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: bronze_vbap
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_vbap.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: bronze_vbep
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_vbep.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: bronze_likp
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_likp.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: bronze_lips
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_lips.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: bronze_vbfa
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_vbfa.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: bronze_vbrk
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_vbrk.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: bronze_vbrp
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/bronze/bronze_vbrp.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        # ── Silver layer ────────────────────────────────────────────────────────
+        - task_key: silver_customers
+          depends_on:
+            - task_key: bronze_kna1
+            - task_key: bronze_knb1
+            - task_key: bronze_knvv
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/silver/silver_customers.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: silver_orders
+          depends_on:
+            - task_key: bronze_vbak
+            - task_key: bronze_vbap
+            - task_key: bronze_vbep
+            - task_key: bronze_makt
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/silver/silver_orders.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: silver_deliveries
+          depends_on:
+            - task_key: bronze_likp
+            - task_key: bronze_lips
+            - task_key: bronze_vbfa
+            - task_key: bronze_makt
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/silver/silver_deliveries.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: silver_invoices
+          depends_on:
+            - task_key: bronze_vbrk
+            - task_key: bronze_vbrp
+            - task_key: bronze_vbfa
+            - task_key: bronze_makt
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/silver/silver_invoices.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: silver_materials
+          depends_on:
+            - task_key: bronze_mara
+            - task_key: bronze_makt
+            - task_key: bronze_mard
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/silver/silver_materials.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: silver_doc_flow
+          depends_on:
+            - task_key: bronze_vbfa
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/silver/silver_doc_flow.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        # ── Gold layer ──────────────────────────────────────────────────────────
+        - task_key: gold_order_lineitems
+          depends_on:
+            - task_key: silver_orders
+            - task_key: silver_customers
+            - task_key: silver_deliveries
+            - task_key: silver_invoices
+            - task_key: silver_doc_flow
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/gold/gold_order_lineitems.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: gold_order_360
+          depends_on:
+            - task_key: gold_order_lineitems
+            - task_key: silver_customers
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/gold/gold_order_360.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: gold_customer_360
+          depends_on:
+            - task_key: gold_order_360
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/gold/gold_customer_360.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: gold_fulfillment_status
+          depends_on:
+            - task_key: gold_order_lineitems
+            - task_key: silver_materials
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/gold/gold_fulfillment_status.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: gold_open_orders
+          depends_on:
+            - task_key: gold_order_360
+            - task_key: gold_fulfillment_status
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/gold/gold_open_orders.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+        - task_key: gold_delivery_performance
+          depends_on:
+            - task_key: gold_order_360
+            - task_key: gold_order_lineitems
+          notebook_task:
+            notebook_path: ernest_genie_pipeline/gold/gold_delivery_performance.py
+            base_parameters:
+              catalog: ${var.ernest_catalog}
+              schema: ${var.ernest_schema}
+
+    capex_genie_pipeline:
+      name: "Capital Budget Genie — Pipeline"
+      tasks:
+        - task_key: setup_schema
+          notebook_task:
+            notebook_path: capex_genie_pipeline/00_setup_schema.py
+            base_parameters:
+              catalog: ${var.capex_catalog}
+              schema: ${var.capex_schema}
+
+        - task_key: seed_capital_data
+          depends_on: [{task_key: setup_schema}]
+          notebook_task:
+            notebook_path: capex_genie_pipeline/seed/seed_capital_data.py
+            base_parameters:
+              catalog: ${var.capex_catalog}
+              schema: ${var.capex_schema}
+
+        - task_key: gold_project_kpis
+          depends_on: [{task_key: seed_capital_data}]
+          notebook_task:
+            notebook_path: capex_genie_pipeline/gold/gold_project_kpis.py
+            base_parameters:
+              catalog: ${var.capex_catalog}
+              schema: ${var.capex_schema}
+
+        - task_key: gold_budget_vs_actual
+          depends_on: [{task_key: seed_capital_data}]
+          notebook_task:
+            notebook_path: capex_genie_pipeline/gold/gold_budget_vs_actual.py
+            base_parameters:
+              catalog: ${var.capex_catalog}
+              schema: ${var.capex_schema}
+
+        - task_key: gold_spend_detail
+          depends_on: [{task_key: seed_capital_data}]
+          notebook_task:
+            notebook_path: capex_genie_pipeline/gold/gold_spend_detail.py
+            base_parameters:
+              catalog: ${var.capex_catalog}
+              schema: ${var.capex_schema}
+
+        - task_key: gold_monthly_burn
+          depends_on: [{task_key: seed_capital_data}]
+          notebook_task:
+            notebook_path: capex_genie_pipeline/gold/gold_monthly_burn.py
+            base_parameters:
+              catalog: ${var.capex_catalog}
+              schema: ${var.capex_schema}

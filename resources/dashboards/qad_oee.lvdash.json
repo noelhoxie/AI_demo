@@ -1,4 +1,5 @@
 {
+  "displayName": "QAD OEE",
   "datasets": [
     {
       "displayName": "OEE by Machine Center",
@@ -16,11 +17,24 @@
       "displayName": "QAD OEE",
       "layout": [
         {
-          "position": { "height": 1, "width": 6, "x": 0, "y": 0 },
-          "widget": { "name": "title", "textbox_spec": "# QAD OEE — Gold tables (5 machine centers, 3 facilities)" }
+          "position": {
+            "height": 1,
+            "width": 6,
+            "x": 0,
+            "y": 0
+          },
+          "widget": {
+            "name": "title",
+            "textbox_spec": "# QAD OEE \u2014 Gold tables (5 machine centers, 3 facilities)"
+          }
         },
         {
-          "position": { "height": 2, "width": 2, "x": 0, "y": 1 },
+          "position": {
+            "height": 2,
+            "width": 2,
+            "x": 0,
+            "y": 1
+          },
           "widget": {
             "name": "avg_oee",
             "queries": [
@@ -29,20 +43,38 @@
                 "query": {
                   "datasetName": "oee_latest",
                   "disaggregated": false,
-                  "fields": [{ "expression": "AVG(`oee_pct`)", "name": "avg_oee_pct" }]
+                  "fields": [
+                    {
+                      "expression": "AVG(`oee_pct`)",
+                      "name": "avg_oee_pct"
+                    }
+                  ]
                 }
               }
             ],
             "spec": {
-              "encodings": { "value": { "displayName": "Avg OEE %", "fieldName": "avg_oee_pct" } },
-              "frame": { "showTitle": true, "title": "Average OEE %" },
+              "encodings": {
+                "value": {
+                  "displayName": "Avg OEE %",
+                  "fieldName": "avg_oee_pct"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Average OEE %"
+              },
               "version": 2,
               "widgetType": "counter"
             }
           }
         },
         {
-          "position": { "height": 6, "width": 6, "x": 0, "y": 3 },
+          "position": {
+            "height": 6,
+            "width": 6,
+            "x": 0,
+            "y": 3
+          },
           "widget": {
             "name": "oee_table",
             "queries": [
@@ -52,12 +84,30 @@
                   "datasetName": "oee_latest",
                   "disaggregated": true,
                   "fields": [
-                    { "expression": "`facility`", "name": "facility" },
-                    { "expression": "`machine_center`", "name": "machine_center" },
-                    { "expression": "`oee_pct`", "name": "oee_pct" },
-                    { "expression": "`availability_pct`", "name": "availability_pct" },
-                    { "expression": "`performance_pct`", "name": "performance_pct" },
-                    { "expression": "`quality_pct`", "name": "quality_pct" }
+                    {
+                      "expression": "`facility`",
+                      "name": "facility"
+                    },
+                    {
+                      "expression": "`machine_center`",
+                      "name": "machine_center"
+                    },
+                    {
+                      "expression": "`oee_pct`",
+                      "name": "oee_pct"
+                    },
+                    {
+                      "expression": "`availability_pct`",
+                      "name": "availability_pct"
+                    },
+                    {
+                      "expression": "`performance_pct`",
+                      "name": "performance_pct"
+                    },
+                    {
+                      "expression": "`quality_pct`",
+                      "name": "quality_pct"
+                    }
                   ]
                 }
               }
@@ -65,22 +115,48 @@
             "spec": {
               "encodings": {
                 "columns": [
-                  { "displayName": "Facility", "fieldName": "facility" },
-                  { "displayName": "Machine Center", "fieldName": "machine_center" },
-                  { "displayName": "OEE %", "fieldName": "oee_pct" },
-                  { "displayName": "Availability %", "fieldName": "availability_pct" },
-                  { "displayName": "Performance %", "fieldName": "performance_pct" },
-                  { "displayName": "Quality %", "fieldName": "quality_pct" }
+                  {
+                    "displayName": "Facility",
+                    "fieldName": "facility"
+                  },
+                  {
+                    "displayName": "Machine Center",
+                    "fieldName": "machine_center"
+                  },
+                  {
+                    "displayName": "OEE %",
+                    "fieldName": "oee_pct"
+                  },
+                  {
+                    "displayName": "Availability %",
+                    "fieldName": "availability_pct"
+                  },
+                  {
+                    "displayName": "Performance %",
+                    "fieldName": "performance_pct"
+                  },
+                  {
+                    "displayName": "Quality %",
+                    "fieldName": "quality_pct"
+                  }
                 ]
               },
-              "frame": { "showTitle": true, "title": "Latest OEE by Machine Center (qad_gold_oee_latest)" },
+              "frame": {
+                "showTitle": true,
+                "title": "Latest OEE by Machine Center (qad_gold_oee_latest)"
+              },
               "version": 2,
               "widgetType": "table"
             }
           }
         },
         {
-          "position": { "height": 5, "width": 6, "x": 0, "y": 9 },
+          "position": {
+            "height": 5,
+            "width": 6,
+            "x": 0,
+            "y": 9
+          },
           "widget": {
             "name": "oee_bar",
             "queries": [
@@ -90,8 +166,14 @@
                   "datasetName": "oee_latest",
                   "disaggregated": true,
                   "fields": [
-                    { "expression": "CONCAT(`facility`, ' — ', `machine_center`)", "name": "facility_machine" },
-                    { "expression": "`oee_pct`", "name": "oee_pct" }
+                    {
+                      "expression": "CONCAT(`facility`, ' \u2014 ', `machine_center`)",
+                      "name": "facility_machine"
+                    },
+                    {
+                      "expression": "`oee_pct`",
+                      "name": "oee_pct"
+                    }
                   ]
                 }
               }
@@ -99,23 +181,31 @@
             "spec": {
               "encodings": {
                 "x": {
-                  "displayName": "Facility — Machine",
+                  "displayName": "Facility \u2014 Machine",
                   "fieldName": "facility_machine",
-                  "scale": { "type": "categorical" }
+                  "scale": {
+                    "type": "categorical"
+                  }
                 },
                 "y": {
                   "displayName": "OEE %",
                   "fieldName": "oee_pct",
-                  "scale": { "type": "quantitative" }
+                  "scale": {
+                    "type": "quantitative"
+                  }
                 }
               },
-              "frame": { "showTitle": true, "title": "OEE % by Machine Center" },
+              "frame": {
+                "showTitle": true,
+                "title": "OEE % by Machine Center"
+              },
               "version": 3,
               "widgetType": "bar"
             }
           }
         }
-      ]
+      ],
+      "name": "qad_oee"
     }
   ]
 }

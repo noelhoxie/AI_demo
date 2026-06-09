@@ -12,6 +12,8 @@ env/
 .eggs/
 dist/
 build/
+# Allow built frontend assets for Databricks Apps deployment
+!airtech_lab_app/frontend/dist/
 
 # IDE / editor
 .idea/

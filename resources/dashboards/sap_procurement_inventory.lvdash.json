@@ -1,4 +1,5 @@
 {
+  "displayName": "SAP Procurement and Inventory",
   "datasets": [
     {
       "displayName": "Procurement KPI",
@@ -21,11 +22,24 @@
       "displayName": "SAP Procurement and Inventory",
       "layout": [
         {
-          "position": { "height": 1, "width": 6, "x": 0, "y": 0 },
-          "widget": { "name": "title", "textbox_spec": "# SAP Procurement and Inventory — Gold tables" }
+          "position": {
+            "height": 1,
+            "width": 6,
+            "x": 0,
+            "y": 0
+          },
+          "widget": {
+            "name": "title",
+            "textbox_spec": "# SAP Procurement and Inventory \u2014 Gold tables"
+          }
         },
         {
-          "position": { "height": 2, "width": 2, "x": 0, "y": 1 },
+          "position": {
+            "height": 2,
+            "width": 2,
+            "x": 0,
+            "y": 1
+          },
           "widget": {
             "name": "total_pos",
             "queries": [
@@ -34,20 +48,38 @@
                 "query": {
                   "datasetName": "kpi_procurement",
                   "disaggregated": false,
-                  "fields": [{ "expression": "`total_pos`", "name": "total_pos" }]
+                  "fields": [
+                    {
+                      "expression": "`total_pos`",
+                      "name": "total_pos"
+                    }
+                  ]
                 }
               }
             ],
             "spec": {
-              "encodings": { "value": { "displayName": "Total POs", "fieldName": "total_pos" } },
-              "frame": { "showTitle": true, "title": "Total Purchase Orders" },
+              "encodings": {
+                "value": {
+                  "displayName": "Total POs",
+                  "fieldName": "total_pos"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Total Purchase Orders"
+              },
               "version": 2,
               "widgetType": "counter"
             }
           }
         },
         {
-          "position": { "height": 2, "width": 2, "x": 2, "y": 1 },
+          "position": {
+            "height": 2,
+            "width": 2,
+            "x": 2,
+            "y": 1
+          },
           "widget": {
             "name": "total_po_value",
             "queries": [
@@ -56,20 +88,38 @@
                 "query": {
                   "datasetName": "kpi_procurement",
                   "disaggregated": false,
-                  "fields": [{ "expression": "`total_po_value`", "name": "total_po_value" }]
+                  "fields": [
+                    {
+                      "expression": "`total_po_value`",
+                      "name": "total_po_value"
+                    }
+                  ]
                 }
               }
             ],
             "spec": {
-              "encodings": { "value": { "displayName": "Total PO Value", "fieldName": "total_po_value" } },
-              "frame": { "showTitle": true, "title": "Total PO Value" },
+              "encodings": {
+                "value": {
+                  "displayName": "Total PO Value",
+                  "fieldName": "total_po_value"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Total PO Value"
+              },
               "version": 2,
               "widgetType": "counter"
             }
           }
         },
         {
-          "position": { "height": 2, "width": 2, "x": 4, "y": 1 },
+          "position": {
+            "height": 2,
+            "width": 2,
+            "x": 4,
+            "y": 1
+          },
           "widget": {
             "name": "total_available_qty",
             "queries": [
@@ -78,20 +128,38 @@
                 "query": {
                   "datasetName": "kpi_inventory",
                   "disaggregated": false,
-                  "fields": [{ "expression": "`total_available_qty`", "name": "total_available_qty" }]
+                  "fields": [
+                    {
+                      "expression": "`total_available_qty`",
+                      "name": "total_available_qty"
+                    }
+                  ]
                 }
               }
             ],
             "spec": {
-              "encodings": { "value": { "displayName": "Total Available", "fieldName": "total_available_qty" } },
-              "frame": { "showTitle": true, "title": "Total Available Qty" },
+              "encodings": {
+                "value": {
+                  "displayName": "Total Available",
+                  "fieldName": "total_available_qty"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Total Available Qty"
+              },
               "version": 2,
               "widgetType": "counter"
             }
           }
         },
         {
-          "position": { "height": 6, "width": 6, "x": 0, "y": 3 },
+          "position": {
+            "height": 6,
+            "width": 6,
+            "x": 0,
+            "y": 3
+          },
           "widget": {
             "name": "procurement_table",
             "queries": [
@@ -101,10 +169,22 @@
                   "datasetName": "business_procurement",
                   "disaggregated": true,
                   "fields": [
-                    { "expression": "`ebeln`", "name": "ebeln" },
-                    { "expression": "`lifnr`", "name": "lifnr" },
-                    { "expression": "`total_qty`", "name": "total_qty" },
-                    { "expression": "`total_value`", "name": "total_value" }
+                    {
+                      "expression": "`ebeln`",
+                      "name": "ebeln"
+                    },
+                    {
+                      "expression": "`lifnr`",
+                      "name": "lifnr"
+                    },
+                    {
+                      "expression": "`total_qty`",
+                      "name": "total_qty"
+                    },
+                    {
+                      "expression": "`total_value`",
+                      "name": "total_value"
+                    }
                   ]
                 }
               }
@@ -112,19 +192,35 @@
             "spec": {
               "encodings": {
                 "columns": [
-                  { "displayName": "PO", "fieldName": "ebeln" },
-                  { "displayName": "Vendor", "fieldName": "lifnr" },
-                  { "displayName": "Qty", "fieldName": "total_qty" },
-                  { "displayName": "Value", "fieldName": "total_value" }
+                  {
+                    "displayName": "PO",
+                    "fieldName": "ebeln"
+                  },
+                  {
+                    "displayName": "Vendor",
+                    "fieldName": "lifnr"
+                  },
+                  {
+                    "displayName": "Qty",
+                    "fieldName": "total_qty"
+                  },
+                  {
+                    "displayName": "Value",
+                    "fieldName": "total_value"
+                  }
                 ]
               },
-              "frame": { "showTitle": true, "title": "Procurement (sap_gold_business_procurement)" },
+              "frame": {
+                "showTitle": true,
+                "title": "Procurement (sap_gold_business_procurement)"
+              },
               "version": 2,
               "widgetType": "table"
             }
           }
         }
-      ]
+      ],
+      "name": "sap_procurement_and_inventory"
     }
   ]
 }

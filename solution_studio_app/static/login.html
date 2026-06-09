@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sign In — Solution Studio</title>
+  <title>Sign In — Design Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -104,7 +104,7 @@
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 9px;
       padding: 11px 14px;
-      font-size: 14px;
+      font-size: 16px; /* ≥16px prevents iOS Safari auto-zoom on focus */
       color: #f0f0f0;
       font-family: inherit;
       outline: none;
@@ -176,6 +176,14 @@
       font-size: 11px;
       color: #374151;
     }
+    .legal-text {
+      margin-top: 20px;
+      font-size: 10px;
+      color: #374151;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .legal-text a { color: #374151; text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -187,12 +195,12 @@
       <path d="M283.923 136.449L150.144 213.624L6.88995 131.168L0 134.982V194.844L150.144 281.115L283.923 204.234V235.926L150.144 313.1L6.88995 230.644L0 234.458V244.729L150.144 331L300 244.729V184.867L293.11 181.052L150.144 263.215L16.0766 186.334V154.643L150.144 231.524L300 145.253V86.2713L292.536 81.8697L150.144 163.739L22.9665 90.9663L150.144 17.8998L254.641 78.055L263.828 72.773V65.4371L150.144 0L0 86.2713V95.6613L150.144 181.933L283.923 104.758V136.449Z" fill="#FF3621"/>
     </svg>
     <div class="brand-text">
-      <div class="brand-name">Solution Studio</div>
+      <div class="brand-name">Design Studio</div>
       <div class="brand-sub">Powered by Databricks</div>
     </div>
   </div>
 
-  <div class="login-title">Welcome to the Solution Studio</div>
+  <div class="login-title">Welcome to the Design Studio</div>
   <div class="login-sub">Login with your name and company to find out about different AI powered business applications specifically for the manufacturing industry.</div>
 
   <!-- Error message injected server-side via JS below -->
@@ -226,6 +234,13 @@
       <path d="M283.923 136.449L150.144 213.624L6.88995 131.168L0 134.982V194.844L150.144 281.115L283.923 204.234V235.926L150.144 313.1L6.88995 230.644L0 234.458V244.729L150.144 331L300 244.729V184.867L293.11 181.052L150.144 263.215L16.0766 186.334V154.643L150.144 231.524L300 145.253V86.2713L292.536 81.8697L150.144 163.739L22.9665 90.9663L150.144 17.8998L254.641 78.055L263.828 72.773V65.4371L150.144 0L0 86.2713V95.6613L150.144 181.933L283.923 104.758V136.449Z" fill="#FF3621"/>
     </svg>
     Powered by Databricks
+  </div>
+
+  <div class="legal-text">
+    &copy; 2026 Databricks, Inc. Use of this app is subject to your Databricks Agreement
+    (<a href="https://www.databricks.com/legal/mcsa" target="_blank">www.databricks.com/legal/mcsa</a>).
+    Use at your own risk. No warranties. No liability beyond $1,000
+    (as outlined at <a href="https://www.databricks.com/legal/db-license" target="_blank">www.databricks.com/legal/db-license</a>).
   </div>
 
 </div>

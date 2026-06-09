@@ -2,6 +2,8 @@
 
 // ── Global State ──────────────────────────────────────────────────────────────
 let _activeTab     = 'ibp';
+let _clickCount    = 0;
+document.addEventListener('click', () => { _clickCount++; });
 let _aiActive      = false;
 let _tabStartTime  = null;   // ms timestamp when current tab was entered
 let _timerInterval = null;
@@ -60,6 +62,26 @@ let   _drillKey   = 0;
 
 // SKU forecast error history (populated by renderDemErrorsTable)
 let _skuErrorData = [];
+let _skuAllData   = [];   // full unfiltered copy for filtering
+let _supplierRaw  = [];   // full unfiltered supplier list for filtering
+
+// Raw data stores for filter re-rendering
+let _ibpBuRaw         = null;
+let _ibpRisksRaw      = null;
+let _ibpKpisRaw       = null;
+let _invWarehousesRaw = null;
+let _invCategoriesRaw = null;
+let _invAlertsRaw     = null;
+let _invKpisRaw       = null;
+let _invHealthRaw     = null;
+let _demMapeRaw       = null;
+let _demKpisRaw       = null;
+let _demFaRaw         = null;
+let _demTrendRaw      = null;
+let _ordKpisRaw       = null;
+let _ordVolRaw        = null;
+let _ordAutoRaw       = null;
+let _scKpisRaw        = null;
 
 function _storeDrill(title, content) {
   const key = 'k' + (_drillKey++);
@@ -330,7 +352,7 @@ async function loadAppConfig() {
     const d = await (await fetch('/supply-chain/api/config')).json();
     if (d.company_name) {
       document.getElementById('nav-brand-name').textContent = d.company_name + ' — Supply Chain';
-      document.title = d.company_name + ' — Supply Chain Intelligence';
+      document.title = d.company_name + ' — Supply Chain Control Tower';
     }
     if (d.company_name) {
       fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(d.company_name)}`)
@@ -338,20 +360,23 @@ async function loadAppConfig() {
         .then(results => {
           if (!results || !results[0] || !results[0].domain) return;
           const img = document.createElement('img');
-          img.src = `https://logo.clearbit.com/${results[0].domain}`;
           img.alt = d.company_name;
-          img.style.cssText = 'width:22px;height:22px;border-radius:4px;object-fit:contain;background:#fff;padding:2px;margin-left:8px;flex-shrink:0;';
-          img.onerror = () => img.remove();
-          const brand = document.querySelector('.nav-brand');
-          if (brand) brand.appendChild(img);
+          img.style.cssText = 'width:28px;height:28px;border-radius:6px;object-fit:contain;flex-shrink:0;';
+          img.onload = () => {
+            // Replace the Databricks icon with the company logo in the top-left
+            const brand = document.querySelector('.nav-brand');
+            const brandSvg = brand ? brand.querySelector('svg') : null;
+            if (brandSvg) brandSvg.replaceWith(img);
+            else if (brand) brand.prepend(img);
+            // Show just the app title — the logo identifies the company visually
+            const nameEl = document.getElementById('nav-brand-name');
+            if (nameEl) nameEl.textContent = 'Supply Chain Control Tower';
+          };
+          img.onerror = () => {}; // fallback: keep company name text
+          img.src = `https://cdn.brandfetch.io/domain/${results[0].domain}?c=1idGdcDDyuPmwhnhURl`; // set src last so onload is always wired up
         })
         .catch(() => {});
     }
-    // Pre-fill contact form if visible
-    const cfEmail   = document.getElementById('cf-email');
-    const cfCompany = document.getElementById('cf-company');
-    if (cfEmail   && !cfEmail.value   && d.email)        cfEmail.value   = d.email;
-    if (cfCompany && !cfCompany.value && d.company_name) cfCompany.value = d.company_name;
   } catch (_) {}
 }
 
@@ -361,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
   switchTab('ibp');
   fetchKpis();
   setInterval(fetchKpis, 30000);
+  showTutorialIfNew();
 
   // Cmd/Ctrl+Enter for AI
   document.getElementById('ai-input').addEventListener('keydown', e => {
@@ -373,41 +399,185 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// ── Contact Form ──────────────────────────────────────────────────────────────
-async function submitContact(e) {
-  e.preventDefault();
-  const btn = document.getElementById('contact-submit-btn');
-  btn.disabled = true;
-  btn.textContent = 'Sending…';
-
-  const payload = {
-    name:     document.getElementById('cf-name').value.trim(),
-    company:  document.getElementById('cf-company').value.trim(),
-    email:    document.getElementById('cf-email').value.trim(),
-    role:     document.getElementById('cf-role').value.trim(),
-    interest: document.getElementById('cf-interest').value,
-    message:  document.getElementById('cf-message').value.trim(),
-  };
-
-  try {
-    const r = await fetch('/supply-chain/api/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (r.ok) {
-      document.getElementById('contact-form').style.display = 'none';
-      document.getElementById('contact-success').style.display = 'block';
-    } else {
-      btn.disabled = false;
-      btn.textContent = 'Send Message';
-      alert('Something went wrong. Please try again.');
-    }
-  } catch (_) {
-    btn.disabled = false;
-    btn.textContent = 'Send Message';
-    alert('Network error. Please try again.');
+function showTutorialIfNew() {
+  if (!localStorage.getItem('sc-tutorial-seen')) {
+    document.getElementById('tut-overlay').classList.remove('hidden');
   }
+}
+function dismissTutorial() {
+  localStorage.setItem('sc-tutorial-seen', '1');
+  document.getElementById('tut-overlay').classList.add('hidden');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') dismissTutorial(); });
+
+// ── Contact Form ──────────────────────────────────────────────────────────────
+// ── Logistics Map ──────────────────────────────────────────────────────────────
+const LOGISTICS_DCS = [
+  { id:'CHI', name:'Chicago DC',   lat:41.85,  lng:-87.65,  color:'#1B6FEB' },
+  { id:'DAL', name:'Dallas DC',    lat:32.78,  lng:-96.80,  color:'#10b981' },
+  { id:'PHX', name:'Phoenix DC',   lat:33.45,  lng:-112.07, color:'#f59e0b' },
+  { id:'ATL', name:'Atlanta DC',   lat:33.75,  lng:-84.39,  color:'#ef4444' },
+  { id:'SEA', name:'Seattle DC',   lat:47.61,  lng:-122.33, color:'#8b5cf6' },
+  { id:'NWK', name:'Newark DC',    lat:40.74,  lng:-74.17,  color:'#f97316' },
+];
+
+const LOGISTICS_TRUCKS = [
+  { id:'TRK-0041', dc:'CHI', from:'Chicago, IL',  to:'Detroit, MI',       lat:42.80, lng:-84.20, status:'in_transit', cargo:'Auto Parts',         load:'38,400 lbs', eta:'2h 15m',       route:'RT-CHI-001' },
+  { id:'TRK-0055', dc:'CHI', from:'Chicago, IL',  to:'Cincinnati, OH',    lat:41.50, lng:-86.10, status:'in_transit', cargo:'Electronics',         load:'41,200 lbs', eta:'4h 40m',       route:'RT-CHI-002' },
+  { id:'TRK-0067', dc:'CHI', from:'Chicago, IL',  to:'Minneapolis, MN',   lat:43.90, lng:-91.50, status:'delayed',    cargo:'Appliances',          load:'35,800 lbs', eta:'6h 30m (+2h)', route:'RT-CHI-003' },
+  { id:'TRK-0072', dc:'CHI', from:'Chicago, IL',  to:'St. Louis, MO',     lat:40.90, lng:-88.90, status:'in_transit', cargo:'Industrial Supplies', load:'44,000 lbs', eta:'3h 50m',       route:'RT-CHI-004' },
+  { id:'TRK-0088', dc:'DAL', from:'Dallas, TX',   to:'Houston, TX',       lat:32.30, lng:-96.00, status:'in_transit', cargo:'Chemical Supplies',   load:'39,600 lbs', eta:'1h 55m',       route:'RT-DAL-001' },
+  { id:'TRK-0094', dc:'DAL', from:'Dallas, TX',   to:'Denver, CO',        lat:35.80, lng:-101.20, status:'in_transit', cargo:'Energy Equipment',   load:'42,000 lbs', eta:'5h 10m',       route:'RT-DAL-002' },
+  { id:'TRK-0103', dc:'DAL', from:'Dallas, TX',   to:'Kansas City, MO',   lat:35.40, lng:-96.40, status:'loading',    cargo:'Consumer Goods',      load:'37,200 lbs', eta:'3h 25m',       route:'RT-DAL-003' },
+  { id:'TRK-0115', dc:'DAL', from:'Dallas, TX',   to:'New Orleans, LA',   lat:31.50, lng:-92.80, status:'delayed',    cargo:'Food Products',       load:'36,000 lbs', eta:'2h 45m (+1h)', route:'RT-DAL-004' },
+  { id:'TRK-0128', dc:'PHX', from:'Phoenix, AZ',  to:'Los Angeles, CA',   lat:34.10, lng:-117.30, status:'in_transit', cargo:'Semiconductors',     load:'28,000 lbs', eta:'1h 20m',       route:'RT-PHX-001' },
+  { id:'TRK-0134', dc:'PHX', from:'Phoenix, AZ',  to:'Salt Lake City, UT',lat:36.20, lng:-112.10, status:'in_transit', cargo:'Mining Equipment',   load:'45,000 lbs', eta:'4h 00m',       route:'RT-PHX-002' },
+  { id:'TRK-0141', dc:'PHX', from:'Phoenix, AZ',  to:'Albuquerque, NM',   lat:33.10, lng:-109.30, status:'in_transit', cargo:'Aerospace Parts',    load:'31,200 lbs', eta:'2h 30m',       route:'RT-PHX-003' },
+  { id:'TRK-0156', dc:'ATL', from:'Atlanta, GA',  to:'Charlotte, NC',     lat:34.40, lng:-82.50, status:'in_transit', cargo:'Textiles',             load:'38,800 lbs', eta:'2h 10m',       route:'RT-ATL-001' },
+  { id:'TRK-0162', dc:'ATL', from:'Atlanta, GA',  to:'Miami, FL',         lat:29.80, lng:-82.00, status:'in_transit', cargo:'Perishables',          load:'33,600 lbs', eta:'2h 40m',       route:'RT-ATL-002' },
+  { id:'TRK-0177', dc:'ATL', from:'Atlanta, GA',  to:'Nashville, TN',     lat:34.80, lng:-86.50, status:'delayed',    cargo:'Automotive Parts',     load:'41,600 lbs', eta:'1h 50m (+45m)',route:'RT-ATL-003' },
+  { id:'TRK-0189', dc:'SEA', from:'Seattle, WA',  to:'Portland, OR',      lat:46.40, lng:-122.20, status:'in_transit', cargo:'Tech Hardware',       load:'29,400 lbs', eta:'1h 30m',       route:'RT-SEA-001' },
+  { id:'TRK-0195', dc:'SEA', from:'Seattle, WA',  to:'Boise, ID',         lat:47.00, lng:-118.80, status:'in_transit', cargo:'Lumber Products',     load:'44,800 lbs', eta:'3h 15m',       route:'RT-SEA-002' },
+  { id:'TRK-0211', dc:'NWK', from:'Newark, NJ',   to:'Boston, MA',        lat:41.70, lng:-72.60, status:'in_transit', cargo:'Pharma Products',      load:'26,800 lbs', eta:'1h 45m',       route:'RT-NWK-001' },
+  { id:'TRK-0224', dc:'NWK', from:'Newark, NJ',   to:'Pittsburgh, PA',    lat:40.80, lng:-76.80, status:'loading',    cargo:'Steel Components',     load:'46,000 lbs', eta:'2h 50m',       route:'RT-NWK-002' },
+];
+
+let _logisticsMap    = null;
+let _truckMarkers    = [];
+let _dcMarkers       = [];
+let _routeLines      = [];
+let _logiFilterDC     = 'all';
+let _logiFilterStatus = 'all';
+let _logiFilterRoute  = '';
+
+function initLogisticsMap() {
+  if (_logisticsMap) { _logisticsMap.invalidateSize(); renderLogisticsMarkers(); return; }
+
+  _logisticsMap = L.map('logistics-map', {
+    center: [39.5, -98.35], zoom: 4,
+    zoomControl: true, attributionControl: true,
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com">CARTO</a>',
+    subdomains: 'abcd', maxZoom: 19,
+  }).addTo(_logisticsMap);
+
+  // Legend control
+  const legend = L.control({ position: 'topright' });
+  legend.onAdd = () => {
+    const div = L.DomUtil.create('div', 'logi-legend');
+    div.innerHTML =
+      '<div class="logi-legend-title">Distribution Centers</div>' +
+      LOGISTICS_DCS.map(d => `<div class="logi-leg"><div class="logi-leg-dc" style="background:${d.color}"></div>${d.name}</div>`).join('') +
+      '<div class="logi-legend-title" style="margin-top:8px">Trucks</div>' +
+      '<div class="logi-leg"><div class="logi-leg-truck" style="background:#10b981"></div>In Transit</div>' +
+      '<div class="logi-leg"><div class="logi-leg-truck" style="background:#1B6FEB"></div>Loading</div>' +
+      '<div class="logi-leg"><div class="logi-leg-truck" style="background:#ef4444"></div>Delayed</div>';
+    return div;
+  };
+  legend.addTo(_logisticsMap);
+
+  renderLogisticsMarkers();
+}
+
+function renderLogisticsMarkers() {
+  if (!_logisticsMap) return;
+  _truckMarkers.forEach(m => _logisticsMap.removeLayer(m));
+  _dcMarkers.forEach(m => _logisticsMap.removeLayer(m));
+  _routeLines.forEach(l => _logisticsMap.removeLayer(l));
+  _truckMarkers = []; _dcMarkers = []; _routeLines = [];
+
+  const dcMap = {};
+  LOGISTICS_DCS.forEach(dc => { dcMap[dc.id] = dc; });
+
+  const trucks = LOGISTICS_TRUCKS.filter(t => {
+    if (_logiFilterDC !== 'all' && t.dc !== _logiFilterDC) return false;
+    if (_logiFilterStatus !== 'all' && t.status !== _logiFilterStatus) return false;
+    if (_logiFilterRoute) {
+      const q = _logiFilterRoute.toLowerCase();
+      if (!t.id.toLowerCase().includes(q) && !t.route.toLowerCase().includes(q) &&
+          !t.to.toLowerCase().includes(q) && !t.from.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  // DC markers
+  LOGISTICS_DCS.forEach(dc => {
+    if (_logiFilterDC !== 'all' && _logiFilterDC !== dc.id) return;
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:34px;height:34px;border-radius:50%;background:${dc.color};border:2px solid rgba(255,255,255,0.9);box-shadow:0 0 0 3px ${dc.color}55,0 4px 14px rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#fff;letter-spacing:-.3px">${dc.id}</div>`,
+      iconSize: [34, 34], iconAnchor: [17, 17],
+    });
+    const activeTrucks = LOGISTICS_TRUCKS.filter(t => t.dc === dc.id).length;
+    const m = L.marker([dc.lat, dc.lng], { icon, zIndexOffset: 1000 })
+      .addTo(_logisticsMap)
+      .bindPopup(
+        `<div style="font-family:Inter,sans-serif"><strong style="font-size:14px">${dc.name}</strong><br>` +
+        `<span style="font-size:11px;color:#9ca3af">Distribution Center · ${dc.id}</span><br>` +
+        `<span style="font-size:12px;margin-top:6px;display:block"><strong>${activeTrucks}</strong> active routes</span></div>`,
+        { className: 'logi-popup' }
+      );
+    _dcMarkers.push(m);
+  });
+
+  // Truck markers + route lines
+  trucks.forEach(t => {
+    const dc = dcMap[t.dc];
+    if (!dc) return;
+    const sColor = t.status === 'in_transit' ? '#10b981' : t.status === 'loading' ? '#1B6FEB' : '#ef4444';
+    const sLabel = t.status === 'in_transit' ? 'In Transit' : t.status === 'loading' ? 'Loading' : 'Delayed';
+
+    const line = L.polyline([[dc.lat, dc.lng], [t.lat, t.lng]], {
+      color: dc.color, weight: 2, opacity: 0.45, dashArray: '7,5',
+    }).addTo(_logisticsMap);
+    _routeLines.push(line);
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:14px;height:14px;border-radius:3px;background:${sColor};border:1.5px solid rgba(255,255,255,0.9);transform:rotate(45deg);box-shadow:0 2px 8px rgba(0,0,0,0.5)"></div>`,
+      iconSize: [14, 14], iconAnchor: [7, 7],
+    });
+
+    const popup =
+      `<div style="font-family:Inter,sans-serif;min-width:210px">` +
+      `<div style="font-weight:700;font-size:13px;margin-bottom:3px">${t.id}</div>` +
+      `<div style="font-size:10.5px;color:#9ca3af;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">${t.route}</div>` +
+      `<div style="font-size:12px;margin-bottom:2px">From: <strong>${t.from}</strong></div>` +
+      `<div style="font-size:12px;margin-bottom:8px">To: <strong>${t.to}</strong></div>` +
+      `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">` +
+      `<span style="background:${sColor}22;color:${sColor};border:1px solid ${sColor}55;border-radius:5px;padding:2px 8px;font-size:10.5px;font-weight:700">${sLabel}</span>` +
+      `<span style="font-size:11px;color:#d1d5db">ETA: <strong>${t.eta}</strong></span></div>` +
+      `<div style="font-size:11px;color:#9ca3af">${t.cargo} · ${t.load}</div></div>`;
+
+    const m = L.marker([t.lat, t.lng], { icon })
+      .addTo(_logisticsMap)
+      .bindPopup(popup, { className: 'logi-popup', maxWidth: 260 });
+    _truckMarkers.push(m);
+  });
+
+  // Update stats
+  document.getElementById('logi-count-transit').textContent = trucks.filter(t => t.status === 'in_transit').length;
+  document.getElementById('logi-count-load').textContent    = trucks.filter(t => t.status === 'loading').length;
+  document.getElementById('logi-count-delayed').textContent = trucks.filter(t => t.status === 'delayed').length;
+}
+
+function logiSetDC(val) {
+  _logiFilterDC = val;
+  renderLogisticsMarkers();
+}
+
+function logiSetStatus(status, btn) {
+  _logiFilterStatus = status;
+  document.querySelectorAll('.logi-status-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLogisticsMarkers();
+}
+
+function logiSearch() {
+  _logiFilterRoute = document.getElementById('logi-route-search').value.trim();
+  renderLogisticsMarkers();
 }
 
 // ── Page Timer ────────────────────────────────────────────────────────────────
@@ -430,11 +600,13 @@ function _timerDisplay(seconds) {
 
 async function _logPageTime(page, seconds) {
   if (seconds < 1) return;
+  const clicks = _clickCount;
+  _clickCount = 0;
   try {
     await fetch('/supply-chain/api/log-page-time', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ page, seconds_spent: seconds }),
+      body: JSON.stringify({ page, seconds_spent: seconds, click_count: clicks }),
     });
   } catch (_) {}
 }
@@ -460,13 +632,13 @@ function switchTab(tab) {
   if (tab === 'inventory' && !_invHealthChart)  fetchInventory();
   if (tab === 'demand'    && !_demFaChart)      fetchDemand();
   if (tab === 'orders'    && !_ordVolChart)     fetchOrders();
-  if (tab === 'contact')                        loadAppConfig(); // refresh pre-fill
+  if (tab === 'logistics')                      initLogisticsMap();
 
   // Refresh open panels
   const ap = document.getElementById('agent-panel');
   if (!ap.classList.contains('hidden')) renderAgentPanel(tab);
-  const tm = document.getElementById('talk-modal');
-  if (!tm.classList.contains('hidden')) renderTalkTrack(tab);
+  const tm = document.getElementById('info-overlay');
+  if (!tm.classList.contains('hidden')) openInfoPanel(tab);
 }
 
 
@@ -474,9 +646,10 @@ function switchTab(tab) {
 async function fetchKpis() {
   try {
     const d = await (await fetch('/supply-chain/api/kpis')).json();
+    _scKpisRaw = d;
     setText('gkpi-plan',  d.plan_attainment + '%');
     setText('gkpi-turns', d.inventory_turns + 'x');
-    setText('gkpi-mape',  d.forecast_mape   + '%');
+    setText('gkpi-mape',  parseFloat(d.forecast_mape.toFixed(2)) + '%');
     setText('gkpi-auto',  d.order_automation + '%');
     setText('gkpi-otd',   d.on_time_delivery + '%');
     setText('gkpi-fill',  d.fill_rate        + '%');
@@ -492,6 +665,10 @@ function setText(id, val) {
 async function fetchIbp() {
   try {
     const d = await (await fetch('/supply-chain/api/ibp')).json();
+    _ibpBuRaw    = d.bu_attainment;
+    _ibpRisksRaw = d.risks;
+    _ibpKpisRaw  = d.kpis;
+    _ibpPlanOrig = d.plan_data;
     renderSopPipeline(d.sop_stages);
     renderIbpPlanChart(d.plan_data);
     renderIbpBuChart(d.bu_attainment);
@@ -768,6 +945,7 @@ function renderSopPipeline(stages) {
 
 let _ibpPlanUnit = '$m';
 let _ibpPlanRaw  = null;
+let _ibpPlanOrig = null;  // immutable original from fetch — never overwritten by filter renders
 
 function toggleIbpPlanUnit(unit) {
   _ibpPlanUnit = unit;
@@ -1001,6 +1179,11 @@ function submitEditRisk(i) {
 async function fetchInventory() {
   try {
     const d = await (await fetch('/supply-chain/api/inventory')).json();
+    _invWarehousesRaw = d.warehouses;
+    _invCategoriesRaw = d.categories;
+    _invAlertsRaw     = d.alerts;
+    _invKpisRaw       = d.kpis;
+    _invHealthRaw     = d.health;
     renderInvKpis(d.kpis);
     renderInvHealthChart(d.health);
     renderInvWarehouseChart(d.warehouses);
@@ -1294,6 +1477,11 @@ function renderInvAlerts(alerts) {
 async function fetchDemand() {
   try {
     const d = await (await fetch('/supply-chain/api/demand')).json();
+    _demMapeRaw  = d.category_mape;
+    _skuAllData  = d.top_errors;
+    _demKpisRaw  = d.kpis;
+    _demFaRaw    = d.forecast_vs_actual;
+    _demTrendRaw = d.mape_trend;
     renderDemKpis(d.kpis);
     renderDemFaChart(d.forecast_vs_actual);
     renderDemMapeChart(d.category_mape);
@@ -1303,7 +1491,7 @@ async function fetchDemand() {
 }
 
 function renderDemKpis(k) {
-  setKpiCard('dem-k1', k.mape + '%', k.mape <= 10 ? GREEN : AMBER, 'Forecast MAPE — Detail',
+  setKpiCard('dem-k1', parseFloat(k.mape.toFixed(2)) + '%', k.mape <= 10 ? GREEN : AMBER, 'Forecast MAPE — Detail',
     _ds('By Category', _dr([
       {l: 'Finished Goods', v: (k.mape + 2.1) + '%'}, {l: 'Raw Materials', v: (k.mape - 1.3) + '%'},
       {l: 'MRO / Spare Parts', v: (k.mape + 5.8) + '%'}, {l: 'WIP', v: (k.mape - 0.4) + '%'},
@@ -1602,6 +1790,9 @@ function openSkuDrill(idx) {
 async function fetchOrders() {
   try {
     const d = await (await fetch('/supply-chain/api/orders')).json();
+    _ordKpisRaw  = d.kpis;
+    _ordVolRaw   = d.order_volume;
+    _ordAutoRaw  = d.automation_trend;
     renderOrdKpis(d.kpis);
     renderOrdVolChart(d.order_volume);
     renderOrdExceptions(d.exceptions);
@@ -1872,6 +2063,7 @@ function renderOrdAutoChart(trend) {
 function renderOrdSupplierTable(suppliers) {
   const tbody = document.querySelector('#ord-supplier-table tbody');
   if (!tbody) return;
+  if (_supplierRaw.length === 0) _supplierRaw = suppliers; // store original on first call
   const sortedSuppliers = [...suppliers].sort((a, b) => b.otd - a.otd);
   tbody.innerHTML = sortedSuppliers.map(s => {
     const cls = s.otd >= 93 ? 'otd-good' : s.otd >= 87 ? 'otd-warn' : 'otd-bad';
@@ -1912,106 +2104,326 @@ const TAB_LABELS = {
   demand:    'Demand Forecasting',
   orders:    'Order Processing',
   ai:        'Supply Chain AI',
+  logistics: 'Logistics Map',
 };
 
 const TALK_TRACKS = {
   ibp: {
-    overview: `Integrated Business Planning is the control-tower view of this app: an 18-month S&OP pipeline with consensus, financial, and capacity slices, plus per-BU attainment versus target. The stepper shows which gate the cycle is in; the risk register quantifies exposure before executive sign-off.
-
-Use it when leadership asks “where are we off plan, and who owns the next decision?” without exporting five spreadsheets from the ERP.`,
-    body: `When financial targets and operational reality diverge, the pain shows up at month-end. This screen exists so the gap is visible by BU and region while the cycle is still open—fed by Delta tables in Databricks, not a static deck.`,
-    insights: [
-      'In this demo, anchor the story on BU-level attainment bars, not a single blended KPI—buyers of IBP software punish aggregate green that hides two red businesses.',
-      'Tie the pipeline stepper to RACI in the meeting: if “Supply Review” is active, the next artifact should be documented assumptions on capacity and lead time, not just demand.',
-      'Use the risk register dollars as the forcing function for the executive agenda—probability-weighted exposure belongs in the same UI as plan attainment.',
-      'Databricks practice: treat consensus version, frozen actuals date, and scenario tags as UC metadata so every chart is reproducible for audit and SOX discussions.',
-      'Close the loop: when a risk mitigates, record the decision and owner in the lakehouse so next month’s review starts from an event log, not memory.',
-    ],
+    what: 'An 18-month integrated business planning view consolidating demand, supply, financial, and capacity plans — with consensus attainment by business unit, revenue at risk, S&OP cycle gate status, and a risk register quantifying open exposure before executive sign-off.',
+    aiml: 'ML consensus models detect plan divergence early by comparing statistical demand signals against commercial submissions from each business unit, surfacing gaps weeks before the monthly S&OP review. Scenario simulation quantifies the financial impact of capacity or supply constraints in real time, enabling executives to make data-backed decisions rather than relying on analyst-prepared what-if slides.',
+    benchmark: 'Procter & Gamble’s integrated business planning process is widely cited in supply chain and consulting literature as the benchmark for cross-functional planning maturity. Gartner recognizes S&OP capability as a primary differentiator in its annual Supply Chain Top 25 ranking. McKinsey research shows top-quartile S&OP performers carry 15–20% less inventory and achieve 5–10% higher customer service levels than median peers.',
   },
   inventory: {
-    overview: `Inventory & Logistics rolls up 6,247 SKUs across five DCs: days-of-supply bands, critical SKU callouts, utilization heat, the $12.4M excess redeployment panel, and alerts that name location and value. It is the SKU-level truth behind aggregate inventory turns.
-
-Pair the map and tables when narrating “we are simultaneously short and long.”`,
-    body: `Stockouts on A-items while slow movers collect dust is the paradox this tab exposes. The alert rail is meant for weekly inventory huddles—lateral moves and promos before quarter-end write-off conversations.`,
-    insights: [
-      'Demo tip: click from a red DOS SKU to the excess tile and show lateral transfer math—same platform, two sides of the working-capital story.',
-      'Policy guardrail: fast movers in this app target roughly 15–25 days cover; anything north of 90 DOS should trigger supply review plus commercial action, not just more warehouse space.',
-      'Databricks pattern: materialize ABC–XYZ segments nightly from shipment variance and COGS so planners are not re-segmenting in Excel.',
-      'Service vs. capital: when critical SKUs breach threshold, escalate with projected lost margin, not only unit shortage—gets sales and finance aligned faster.',
-      'Governance: write inventory snapshots to versioned Delta tables so “what did we know on Tuesday?” is answerable during OTIF post-mortems.',
-    ],
+    what: 'SKU-level inventory health across all distribution centers — days of supply, stockout risk, overstock exposure, and warehouse utilization — aggregated from ERP and WMS systems into a single operational view with actionable alerts for lateral transfers and demand rebalancing.',
+    aiml: 'ML demand sensing models adjust safety stock levels dynamically based on forward-looking signals — promotions, seasonality, external market data — rather than static reorder points. Cluster analysis groups SKUs by demand volatility and gross margin to apply differentiated replenishment policies, replacing the uniform safety stock rules that simultaneously create stockouts and excess.',
+    benchmark: 'McKinsey research estimates AI-driven inventory optimization can reduce inventory holding costs by 20–50% while maintaining or improving service levels. Amazon and Walmart are globally recognized for machine learning-driven inventory management. Zara (Inditex) is among the most cited examples in supply chain literature for rapid replenishment cycles enabled by near-real-time inventory data across its global network.',
   },
   demand: {
-    overview: `Demand Forecasting shows MAPE and bias by category, the ML vs. actual trend, and the “top SKU errors” table where planner overrides meet model error. It is the place to prove whether humans are helping or hurting the statistical baseline.
-
-This tab should be shown immediately after Inventory when FG-55102 or similar ties forecast error to a service issue.`,
-    body: `Bias beats random noise: a persistent −2.3% on Finished Goods in this demo means buyers are structurally short. The app is built to spotlight those five SKUs where overrides increase MAPE so you can coach or remove the override policy.`,
-    insights: [
-      'Run Forecast Value Add quarterly here: if overrides do not beat the model, publish a rule to default to ML except for signed events (launch, promo, force majeure).',
-      'Databricks MLflow tip: display model version and training cutoff beside MAPE so stakeholders trust the number and know when drift work is due.',
-      'Segment storytelling: industrial categories with long tails belong to different accuracy targets than CPG-like SKUs—avoid one enterprise MAPE goal.',
-      'Feature store hygiene: keep competitor pricing and macro inputs versioned; otherwise “accuracy improved” might just be a covariate shift artifact.',
-      'Operational bridge: push top error SKUs into a weekly supply meeting backlog with owner and expected lift—turn analytics into a work queue.',
-    ],
+    what: 'ML-powered 12-month demand forecasts at the SKU-region level with MAPE tracking, forecast bias analysis, and a comparison of model predictions versus planner overrides — enabling supply planners to see where AI outperforms human judgment and where override policies are adding accuracy.',
+    aiml: 'Ensemble models combining gradient boosting, ARIMA, and deep learning generate forecasts that systematically outperform statistical baselines on out-of-sample data. MAPE tracking by SKU category identifies where model accuracy degrades so retraining can be precisely targeted. Forecast Value Add analysis automatically identifies planners whose overrides are hurting rather than helping forecast accuracy.',
+    benchmark: 'Unilever publicly reported approximately a 20% reduction in forecast error after deploying AI-based demand sensing — one of the most widely cited supply chain AI case studies. Industry benchmarks show ML ensemble models achieving MAPE of 10–15% for CPG SKUs, versus 20–30% for traditional statistical methods. Amazon’s demand forecasting systems process billions of data points across millions of SKUs and are frequently referenced in both supply chain and ML research literature.',
   },
   orders: {
-    overview: `Order Processing is the procure-to-pay health page: touchless automation rate (78.4% here), exception queue with dollar hold, cluster badges (e.g., Pacific Components price mismatch), and supplier OTD ranked with open PO counts.
-
-It answers “where is manual work starving strategic procurement?” in one glance.`,
-    body: `The demo narrative is concentration plus automation—47 exceptions / $402K held orders, and clearing the Pacific cluster unlocks most of the queue. EuroTech’s 79.3% OTD on 54 open POs is the supplier risk callout for the chief procurement officer.`,
-    insights: [
-      'SLA the exceptions shown here: price mismatches in hours, GR/quantity mismatches in a day—treat delay as a working-capital line item, not clerical backlog.',
-      'Touchless target for this app storyline: march automation from 71% → 78% toward >90% by fixing master data and contract price tables, not by hiring more matchers.',
-      'Use OTD + open PO count together: low OTD with high open exposure is escalation; high OTD with few POs might still hide invoice defects—cross-check the exception mix.',
-      'Databricks integration story: land SAP iDocs/IDocs or equivalent into Bronze, resolve in Silver with business rules, feed this UI from Gold KPI tables served to Apps.',
-      'Dual-source rule: any supplier over ~20% category spend without backup gets a quarterly resilience review tied to the exception categories they generate.',
-    ],
+    what: 'Purchase order health across the supplier network — automation rate, exception queue with dollar value on hold, supplier on-time delivery rankings, and order cycle time — identifying where manual intervention is creating cost and delay in the procure-to-pay process.',
+    aiml: 'NLP models extract and classify order exceptions from supplier communications and EDI feeds, automatically routing each exception to the appropriate resolver. Predictive scoring flags suppliers at statistical risk of late delivery based on historical patterns and current lead time signals, enabling buyers to act before a confirmed miss. Intelligent automation handles straight-through processing for routine POs that match contract price and quantity parameters.',
+    benchmark: 'McKinsey estimates 50–80% of purchase order processing steps can be automated with AI, reducing cycle times by 30–50%. The Hackett Group benchmarks show top-performing procurement organizations process 60%+ of POs straight-through without manual intervention, versus an industry average below 30%. Siemens and Unilever are widely cited for intelligent procurement automation programs that have materially reduced invoice exception rates and processing costs.',
   },
   ai: {
-    overview: `Supply Chain AI is Genie against the same Delta facts as the other tabs: natural-language answers on exposure, suppliers, inventory turns, and cross-domain joins (forecast error vs. stockout, exceptions vs. contract).
-
-It is the “ask anything” layer for managers who will never open a notebook.`,
-    body: `The canned prompts are intentional—they mirror executive questions that usually wait 48 hours for an analyst. Grounding in UC-approved semantic models is what keeps answers aligned with the KPIs you already showed.`,
-    insights: [
-      'Ship curated prompts per persona (planner, buyer, CFO) before opening free text—reduces hallucination risk and trains users on trusted phrasing.',
-      'Log low-confidence answers and feed them to the semantic model backlog; Genie adoption lives or dies on fixing recurring misses.',
-      'Security: row-level security by region and supplier confidentiality tier—procurement chat must respect the same entitlements as the dashboards.',
-      'Latency honesty: label responses as post-batch or near-real-time to match your pipeline; do not promise PLC speed from a lakehouse assistant.',
-      'Human-in-the-loop: for dollar commitments over a threshold, require planner acknowledgment even when the AI recommendation is correct—builds trust and audit trail.',
-    ],
+    what: 'A natural language interface to supply chain data — S&OP metrics, inventory positions, demand forecasts, and order data — grounded in your Delta Lake so analysts and executives can get data-backed answers in seconds rather than waiting for analyst-prepared reports.',
+    aiml: 'A large language model with retrieval-augmented generation (RAG) translates natural language questions into SQL queries against Unity Catalog-governed Delta Lake tables. Intent classification ensures responses draw from the correct data domain and metric definitions. Conversation history enables multi-turn analysis — asking follow-up questions to drill into a specific supplier, SKU, or region without re-stating context.',
+    benchmark: 'Gartner’s 2023 and 2024 surveys identify conversational analytics as one of the top emerging use cases for supply chain AI adoption. McKinsey’s 2023 report on the economic potential of generative AI estimates it could add $2.6–4.4 trillion annually in value across global supply chains. Nestlé, Procter & Gamble, and Unilever have publicly announced generative AI pilots for supply chain planning teams.',
+  },
+  logistics: {
+    what: 'Real-time truck positions across the distribution network, distribution center operational status, shipment ETAs, and route delay alerts — sourced from TMS and telematics feeds to give supply chain teams live visibility into the delivery pipeline and emerging exceptions.',
+    aiml: 'Route optimization algorithms continuously minimize transit time and fuel consumption across the DC network, dynamically rerouting around detected delays or closures. Delay prediction models flag individual shipments at risk of missing delivery windows 24–48 hours in advance, enabling proactive customer communication and load rebalancing before a miss becomes a service failure.',
+    benchmark: 'UPS’s ORION (On-Road Integrated Optimization and Navigation) system is widely reported to save approximately 100 million miles per year — consistently cited as the standard industry reference for AI route optimization. DHL and FedEx have both published extensively on AI-driven logistics network optimization. McKinsey estimates AI-driven route optimization can reduce transportation costs by 15–20% in large distribution networks.',
   },
 };
 
-function openTalkTrack() {
-  document.getElementById('talk-overlay').classList.remove('hidden');
-  document.getElementById('talk-modal').classList.remove('hidden');
-  renderTalkTrack(_activeTab);
-}
-function closeTalkTrack() {
-  document.getElementById('talk-overlay').classList.add('hidden');
-  document.getElementById('talk-modal').classList.add('hidden');
-}
-function renderTalkTrack(tab) {
-  const track = TALK_TRACKS[tab] || TALK_TRACKS.ibp;
-  document.getElementById('talk-tab-badge').textContent = TAB_LABELS[tab] || tab;
-  const insights = track.insights || track.bestPractices || [];
-  const insightsHtml = insights.length
-    ? `<div class="talk-best-practices">
-        <div class="talk-bp-title">Key insights</div>
-        <ul class="talk-bp-list">${insights.map((bp) => `<li>${bp}</li>`).join('')}</ul>
-       </div>`
-    : '';
-  const overviewHtml = track.overview
-    ? `<div class="talk-page-overview">
-        <div class="talk-page-overview-label">Page overview</div>
-        <div class="talk-body-text">${track.overview.split('\n\n').map((p) => `<p>${p}</p>`).join('')}</div>
-      </div>`
-    : '';
-  document.getElementById('talk-modal-body').innerHTML = `
-    ${overviewHtml}
-    <div class="talk-body-text">${(track.body || '').split('\n\n').map((p) => `<p>${p}</p>`).join('')}</div>
-    ${insightsHtml}
+function openInfoPanel(key) {
+  const track = TALK_TRACKS[key] || TALK_TRACKS[_activeTab] || TALK_TRACKS.ibp;
+  const label = TAB_LABELS[key] || key;
+  document.getElementById('info-panel-title').textContent = label;
+  document.getElementById('info-panel-body').innerHTML = `
+    <div class="info-sec-block">
+      <div class="info-sec-title">What This Page Shows</div>
+      <div class="info-what"><p>${track.what || ''}</p></div>
+    </div>
+    <div class="info-sec-block">
+      <div class="info-sec-title info-sec-ai">How AI &amp; ML Is Applied</div>
+      <div class="info-what"><p>${track.aiml || ''}</p></div>
+    </div>
+    <div class="info-sec-block">
+      <div class="info-sec-title info-sec-bench">Industry Benchmarks</div>
+      <div class="info-what"><p>${track.benchmark || ''}</p></div>
+    </div>
   `;
+  document.getElementById('info-overlay').classList.remove('hidden');
+}
+function closeInfoPanel(e) {
+  if (!e || e.target === document.getElementById('info-overlay'))
+    document.getElementById('info-overlay').classList.add('hidden');
+}
+
+// ── Filter Bar ────────────────────────────────────────────────────────────────
+// KPI offsets per period (added to base %; turns offset is ×0.1 applied separately)
+const _PERIOD_KPI_ADJ = {
+  '':    { plan: 0,    mape: 0,    fill: 0,    otd: 0,    auto: 0,    turns: 0    },
+  '30d': { plan: -0.8, mape: 0.6,  fill: -0.3, otd: -0.4, auto: -1.2, turns: 0.1  },
+  'q1':  { plan: -1.4, mape: 1.1,  fill: -0.5, otd: 0.6,  auto: -2.8, turns: -0.2 },
+  'q2':  { plan: 0.5,  mape: -0.4, fill: 0.3,  otd: -0.3, auto: 1.4,  turns: 0.4  },
+  '12m': { plan: 0,    mape: 0,    fill: 0,    otd: 0,    auto: 0,    turns: 0    },
+};
+// KPI offsets per BU
+const _BU_KPI_ADJ = {
+  '':     { plan: 0,    mape: 0,    fill: 0,    otd: 0,    auto: 0,    turns: 0    },
+  'auto': { plan: 1.3,  mape: -0.9, fill: 0.4,  otd: 0.8,  auto: 2.1,  turns: 0.4  },
+  'ind':  { plan: -0.7, mape: 1.4,  fill: -0.4, otd: -0.5, auto: -1.8, turns: -0.3 },
+  'cons': { plan: 0.8,  mape: -0.5, fill: 0.7,  otd: 0.3,  auto: 1.3,  turns: 0.9  },
+  'elec': { plan: -2.2, mape: 2.3,  fill: -0.9, otd: -1.2, auto: -0.9, turns: 1.1  },
+};
+// Volume scale per BU (applied to absolute $M / count values)
+const _BU_VOL_SCALE = { '': 1.0, 'auto': 0.38, 'ind': 0.22, 'cons': 0.28, 'elec': 0.12 };
+// IBP BU-name mapping for BU filter
+const _BU_REGION_MAP = {
+  auto:  ['North America'],
+  ind:   ['EMEA', 'Latin America'],
+  cons:  ['APAC'],
+  elec:  ['Rest of World'],
+};
+
+// Clamp + round a KPI value
+function _kAdj(base, ...deltas) {
+  return Math.max(0, parseFloat((base + deltas.reduce((a, b) => a + b, 0)).toFixed(1)));
+}
+
+// Slice a time-series array by the period filter
+function _filterByPeriod(arr, period) {
+  if (!arr || !period || period === '12m') return arr;
+  if (period === '30d') return arr.slice(-1);
+  if (period === 'q1')  return arr.filter(d => /^(Jan|Feb|Mar)/.test(d.month));
+  if (period === 'q2')  return arr.filter(d => /^(Apr|May|Jun)/.test(d.month));
+  return arr;
+}
+
+function applyFilters() {
+  const selects = document.querySelectorAll('.filter-select');
+  const active = Array.from(selects).filter(s => s.value !== '').length;
+  const clearBtn = document.getElementById('filter-clear');
+  const countEl  = document.getElementById('filter-count');
+  if (clearBtn) clearBtn.classList.toggle('hidden', active === 0);
+  if (countEl) {
+    countEl.classList.toggle('hidden', active === 0);
+    if (active > 0) countEl.textContent = `${active} filter${active > 1 ? 's' : ''} active`;
+  }
+
+  const period   = document.getElementById('f-period')?.value   || '';
+  const region   = document.getElementById('f-region')?.value   || '';
+  const bu       = document.getElementById('f-bu')?.value       || '';
+  const category = document.getElementById('f-category')?.value || '';
+
+  const pAdj     = _PERIOD_KPI_ADJ[period] || _PERIOD_KPI_ADJ[''];
+  const bAdj     = _BU_KPI_ADJ[bu]         || _BU_KPI_ADJ[''];
+  const volScale = _BU_VOL_SCALE[bu]       || 1.0;
+
+  // Shared dimension maps
+  const REGION_BUS = { amer: ['North America', 'Latin America'], emea: ['EMEA'], apac: ['APAC', 'Rest of World'] };
+  const REGION_WH  = { amer: ['North America', 'Latin America'], emea: ['EMEA'], apac: ['APAC'] };
+  const CAT_INV    = { fg: ['Finished Goods'], rm: ['Raw Materials', 'Components', 'Packaging'], wip: ['Work in Progress', 'MRO'] };
+  const CAT_MAPE   = { fg: ['Finished Goods'], rm: ['Raw Materials', 'Components'], wip: ['MRO', 'Packaging'] };
+  const CAT_ALERT_PREFIX = { fg: 'FG-', rm: 'RM-', wip: 'WIP-' };
+
+  // ── Global KPI strip ───────────────────────────────────────────────────────
+  if (_scKpisRaw) {
+    const k = _scKpisRaw;
+    setText('gkpi-plan',  _kAdj(k.plan_attainment,  pAdj.plan,  bAdj.plan)  + '%');
+    setText('gkpi-turns', _kAdj(k.inventory_turns,  (pAdj.turns + bAdj.turns) * 0.1) + 'x');
+    setText('gkpi-mape',  _kAdj(k.forecast_mape,    pAdj.mape,  bAdj.mape)  + '%');
+    setText('gkpi-auto',  _kAdj(k.order_automation, pAdj.auto,  bAdj.auto)  + '%');
+    setText('gkpi-otd',   _kAdj(k.on_time_delivery, pAdj.otd,   bAdj.otd)   + '%');
+    setText('gkpi-fill',  _kAdj(k.fill_rate,        pAdj.fill,  bAdj.fill)  + '%');
+  }
+
+  // ── IBP tab ────────────────────────────────────────────────────────────────
+  if (_ibpPlanOrig) {
+    const planSlice = _filterByPeriod(_ibpPlanOrig, period);
+    const planBase  = planSlice.length ? planSlice : _ibpPlanOrig;
+    const scaledPlan = bu ? planBase.map(d => ({
+      ...d,
+      consensus:   parseFloat((d.consensus   * volScale).toFixed(1)),
+      financial:   parseFloat((d.financial   * volScale).toFixed(1)),
+      capacity:    parseFloat((d.capacity    * volScale).toFixed(1)),
+      consensus_k: Math.round(d.consensus_k  * volScale),
+      financial_k: Math.round(d.financial_k  * volScale),
+      capacity_k:  Math.round(d.capacity_k   * volScale),
+    })) : planBase;
+    renderIbpPlanChart(scaledPlan);
+  }
+  if (_ibpBuRaw) {
+    let filteredBus = _ibpBuRaw;
+    if (region) filteredBus = filteredBus.filter(b => (REGION_BUS[region] || []).includes(b.bu));
+    if (bu) {
+      const names = _BU_REGION_MAP[bu] || [];
+      const byBu  = filteredBus.filter(b => names.includes(b.bu));
+      if (byBu.length) filteredBus = byBu;
+    }
+    const adjustedBus = filteredBus.map(b => ({
+      ...b, attainment: _kAdj(b.attainment, pAdj.plan, bAdj.plan),
+    }));
+    renderIbpBuChart(adjustedBus.length ? adjustedBus : _ibpBuRaw);
+  }
+  if (_ibpRisksRaw) {
+    const regionKw = { amer: ['america', 'north am', 'latin', 'canada'], emea: ['emea', 'europe', 'rotterdam'], apac: ['apac', 'asia', 'port congestion', 'pacific', 'china'] };
+    const filteredRisks = region && regionKw[region]
+      ? _ibpRisksRaw.filter(r => regionKw[region].some(kw => r.item.toLowerCase().includes(kw)))
+      : _ibpRisksRaw;
+    renderIbpRiskTable(filteredRisks.length ? filteredRisks : _ibpRisksRaw);
+  }
+
+  // ── Inventory tab ──────────────────────────────────────────────────────────
+  if (_invKpisRaw) {
+    const k     = _invKpisRaw;
+    const turns = _kAdj(k.inventory_turns, (pAdj.turns + bAdj.turns) * 0.1);
+    const doh   = Math.max(1, Math.round(k.days_on_hand - (pAdj.turns + bAdj.turns) * 1.5));
+    const fr    = _kAdj(k.fill_rate,      pAdj.fill, bAdj.fill);
+    const exc   = parseFloat((k.excess_value_m * volScale).toFixed(1));
+    setKpiCard('inv-k1', turns + 'x',    '#f0f0f0');
+    setKpiCard('inv-k2', doh   + ' days','#f0f0f0');
+    setKpiCard('inv-k3', fr    + '%',    fr >= 97 ? GREEN : AMBER);
+    setKpiCard('inv-k4', '$'  + exc + 'M', AMBER);
+  }
+  if (_invHealthRaw) {
+    const h = _invHealthRaw;
+    if (category) {
+      const CAT_HEALTH_SCALE = { fg: 0.42, rm: 0.30, wip: 0.20 };
+      const scale = CAT_HEALTH_SCALE[category] || 1.0;
+      renderInvHealthChart({
+        optimal:  Math.round(h.optimal  * scale),
+        excess:   Math.round(h.excess   * scale),
+        at_risk:  Math.round(h.at_risk  * scale),
+        stockout: Math.round(h.stockout * scale),
+      });
+    } else {
+      renderInvHealthChart(h);
+    }
+  }
+  if (_invWarehousesRaw) {
+    const filteredWh = region
+      ? _invWarehousesRaw.filter(w => (REGION_WH[region] || []).includes(w.region))
+      : _invWarehousesRaw;
+    renderInvWarehouseChart(filteredWh.length ? filteredWh : _invWarehousesRaw);
+  }
+  if (_invCategoriesRaw) {
+    const filteredCats = category
+      ? _invCategoriesRaw.filter(c => (CAT_INV[category] || []).includes(c.name))
+      : _invCategoriesRaw;
+    renderInvDosChart(filteredCats.length ? filteredCats : _invCategoriesRaw);
+  }
+  if (_invAlertsRaw) {
+    let filteredAlerts = _invAlertsRaw;
+    if (region) {
+      const whForRegion = (REGION_WH[region] || []);
+      const regionDcs = (_invWarehousesRaw || []).filter(w => whForRegion.includes(w.region)).map(w => w.name);
+      filteredAlerts = filteredAlerts.filter(a => regionDcs.some(dc => a.location === dc));
+    }
+    if (category) {
+      const prefix = CAT_ALERT_PREFIX[category];
+      if (prefix) filteredAlerts = filteredAlerts.filter(a => a.sku.startsWith(prefix));
+    }
+    renderInvAlerts(filteredAlerts.length ? filteredAlerts : _invAlertsRaw);
+  }
+
+  // ── Demand tab ─────────────────────────────────────────────────────────────
+  if (_demKpisRaw) {
+    const k       = _demKpisRaw;
+    const adjMape = _kAdj(k.mape, pAdj.mape, bAdj.mape);
+    const adjBias = parseFloat((k.bias + pAdj.mape * 0.15 + bAdj.mape * 0.1).toFixed(1));
+    setKpiCard('dem-k1', adjMape + '%',                       adjMape <= 10 ? GREEN : AMBER);
+    setKpiCard('dem-k2', adjBias + '%',                       Math.abs(adjBias) < 3 ? GREEN : AMBER);
+    setKpiCard('dem-k3', '+' + k.forecast_value_add + '%',    '#f0f0f0');
+    setKpiCard('dem-k4', k.skus_forecast.toLocaleString(),    '#f0f0f0');
+  }
+  if (_demFaRaw) {
+    const slice = _filterByPeriod(_demFaRaw, period);
+    renderDemFaChart(slice.length ? slice : _demFaRaw);
+  }
+  if (_demMapeRaw) {
+    const filteredMape = category
+      ? _demMapeRaw.filter(c => (CAT_MAPE[category] || []).includes(c.category))
+      : _demMapeRaw;
+    renderDemMapeChart(filteredMape.length ? filteredMape : _demMapeRaw);
+  }
+  if (_demTrendRaw) {
+    const slice = _filterByPeriod(_demTrendRaw, period);
+    renderDemTrendChart(slice.length ? slice : _demTrendRaw);
+  }
+  if (_skuAllData.length) {
+    const filteredSkus = !category ? _skuAllData : _skuAllData.filter(e => {
+      if (category === 'fg')  return e.sku.startsWith('FG-');
+      if (category === 'rm')  return e.sku.startsWith('RM-') || e.sku.startsWith('COMP-');
+      if (category === 'wip') return e.sku.startsWith('WIP-');
+      return true;
+    });
+    renderDemErrorsTable(filteredSkus.length ? filteredSkus : _skuAllData);
+    if (filteredSkus.length) _skuErrorData = filteredSkus;
+  }
+
+  // ── Orders tab ─────────────────────────────────────────────────────────────
+  if (_ordKpisRaw) {
+    const k    = _ordKpisRaw;
+    const auto = _kAdj(k.automation_rate,  pAdj.auto, bAdj.auto);
+    const otd  = _kAdj(k.on_time_delivery, pAdj.otd,  bAdj.otd);
+    setKpiCard('ord-k1', auto + '%',          auto >= 80 ? GREEN : AMBER);
+    setKpiCard('ord-k2', k.avg_cycle_hours + 'h', '#f0f0f0');
+    setKpiCard('ord-k3', k.exceptions_open,   k.exceptions_open > 30 ? RED : AMBER);
+    setKpiCard('ord-k4', otd + '%',           otd >= 92 ? GREEN : AMBER);
+  }
+  if (_ordVolRaw) {
+    const slice    = _filterByPeriod(_ordVolRaw, period);
+    const baseData = slice.length ? slice : _ordVolRaw;
+    renderOrdVolChart(bu ? baseData.map(d => ({
+      ...d,
+      automated: Math.round(d.automated * volScale),
+      manual:    Math.round(d.manual    * volScale),
+      total:     Math.round(d.total     * volScale),
+    })) : baseData);
+  }
+  if (_ordAutoRaw) {
+    const slice    = _filterByPeriod(_ordAutoRaw, period);
+    const baseData = slice.length ? slice : _ordAutoRaw;
+    renderOrdAutoChart(baseData.map(d => ({
+      ...d, rate: _kAdj(d.rate, pAdj.auto * 0.3, bAdj.auto * 0.3),
+    })));
+  }
+
+  // Supplier OTD table (Orders tab) — region filter
+  if (_supplierRaw.length) {
+    const AMER = ['USA', 'Canada', 'Mexico', 'Brazil', 'Colombia', 'Argentina'];
+    const EMEA = ['Germany', 'UK', 'Netherlands', 'France', 'Spain', 'Italy', 'Belgium', 'Sweden', 'Switzerland', 'Norway', 'Denmark', 'Poland'];
+    const APAC = ['China', 'Japan', 'South Korea', 'Korea', 'Singapore', 'Australia', 'India', 'Taiwan', 'Vietnam', 'Thailand'];
+    const filteredSuppliers = !region ? _supplierRaw : _supplierRaw.filter(s => {
+      if (region === 'amer') return AMER.includes(s.country);
+      if (region === 'emea') return EMEA.includes(s.country);
+      if (region === 'apac') return APAC.includes(s.country);
+      return true;
+    });
+    const tbody = document.querySelector('#ord-supplier-table tbody');
+    if (tbody) {
+      if (!filteredSuppliers.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted)">No suppliers for selected region</td></tr>`;
+      } else {
+        const saved = _supplierRaw;
+        _supplierRaw = [];
+        renderOrdSupplierTable(filteredSuppliers);
+        _supplierRaw = saved;
+      }
+    }
+  }
+}
+
+function clearFilters() {
+  document.querySelectorAll('.filter-select').forEach(s => { s.value = ''; });
+  applyFilters();
 }
 
 // ── Agent Actions ─────────────────────────────────────────────────────────────
@@ -2118,6 +2530,20 @@ const AGENT_ACTIONS = {
   ],
 };
 
+// ── Genie chat panel ─────────────────────────────────────────────────────────
+let _geniePanelOpen = false;
+function toggleGeniePanel() { _geniePanelOpen ? closeGeniePanel() : openGeniePanel(); }
+function openGeniePanel() {
+  _geniePanelOpen = true;
+  document.getElementById('genie-panel-overlay').classList.add('open');
+  document.getElementById('genie-chat-panel').classList.add('open');
+}
+function closeGeniePanel() {
+  _geniePanelOpen = false;
+  document.getElementById('genie-panel-overlay').classList.remove('open');
+  document.getElementById('genie-chat-panel').classList.remove('open');
+}
+
 function openAgentPanel() {
   document.getElementById('agent-overlay').classList.remove('hidden');
   document.getElementById('agent-panel').classList.remove('hidden');
@@ -2202,11 +2628,14 @@ async function submitAi() {
   if (loading) { loading.classList.remove('hidden'); loading.style.display = 'flex'; }
 
   try {
-    const res  = await fetch('/supply-chain/api/ai-chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question }),
-    });
+    const [res] = await Promise.all([
+      fetch('/supply-chain/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      }),
+      new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000)),
+    ]);
     const data = await res.json();
     if (loading) { loading.classList.add('hidden'); loading.style.display = 'none'; }
 
@@ -2299,24 +2728,33 @@ function appendAiMsg(role, content, source, followUps) {
   }
   wrap.appendChild(bubble);
 
-  if (source) {
-    const s = document.createElement('div');
-    s.className = 'msg-source';
-    s.textContent = source;
-    wrap.appendChild(s);
-  }
+  if (role === 'ai' && followUps && followUps.length) {
+    const row = document.createElement('div');
+    row.className = 'sc-panels-row';
 
-  if (followUps && followUps.length) {
-    const fups = document.createElement('div');
-    fups.className = 'follow-ups';
+    const fupPanel = document.createElement('div');
+    fupPanel.className = 'fup-panel sc-panel-col';
+    fupPanel.innerHTML = `<div class="fup-panel-header">Suggested Questions</div>`;
+    const fupCards = document.createElement('div');
+    fupCards.className = 'fup-cards';
     followUps.forEach(fu => {
-      const b = document.createElement('button');
-      b.className   = 'follow-up-btn';
-      b.textContent = fu;
-      b.onclick     = () => { document.getElementById('ai-input').value = fu; submitAi(); };
-      fups.appendChild(b);
+      const card = document.createElement('div');
+      card.className = 'fup-card';
+      card.innerHTML = `<div class="fup-card-text">${esc(fu)}</div><button class="fup-ask-btn">Ask →</button>`;
+      card.querySelector('.fup-ask-btn').onclick = () => {
+        document.getElementById('ai-input').value = fu;
+        submitAi();
+      };
+      fupCards.appendChild(card);
     });
-    wrap.appendChild(fups);
+    fupPanel.appendChild(fupCards);
+    row.appendChild(fupPanel);
+
+    const actionCol = document.createElement('div');
+    actionCol.className = 'sc-action-col sc-panel-col';
+    row.appendChild(actionCol);
+
+    wrap.appendChild(row);
   }
 
   div.appendChild(av);
@@ -2326,12 +2764,14 @@ function appendAiMsg(role, content, source, followUps) {
 }
 
 function appendActionPanel(wrapEl, actions) {
+  const target = wrapEl.querySelector('.sc-action-col') || wrapEl;
+
   const panel = document.createElement('div');
   panel.className = 'action-panel';
 
   const hdr = document.createElement('div');
   hdr.className = 'action-panel-header';
-  hdr.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Recommended Actions`;
+  hdr.innerHTML = `Recommended Actions`;
   panel.appendChild(hdr);
 
   const cards = document.createElement('div');
@@ -2367,7 +2807,7 @@ function appendActionPanel(wrapEl, actions) {
   });
 
   panel.appendChild(cards);
-  wrapEl.appendChild(panel);
+  target.appendChild(panel);
 
   const chatBody = document.querySelector('.ai-chat-body');
   if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
@@ -2390,4 +2830,238 @@ async function executeAction(actionId, outcome, btn) {
       }
     }
   } catch (e) { /* silent */ }
+}
+
+// ── Interactive ML Features ────────────────────────────────────────────────
+
+function _scMlRunnerStart(btnId, thinkingId, steps, stepId, doneCallback) {
+  const btn = document.getElementById(btnId);
+  const thinking = document.getElementById(thinkingId);
+  const stepEl = document.getElementById(stepId);
+  if (!btn || !thinking) return;
+  btn.disabled = true;
+  thinking.style.display = 'flex';
+  let i = 0;
+  const iv = setInterval(() => { i++; if (i < steps.length && stepEl) stepEl.textContent = steps[i]; }, 900);
+  setTimeout(() => {
+    clearInterval(iv); thinking.style.display = 'none'; btn.disabled = false; doneCallback();
+  }, steps.length * 900 + 500);
+}
+
+function _scRenderFeatureBars(containerId, features) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.classList.add('visible');
+  el.innerHTML = `<div class="feature-importance-title">Model Feature Importance</div>` +
+    features.map(f => `
+      <div class="feature-row">
+        <div class="feature-label">${f.label}</div>
+        <div class="feature-bar-wrap"><div class="feature-bar" id="scfb-${f.id}" style="background:${f.color || '#1B6FEB'};"></div></div>
+        <div class="feature-pct">${f.pct}%</div>
+      </div>`).join('');
+  requestAnimationFrame(() => {
+    features.forEach(f => {
+      const bar = document.getElementById(`scfb-${f.id}`);
+      if (bar) bar.style.width = f.pct + '%';
+    });
+  });
+}
+
+// ── IBP Scenario Switcher ──────────────────────────────────────────────────
+const IBP_SCENARIOS = {
+  base:     { util:'82%', gap:'$4.2M',  risk:'Medium', ss:'+$1.8M',  riskColor:'#f59e0b' },
+  upside:   { util:'96%', gap:'$12.7M', risk:'High',   ss:'+$6.4M',  riskColor:'#ef4444' },
+  downside: { util:'61%', gap:'−$8.1M', risk:'Low',    ss:'−$3.2M',  riskColor:'#10b981' },
+};
+
+function switchIbpScenario(scenario, btn) {
+  document.querySelectorAll('.scenario-toggle-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const s = IBP_SCENARIOS[scenario] || IBP_SCENARIOS.base;
+  const set = (id, val, color) => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = val; if (color) el.style.color = color; }
+  };
+  set('ibp-scen-util', s.util);
+  set('ibp-scen-gap', s.gap, scenario === 'downside' ? '#10b981' : '#ef4444');
+  set('ibp-scen-risk', s.risk, s.riskColor);
+  set('ibp-scen-ss', s.ss, scenario === 'downside' ? '#10b981' : '#ef4444');
+  // Animate IBP chart if loaded
+  if (_ibpPlanChart && _ibpPlanChart.data) {
+    const multiplier = scenario === 'upside' ? 1.12 : scenario === 'downside' ? 0.85 : 1.0;
+    const base = [78,82,85,88,91,84,87,90,93,96,89,92,88,91,94,87,90,95,98];
+    _ibpPlanChart.data.datasets[0].data = base.map(v => +(v * multiplier).toFixed(1));
+    _ibpPlanChart.update('active');
+  }
+}
+
+// ── Demand Scenario Planner ────────────────────────────────────────────────
+let _demScenTimer = null;
+
+function updateDemandScenario() {
+  const vol = parseInt(document.getElementById('dem-vol-slider')?.value || 0);
+  const promo = parseInt(document.getElementById('dem-promo-slider')?.value || 0);
+  const season = parseInt(document.getElementById('dem-season-slider')?.value || 0);
+
+  const volEl = document.getElementById('dem-vol-val');
+  const promoEl = document.getElementById('dem-promo-val');
+  const seasonEl = document.getElementById('dem-season-val');
+  if (volEl)    volEl.textContent   = (vol >= 0 ? '+' : '') + vol + '%';
+  if (promoEl)  promoEl.textContent = '+' + promo + '%';
+  if (seasonEl) seasonEl.textContent = (season >= 0 ? '+' : '') + season + '%';
+
+  clearTimeout(_demScenTimer);
+  _demScenTimer = setTimeout(() => runDemandScenario(true), 600);
+}
+
+function runDemandScenario(auto = false) {
+  const vol = parseInt(document.getElementById('dem-vol-slider')?.value || 0);
+  const promo = parseInt(document.getElementById('dem-promo-slider')?.value || 0);
+  const season = parseInt(document.getElementById('dem-season-slider')?.value || 0);
+  const total = vol + promo * 0.6 + season * 0.4;
+
+  if (auto) {
+    // Instant update — no animation needed for slider drags
+    const baseMape = 8.4;
+    const mape = Math.max(5.1, baseMape + Math.abs(total) * 0.12).toFixed(1);
+    const ssChange = total !== 0 ? (total > 0 ? `+$${(total * 0.18).toFixed(1)}M` : `−$${Math.abs(total * 0.18).toFixed(1)}M`) : '—';
+    const fillImpact = total > 0 ? `+${(total * 0.08).toFixed(1)}%` : total < 0 ? `−${Math.abs(total * 0.08).toFixed(1)}%` : '—';
+    const bias = (total * 0.05 - 2.1).toFixed(1);
+
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('dem-scen-mape', mape + '%');
+    set('dem-scen-ss', ssChange);
+    set('dem-scen-bias', (parseFloat(bias) >= 0 ? '+' : '') + bias + '%');
+    set('dem-scen-fill', fillImpact);
+    return;
+  }
+
+  const steps = [
+    'Loading 12-month demand history from demand_gold…',
+    'Applying volume, promotional, and seasonal adjustments…',
+    'Running LSTM forecast model across 6,247 active SKUs…',
+    'Computing MAPE, bias, and safety stock requirements…',
+  ];
+  _scMlRunnerStart('demand-scen-btn', 'demand-scen-thinking', steps, 'demand-scen-step', () => {
+    updateDemandScenario(true);
+    const resultsEl = document.getElementById('demand-scen-results');
+    if (resultsEl) { resultsEl.classList.add('visible'); }
+    const chips = `
+      <div class="ml-action-chips" style="margin-top:12px;">
+        <button class="ml-action-chip blue" onclick="this.textContent='✓ Applied';this.disabled=true;">Apply Scenario to S&OP</button>
+        <button class="ml-action-chip green" onclick="this.textContent='✓ Exported';this.disabled=true;">Export Forecast to ERP</button>
+        <button class="ml-action-chip amber" onclick="this.textContent='✓ Sent';this.disabled=true;">Alert Demand Planning Team</button>
+      </div>`;
+    const sumEl = document.getElementById('demand-scen-summary');
+    if (sumEl) { const existing = sumEl.querySelector('.ml-action-chips'); if (!existing) sumEl.insertAdjacentHTML('beforeend', chips); }
+  });
+}
+
+// ── Inventory Rebalance Optimizer ──────────────────────────────────────────
+function runInventoryRebalance() {
+  const dc = document.getElementById('inv-rebal-dc')?.value || 'all';
+  const dcLabel = dc === 'all' ? 'all DCs' : dc + ' DC';
+  const steps = [
+    `Loading inventory positions for ${dcLabel} from inventory_gold…`,
+    'Running network flow optimization model (min-cost formulation)…',
+    'Evaluating 847 potential transfer routes by cost × service impact…',
+    'Ranking recommendations by DOS improvement and freight cost…',
+  ];
+  _scMlRunnerStart('inv-rebal-btn', 'inv-rebal-thinking', steps, 'inv-rebal-step', () => {
+    const transfers = dc === 'all' ? [
+      { from:'Chicago DC', to:'Newark DC', sku:'FG-55102', qty:240, dosGain:'+8 days', cost:'$1,840' },
+      { from:'Phoenix DC', to:'Atlanta DC', sku:'FG-22301', qty:180, dosGain:'+6 days', cost:'$2,210' },
+      { from:'Dallas DC', to:'Seattle DC', sku:'RM-77043', qty:320, dosGain:'+11 days', cost:'$3,180' },
+      { from:'Newark DC', to:'Chicago DC', sku:'WIP-11220', qty:90, dosGain:'+5 days', cost:'$890' },
+    ] : [
+      { from: dc + ' DC', to:'Nearest DC', sku:'FG-55102', qty:180, dosGain:'+7 days', cost:'$1,640' },
+      { from: dc + ' DC', to:'Regional Hub', sku:'FG-22301', qty:120, dosGain:'+5 days', cost:'$1,420' },
+    ];
+    const totalFreight = transfers.reduce((s,t) => s + parseInt(t.cost.replace(/[^0-9]/g,'')), 0);
+    const el = document.getElementById('inv-rebal-results');
+    if (!el) return;
+    el.classList.add('visible');
+    el.innerHTML = `
+      <div class="ml-result-summary">
+        <div class="ml-result-kpi"><div class="ml-result-kpi-label">Transfers Recommended</div><div class="ml-result-kpi-val">${transfers.length}</div></div>
+        <div class="ml-result-kpi"><div class="ml-result-kpi-label">Total Freight Cost</div><div class="ml-result-kpi-val">$${(totalFreight/1000).toFixed(1)}K</div></div>
+        <div class="ml-result-kpi"><div class="ml-result-kpi-label">Stockouts Resolved</div><div class="ml-result-kpi-val" style="color:#10b981">${transfers.length}</div></div>
+      </div>
+      <div style="overflow-x:auto;margin-top:8px;">
+        <table style="width:100%;font-size:12px;border-collapse:collapse;">
+          <thead><tr style="color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:.06em;">
+            <th style="text-align:left;padding:4px 8px;">From</th><th style="text-align:left;padding:4px 8px;">To</th>
+            <th style="text-align:left;padding:4px 8px;">SKU</th><th style="text-align:right;padding:4px 8px;">Qty</th>
+            <th style="text-align:right;padding:4px 8px;">DOS Gain</th><th style="text-align:right;padding:4px 8px;">Freight</th>
+            <th style="padding:4px 8px;"></th>
+          </tr></thead>
+          <tbody>${transfers.map(t => `<tr style="border-top:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:5px 8px;color:#c8c8c8;">${t.from}</td><td style="padding:5px 8px;color:#c8c8c8;">${t.to}</td>
+            <td style="padding:5px 8px;font-family:monospace;color:#818cf8;">${t.sku}</td>
+            <td style="padding:5px 8px;text-align:right;">${t.qty.toLocaleString()}</td>
+            <td style="padding:5px 8px;text-align:right;color:#10b981;font-weight:700;">${t.dosGain}</td>
+            <td style="padding:5px 8px;text-align:right;color:#9ca3af;">${t.cost}</td>
+            <td style="padding:5px 8px;"><button style="background:rgba(27,111,235,0.12);border:1px solid rgba(27,111,235,0.3);border-radius:5px;color:#1B6FEB;font-size:11px;padding:3px 9px;cursor:pointer;font-family:inherit;" onclick="this.textContent='✓ Approved';this.disabled=true;">Approve</button></td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+      <div class="ml-action-chips" style="margin-top:12px;">
+        <button class="ml-action-chip blue" onclick="this.textContent='✓ All Approved';this.disabled=true;">Approve All Transfers</button>
+        <button class="ml-action-chip green" onclick="this.textContent='✓ Submitted';this.disabled=true;">Submit to WMS</button>
+      </div>`;
+  });
+}
+
+// ── Order Risk Scorer ──────────────────────────────────────────────────────
+function runOrderRiskScore() {
+  const filter = document.getElementById('ord-risk-filter')?.value || 'all';
+  const steps = [
+    'Fetching open PO register from order_management_gold…',
+    'Loading supplier risk profiles and historical OTD data…',
+    'Running XGBoost risk classifier on 1,247 open orders…',
+    'Ranking orders by combined risk score…',
+  ];
+  _scMlRunnerStart('ord-risk-btn', 'ord-risk-thinking', steps, 'ord-risk-step', () => {
+    const orders = [
+      { id:'PO-4821', supplier:'Pacific Components', risk:'High', score:87, value:'$142K', reason:'OTD < 60%, single-source, lead time +18 days', color:'#ef4444' },
+      { id:'PO-4790', supplier:'Midwest Metals', risk:'High', score:79, value:'$89K', reason:'Price variance +22% vs contract, quality hold history', color:'#ef4444' },
+      { id:'PO-4812', supplier:'Atlantic Plastics', risk:'Medium', score:61, value:'$56K', reason:'Capacity utilization 94%, extended lead time forecast', color:'#f59e0b' },
+      { id:'PO-4844', supplier:'Delta Electronics', risk:'Medium', score:58, value:'$34K', reason:'Port congestion on inbound route, +7 day delay likely', color:'#f59e0b' },
+      { id:'PO-4833', supplier:'CoreSupply Inc.', risk:'Low', score:22, value:'$78K', reason:'Preferred supplier, 98% OTD, within contract price band', color:'#10b981' },
+    ].filter(o => filter === 'all' || (filter === 'high' && o.risk === 'High') || (filter === 'late' && o.score > 60) || (filter === 'exception' && o.score > 75));
+    const highRisk = orders.filter(o => o.risk === 'High').length;
+    const valueAtRisk = orders.filter(o => o.risk !== 'Low').reduce((s,o) => s + parseInt(o.value.replace(/[^0-9]/g,'')), 0);
+    const el = document.getElementById('ord-risk-results');
+    if (!el) return;
+    el.classList.add('visible');
+    el.innerHTML = `
+      <div class="ml-result-summary">
+        <div class="ml-result-kpi"><div class="ml-result-kpi-label">Orders Scored</div><div class="ml-result-kpi-val">${orders.length}</div></div>
+        <div class="ml-result-kpi"><div class="ml-result-kpi-label">High Risk Orders</div><div class="ml-result-kpi-val" style="color:#ef4444">${highRisk}</div></div>
+        <div class="ml-result-kpi"><div class="ml-result-kpi-label">Value at Risk</div><div class="ml-result-kpi-val" style="color:#f59e0b">$${(valueAtRisk/1000).toFixed(0)}K</div></div>
+      </div>
+      <div style="overflow-x:auto;margin-top:8px;">
+        <table style="width:100%;font-size:12px;border-collapse:collapse;">
+          <thead><tr style="color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:.06em;">
+            <th style="text-align:left;padding:4px 8px;">PO</th><th style="text-align:left;padding:4px 8px;">Supplier</th>
+            <th style="text-align:center;padding:4px 8px;">Risk</th><th style="text-align:right;padding:4px 8px;">Score</th>
+            <th style="text-align:right;padding:4px 8px;">Value</th><th style="text-align:left;padding:4px 8px;">Risk Signal</th>
+            <th style="padding:4px 8px;"></th>
+          </tr></thead>
+          <tbody>${orders.map(o => `<tr style="border-top:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:5px 8px;font-family:monospace;font-size:11px;color:#818cf8;">${o.id}</td>
+            <td style="padding:5px 8px;font-weight:600;color:#f0f0f0;">${o.supplier}</td>
+            <td style="padding:5px 8px;text-align:center;"><span style="background:${o.color}22;color:${o.color};border:1px solid ${o.color}55;border-radius:4px;padding:2px 8px;font-size:10.5px;font-weight:700;">${o.risk}</span></td>
+            <td style="padding:5px 8px;text-align:right;font-weight:700;color:${o.color};">${o.score}</td>
+            <td style="padding:5px 8px;text-align:right;color:#c8c8c8;">${o.value}</td>
+            <td style="padding:5px 8px;color:#9ca3af;font-size:11px;max-width:200px;">${o.reason}</td>
+            <td style="padding:5px 8px;"><button style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:5px;color:#ef4444;font-size:11px;padding:3px 9px;cursor:pointer;font-family:inherit;${o.risk === 'Low' ? 'opacity:.4;' : ''}" onclick="this.textContent='✓ Escalated';this.disabled=true;" ${o.risk === 'Low' ? 'disabled' : ''}>Escalate</button></td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+      <div class="ml-action-chips" style="margin-top:12px;">
+        <button class="ml-action-chip blue" onclick="this.textContent='✓ Notified';this.disabled=true;">Notify Procurement Team</button>
+        <button class="ml-action-chip amber" onclick="this.textContent='✓ Triggered';this.disabled=true;">Trigger Supplier Review</button>
+      </div>`;
+  });
 }

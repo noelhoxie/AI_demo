@@ -3,13 +3,19 @@
 // ── Global State ───────────────────────────────────────────────────────────
 let _activeTab    = 'pl';
 let _tabStartTime = null;
+let _clickCount   = 0;
+document.addEventListener('click', () => { _clickCount++; });
 let _timerInterval = null;
 
 // lazy-load flags
 let _plLoaded   = false;
 let _wcLoaded   = false;
-let _cfLoaded   = false;
 let _costLoaded = false;
+
+// raw data for filter re-renders
+let _plRaw   = [];
+let _wcRaw   = [];
+let _costRaw = [];
 
 // ── Page-time logging ──────────────────────────────────────────────────────
 function _startTimer() {
@@ -31,11 +37,13 @@ function _timerDisplay(seconds) {
 
 async function _logPageTime(page, seconds) {
   if (seconds < 1) return;
+  const clicks = _clickCount;
+  _clickCount = 0;
   try {
     await fetch('/finance/api/log-page-time', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ page, seconds_spent: seconds }),
+      body: JSON.stringify({ page, seconds_spent: seconds, click_count: clicks }),
     });
   } catch (_) {}
 }
@@ -44,7 +52,7 @@ window.addEventListener('beforeunload', () => {
   if (_tabStartTime !== null) {
     const seconds = Math.round((Date.now() - _tabStartTime) / 1000);
     navigator.sendBeacon('/finance/api/log-page-time',
-      new Blob([JSON.stringify({ page: _activeTab, seconds_spent: seconds })],
+      new Blob([JSON.stringify({ page: _activeTab, seconds_spent: seconds, click_count: _clickCount })],
                { type: 'application/json' }));
   }
 });
@@ -64,12 +72,21 @@ function switchTab(tab) {
   _activeTab = tab;
   _startTimer();
 
+  // Show/hide cost type filter based on tab
+  const ctEl = document.getElementById('f-costtype');
+  if (ctEl) ctEl.style.display = tab === 'working-capital' ? 'none' : '';
+
+  _applyFinFilters(); // re-apply active filters for new tab
+
+  // Refresh open agent panel
+  const ap = document.getElementById('agent-panel');
+  if (ap && !ap.classList.contains('hidden')) renderAgentPanel(tab);
+
   // Lazy-load data on first visit
   if (tab === 'pl'              && !_plLoaded)   { _plLoaded   = true; loadPl(); }
   if (tab === 'working-capital' && !_wcLoaded)   { _wcLoaded   = true; loadWorkingCapital(); }
-  if (tab === 'cashflow'        && !_cfLoaded)   { _cfLoaded   = true; loadCashFlow(); }
   if (tab === 'cost'            && !_costLoaded) { _costLoaded = true; loadCostCenters(); }
-  if (tab === 'genie') initGenie();
+  if (tab === 'genie') { openGeniePanel(); return; }
 }
 
 // ── App Config (branding) ──────────────────────────────────────────────────
@@ -87,12 +104,18 @@ async function loadAppConfig() {
         .then(results => {
           if (!results || !results[0] || !results[0].domain) return;
           const img = document.createElement('img');
-          img.src = `https://logo.clearbit.com/${results[0].domain}`;
           img.alt = d.company_name;
-          img.style.cssText = 'width:22px;height:22px;border-radius:4px;object-fit:contain;background:#fff;padding:2px;margin-left:8px;flex-shrink:0;';
-          img.onerror = () => img.remove();
-          const brand = document.querySelector('.nav-brand');
-          if (brand) brand.appendChild(img);
+          img.style.cssText = 'width:28px;height:28px;border-radius:6px;object-fit:contain;flex-shrink:0;';
+          img.onload = () => {
+            const brand = document.querySelector('.nav-brand');
+            const brandSvg = brand ? brand.querySelector('svg') : null;
+            if (brandSvg) brandSvg.replaceWith(img);
+            else if (brand) brand.prepend(img);
+            const nameEl = document.querySelector('.nav-brand-name');
+            if (nameEl) nameEl.textContent = 'Finance Intelligence';
+          };
+          img.onerror = () => {};
+          img.src = `https://cdn.brandfetch.io/domain/${results[0].domain}?c=1idGdcDDyuPmwhnhURl`;
         })
         .catch(() => {});
     }
@@ -104,7 +127,19 @@ document.addEventListener('DOMContentLoaded', () => {
   loadKpis();          // global strip always loads
   loadAppConfig();
   switchTab('pl');     // triggers P&L lazy load + timer
+  showTutorialIfNew();
 });
+
+function showTutorialIfNew() {
+  if (!localStorage.getItem('fin-tutorial-seen')) {
+    document.getElementById('tut-overlay').classList.remove('hidden');
+  }
+}
+function dismissTutorial() {
+  localStorage.setItem('fin-tutorial-seen', '1');
+  document.getElementById('tut-overlay').classList.add('hidden');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') dismissTutorial(); });
 
 // ── Global KPI Strip ───────────────────────────────────────────────────────
 async function loadKpis() {
@@ -152,8 +187,8 @@ async function loadBriefing(force = false) {
     const text = d.briefing || '';
     const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
     const paras = [];
-    for (let i = 0; i < sentences.length; i += 2) {
-      paras.push(sentences.slice(i, i + 2).join(' ').trim());
+    for (let i = 0; i < sentences.length; i += 3) {
+      paras.push(sentences.slice(i, i + 3).join(' ').trim());
     }
     el.innerHTML = paras.map(p => `<p>${highlight(p)}</p>`).join('');
   } catch (_) {
@@ -174,7 +209,10 @@ function highlight(text) {
 async function loadTrend() {
   try {
     const rows = await fetch('/finance/api/pl-trend').then(r => r.json());
-    if (rows && rows.length) renderTrendChart(rows, 'trend-chart', '#D4A017', '#4CAF7D');
+    if (rows && rows.length) {
+      _plRaw = rows;
+      _applyFinFilters();
+    }
   } catch (_) {}
 }
 
@@ -226,100 +264,20 @@ async function loadWorkingCapital() {
   if (!tbody) return;
   try {
     const rows = await fetch('/finance/api/working-capital').then(r => r.json());
-    // Compute averages for KPI cards
-    const avgDso = (rows.reduce((s,r) => s + parseFloat(r.dso), 0) / rows.length).toFixed(1);
-    const avgDpo = (rows.reduce((s,r) => s + parseFloat(r.dpo), 0) / rows.length).toFixed(1);
-    const avgCcc = (rows.reduce((s,r) => s + parseFloat(r.ccc), 0) / rows.length).toFixed(1);
-    const avgAr  = (rows.reduce((s,r) => s + parseFloat(r.ar_90_plus_pct), 0) / rows.length).toFixed(1);
-    setText('wc-k1', avgDso + 'd');
-    setText('wc-k2', avgDpo + 'd');
-    const cccEl = document.getElementById('wc-k3');
-    if (cccEl) { cccEl.textContent = (parseFloat(avgCcc) <= 0 ? '' : '+') + avgCcc + 'd'; cccEl.className = 'kpi-val ' + (parseFloat(avgCcc) <= 0 ? 'positive' : 'negative'); }
-    setText('wc-k4', avgAr + '%');
-
-    tbody.innerHTML = rows.map(r => {
-      const ccc = parseFloat(r.ccc);
-      const cccCls  = ccc <= 0 ? 'ccc-positive' : 'ccc-negative';
-      const cccSign = ccc <= 0 ? '' : '+';
-      const ar90 = parseFloat(r.ar_90_plus_pct);
-      const arCls = ar90 > 7 ? 'ar-warn' : '';
-      return `<tr>
-        <td>${r.region}</td>
-        <td>${r.dso}d</td>
-        <td>${r.dpo}d</td>
-        <td class="${cccCls}">${cccSign}${ccc}d</td>
-        <td class="${arCls}">${ar90}%</td>
-      </tr>`;
-    }).join('');
+    _wcRaw = rows;
+    _applyFinFilters();
   } catch (_) {
     if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="loading-cell">Unable to load</td></tr>`;
   }
 }
 
 // ── Cash Flow Tab ──────────────────────────────────────────────────────────
-async function loadCashFlow() {
-  try {
-    const rows = await fetch('/finance/api/cash-flow').then(r => r.json());
-    const latest = rows[rows.length - 1];
-    const prev   = rows[rows.length - 5] || rows[0]; // Q1 prior year
-    setText('cf-k1', `$${latest.operating_cf}M`);
-    setText('cf-k2', `$${Math.abs(latest.capex)}M`);
-    setText('cf-k3', `$${latest.fcf}M`);
-    const yoy = ((latest.fcf - prev.fcf) / Math.abs(prev.fcf) * 100).toFixed(1);
-    const yoyEl = document.getElementById('cf-k4');
-    if (yoyEl) { yoyEl.textContent = (parseFloat(yoy) >= 0 ? '+' : '') + yoy + '%'; yoyEl.className = 'kpi-val ' + (parseFloat(yoy) >= 0 ? 'positive' : 'negative'); }
-    // Global KPI strip FCF
-    setText('gkpi-fcf', `$${latest.fcf}M`);
-
-    // Chart — map rows to use operating_cf and fcf keys
-    renderTrendChart(rows, 'cf-trend-chart', '#1B6FEB', '#4CAF7D');
-
-    // Table
-    const tbody = document.getElementById('cf-tbody');
-    if (tbody) {
-      tbody.innerHTML = [...rows].reverse().slice(0, 8).map(r => `<tr>
-        <td>${(r.period_key||r.period).replace('FY','')}</td>
-        <td>$${r.operating_cf}M</td>
-        <td style="color:var(--negative)">($${Math.abs(r.capex)}M)</td>
-        <td class="${parseFloat(r.fcf) >= 0 ? 'ccc-positive' : 'ccc-negative'}">$${r.fcf}M</td>
-      </tr>`).join('');
-    }
-  } catch (_) {}
-}
-
 // ── Cost Management Tab ────────────────────────────────────────────────────
 async function loadCostCenters() {
   try {
     const rows = await fetch('/finance/api/cost-centers').then(r => r.json());
-    const totalActual  = rows.reduce((s, r) => s + parseFloat(r.actual_m), 0).toFixed(1);
-    const overBudget   = rows.filter(r => parseFloat(r.variance_m) < 0).length;
-    const totalVariance = rows.reduce((s, r) => s + parseFloat(r.variance_m), 0).toFixed(1);
-    // G&A = Finance + HR + G&A cost centers
-    const gaRows = rows.filter(r => r.department === 'Corporate');
-    const gaActual = gaRows.reduce((s, r) => s + parseFloat(r.actual_m), 0).toFixed(1);
-
-    setText('cost-k1', `$${totalActual}M`);
-    setText('cost-k2', `${((gaActual / 509) * 100).toFixed(1)}%`);
-    const obEl = document.getElementById('cost-k3');
-    if (obEl) { obEl.textContent = overBudget; obEl.className = 'kpi-val ' + (overBudget > 2 ? 'negative' : 'positive'); }
-    const tvEl = document.getElementById('cost-k4');
-    if (tvEl) { tvEl.textContent = (parseFloat(totalVariance) >= 0 ? '+' : '') + `$${totalVariance}M`; tvEl.className = 'kpi-val ' + (parseFloat(totalVariance) >= 0 ? 'positive' : 'negative'); }
-
-    const tbody = document.getElementById('cost-tbody');
-    if (tbody) {
-      tbody.innerHTML = rows.map(r => {
-        const v = parseFloat(r.variance_m);
-        const over = v < 0;
-        return `<tr>
-          <td style="font-weight:600;color:var(--text-primary)">${r.cost_center}</td>
-          <td>${r.department}</td>
-          <td>$${r.budget_m}M</td>
-          <td>$${r.actual_m}M</td>
-          <td class="${over ? 'ccc-negative' : 'ccc-positive'}">${over ? '' : '+'}$${r.variance_m}M</td>
-          <td><span class="status-badge ${over ? 'over' : 'under'}">${over ? 'Over Budget' : 'On Track'}</span></td>
-        </tr>`;
-      }).join('');
-    }
+    _costRaw = rows;
+    _applyFinFilters();
   } catch (_) {}
 }
 
@@ -411,6 +369,7 @@ function appendGenieAnswer(d) {
   const avatar = document.createElement('div');
   avatar.className = 'msg-avatar system-avatar';
   avatar.innerHTML = _avatarSVG;
+  const wrap = document.createElement('div');
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
   bubble.innerHTML = `<p>${highlight(escHtml(d.answer || 'No answer returned.'))}</p>`;
@@ -429,11 +388,37 @@ function appendGenieAnswer(d) {
     det.innerHTML = `<summary>▶ View SQL</summary><pre>${escHtml(d.query.sql)}</pre>`;
     bubble.appendChild(det);
   }
+  wrap.appendChild(bubble);
+
+  const followUps = d.follow_ups || [];
+  if (followUps.length) {
+    const row = document.createElement('div');
+    row.className = 'fin-panels-row';
+    const fupPanel = document.createElement('div');
+    fupPanel.className = 'fup-panel fin-panel-col';
+    fupPanel.innerHTML = `<div class="fup-panel-header">Suggested Questions</div>`;
+    const fupCards = document.createElement('div');
+    fupCards.className = 'fup-cards';
+    followUps.forEach(fu => {
+      const card = document.createElement('div');
+      card.className = 'fup-card';
+      card.innerHTML = `<div class="fup-card-text">${escHtml(fu)}</div><button class="fup-ask-btn">Ask →</button>`;
+      card.querySelector('.fup-ask-btn').onclick = () => sendMessage(fu);
+      fupCards.appendChild(card);
+    });
+    fupPanel.appendChild(fupCards);
+    row.appendChild(fupPanel);
+    const actionCol = document.createElement('div');
+    actionCol.className = 'fin-action-col fin-panel-col';
+    row.appendChild(actionCol);
+    wrap.appendChild(row);
+  }
+
   div.appendChild(avatar);
-  div.appendChild(bubble);
+  div.appendChild(wrap);
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
-  return bubble;
+  return wrap;
 }
 
 function appendFinActionPanel(wrapEl, actions) {
@@ -441,7 +426,7 @@ function appendFinActionPanel(wrapEl, actions) {
   panel.className = 'action-panel';
   const hdr = document.createElement('div');
   hdr.className = 'action-panel-header';
-  hdr.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Recommended Actions`;
+  hdr.innerHTML = `Recommended Actions`;
   panel.appendChild(hdr);
   const cards = document.createElement('div');
   cards.className = 'action-cards';
@@ -464,7 +449,8 @@ function appendFinActionPanel(wrapEl, actions) {
     cards.appendChild(card);
   });
   panel.appendChild(cards);
-  wrapEl.appendChild(panel);
+  const target = wrapEl.querySelector('.fin-action-col') || wrapEl;
+  target.appendChild(panel);
   messages.scrollTop = messages.scrollHeight;
 }
 
@@ -501,4 +487,614 @@ function removeMsg(id) { if (id) document.getElementById(id)?.remove(); }
 function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Filter Bar ───────────────────────────────────────────────────────────────
+function applyFilters() {
+  const selects = document.querySelectorAll('.filter-select');
+  const active = Array.from(selects).filter(s => s.value !== '').length;
+  const clearBtn = document.getElementById('filter-clear');
+  const countEl  = document.getElementById('filter-count');
+  if (clearBtn) clearBtn.classList.toggle('hidden', active === 0);
+  if (countEl) {
+    countEl.classList.toggle('hidden', active === 0);
+    if (active > 0) countEl.textContent = `${active} filter${active > 1 ? 's' : ''} active`;
+  }
+  _applyFinFilters();
+}
+
+function clearFilters() {
+  document.querySelectorAll('.filter-select').forEach(s => { s.value = ''; });
+  applyFilters();
+}
+
+function _applyFinFilters() {
+  const period = document.getElementById('f-period')?.value || '';
+  const bu     = document.getElementById('f-bu')?.value || '';
+  const ct     = document.getElementById('f-costtype')?.value || '';
+
+  const BU_SHARE = { amer: 0.45, emea: 0.30, apac: 0.20, corp: 0.05 };
+  const share = BU_SHARE[bu] || 1;
+
+  // ── P&L ────────────────────────────────────────────────────────────────
+  if (_activeTab === 'pl' && _plRaw.length) {
+    let show = _filterByPeriod(_plRaw, period);
+    if (!show.length) show = _plRaw;
+    const scaled = share < 1
+      ? show.map(r => ({ ...r, revenue_m: +(r.revenue_m * share).toFixed(1), ebitda_m: +(r.ebitda_m * share).toFixed(1) }))
+      : show;
+    const latest = scaled[scaled.length - 1];
+    if (latest) {
+      const rev    = `$${latest.revenue_m}M`;
+      const ebitda = `$${latest.ebitda_m}M`;
+      const margin = latest.ebitda_margin
+        ? String(latest.ebitda_margin).includes('%') ? latest.ebitda_margin : latest.ebitda_margin + '%'
+        : ((latest.ebitda_m / latest.revenue_m) * 100).toFixed(1) + '%';
+      setText('kpi-revenue', rev);
+      setText('kpi-ebitda', ebitda);
+      setText('kpi-margin', margin);
+      setText('gkpi-revenue', rev);
+      setText('gkpi-ebitda', ebitda);
+      setText('gkpi-margin', margin);
+    }
+    renderTrendChart(scaled.length >= 2 ? scaled : _plRaw, 'trend-chart', '#D4A017', '#4CAF7D');
+  }
+
+  // ── Working Capital ─────────────────────────────────────────────────────
+  if (_activeTab === 'working-capital' && _wcRaw.length) {
+    const rows = _applyBuFilter(_wcRaw, bu);
+    const src  = rows.length ? rows : _wcRaw;
+    const avgDso = (src.reduce((s,r) => s + parseFloat(r.dso), 0) / src.length).toFixed(1);
+    const avgDpo = (src.reduce((s,r) => s + parseFloat(r.dpo), 0) / src.length).toFixed(1);
+    const avgCcc = (src.reduce((s,r) => s + parseFloat(r.ccc), 0) / src.length).toFixed(1);
+    const avgAr  = (src.reduce((s,r) => s + parseFloat(r.ar_90_plus_pct), 0) / src.length).toFixed(1);
+    setText('wc-k1', avgDso + 'd');
+    setText('wc-k2', avgDpo + 'd');
+    const cccEl = document.getElementById('wc-k3');
+    if (cccEl) {
+      cccEl.textContent = (parseFloat(avgCcc) <= 0 ? '' : '+') + avgCcc + 'd';
+      cccEl.className   = 'kpi-val ' + (parseFloat(avgCcc) <= 0 ? 'positive' : 'negative');
+    }
+    setText('wc-k4', avgAr + '%');
+    _renderWcTableRows(rows.length ? rows : (bu ? [] : _wcRaw));
+  }
+
+  // ── Cost Management ─────────────────────────────────────────────────────
+  if (_activeTab === 'cost' && _costRaw.length) {
+    const rows         = _applyCostFilter(_costRaw, bu, ct);
+    const src          = rows.length ? rows : _costRaw;
+    const totalActual  = src.reduce((s, r) => s + parseFloat(r.actual_m), 0).toFixed(1);
+    const overBudget   = src.filter(r => parseFloat(r.variance_m) < 0).length;
+    const totalVariance = src.reduce((s, r) => s + parseFloat(r.variance_m), 0).toFixed(1);
+    const gaRows       = src.filter(r => r.department === 'Corporate');
+    const gaActual     = gaRows.reduce((s, r) => s + parseFloat(r.actual_m), 0);
+    const baseRev      = 509 * share;
+    setText('cost-k1', `$${totalActual}M`);
+    setText('cost-k2', `${((gaActual / baseRev) * 100).toFixed(1)}%`);
+    const obEl = document.getElementById('cost-k3');
+    if (obEl) {
+      obEl.textContent = overBudget;
+      obEl.className   = 'kpi-val ' + (overBudget > 2 ? 'negative' : 'positive');
+    }
+    const tvEl = document.getElementById('cost-k4');
+    if (tvEl) {
+      tvEl.textContent = (parseFloat(totalVariance) >= 0 ? '+' : '') + `$${totalVariance}M`;
+      tvEl.className   = 'kpi-val ' + (parseFloat(totalVariance) >= 0 ? 'positive' : 'negative');
+    }
+    _renderCostTableRows(rows.length ? rows : (bu || ct ? [] : _costRaw));
+  }
+}
+
+function _filterByPeriod(rows, period) {
+  if (!period) return rows;
+  return rows.filter(r => {
+    const k = r.period_key || '';
+    if (period === 'q1-25') return k === 'FY2025-Q1';
+    if (period === 'q4-24') return k === 'FY2024-Q4';
+    if (period === 'ytd')   return k.startsWith('FY2025');
+    if (period === 'fy24')  return k.startsWith('FY2024');
+    return true;
+  });
+}
+
+function _applyBuFilter(rows, bu) {
+  if (!bu) return rows;
+  return rows.filter(r => {
+    const reg = (r.region || '').toLowerCase();
+    if (bu === 'amer') return reg.includes('north america') || reg.includes('americas') || reg.includes('latin america');
+    if (bu === 'emea') return reg === 'emea';
+    if (bu === 'apac') return reg === 'apac';
+    if (bu === 'corp') return (r.department || '').toLowerCase() === 'corporate';
+    return true;
+  });
+}
+
+function _applyCostFilter(rows, bu, ct) {
+  return rows.filter(r => {
+    const dep = r.department || '';
+    if (bu === 'corp' && dep !== 'Corporate') return false;
+    if (ct === 'opex'  && !['Operations', 'Commercial'].includes(dep)) return false;
+    if (ct === 'capex' && dep !== 'Technology') return false;
+    if (ct === 'ga'    && dep !== 'Corporate')  return false;
+    return true;
+  });
+}
+
+function _renderWcTableRows(rows) {
+  const tbody = document.getElementById('wc-tbody');
+  if (!tbody) return;
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="loading-cell">No data matches the selected filters</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const ccc = parseFloat(r.ccc);
+    const cccCls  = ccc <= 0 ? 'ccc-positive' : 'ccc-negative';
+    const cccSign = ccc <= 0 ? '' : '+';
+    const ar90 = parseFloat(r.ar_90_plus_pct);
+    const arCls = ar90 > 7 ? 'ar-warn' : '';
+    return `<tr>
+      <td>${r.region}</td>
+      <td>${r.dso}d</td>
+      <td>${r.dpo}d</td>
+      <td class="${cccCls}">${cccSign}${ccc}d</td>
+      <td class="${arCls}">${ar90}%</td>
+    </tr>`;
+  }).join('');
+}
+
+
+function _renderCostTableRows(rows) {
+  const tbody = document.getElementById('cost-tbody');
+  if (!tbody) return;
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="loading-cell">No data matches the selected filters</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const v = parseFloat(r.variance_m);
+    const over = v < 0;
+    return `<tr>
+      <td style="font-weight:600;color:var(--text-primary)">${r.cost_center}</td>
+      <td>${r.department}</td>
+      <td>$${r.budget_m}M</td>
+      <td>$${r.actual_m}M</td>
+      <td class="${over ? 'ccc-negative' : 'ccc-positive'}">${over ? '' : '+'}$${r.variance_m}M</td>
+      <td><span class="status-badge ${over ? 'over' : 'under'}">${over ? 'Over Budget' : 'On Track'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Agent Actions ───────────────────────────────────────────────────────────
+const FIN_TAB_LABELS = {
+  'pl':              'P&L Overview',
+  'working-capital': 'Working Capital',
+  'cost':            'Cost Management',
+};
+
+const AGENT_ACTIONS = {
+  pl: [
+    {
+      sys: 'ERP',
+      title: 'Post Q1 2025 Variance Report to Financial Planning System',
+      desc: 'Write the Q1 2025 revenue and EBITDA variance analysis to your ERP Financial Planning module, updating the official record with Databricks-generated actuals vs. budget figures — so the numbers are available for the board pack without manual re-entry.',
+      result: 'Variance report posted · Q1 2025 · Revenue variance –$2.1M · EBITDA variance –$0.8M · Document FI-PLAN-20250331 confirmed · Transaction FINS_FIN01-0000000051490001',
+    },
+    {
+      sys: 'Teams',
+      title: 'Send Executive P&L Briefing to CFO Leadership Channel',
+      desc: 'Post a concise P&L summary — revenue, EBITDA, margins, and top 3 variance drivers — to the #cfo-leadership channel in Teams, so the CFO and Finance VPs have the brief before the quarterly business review.',
+      result: 'P&L briefing posted to #cfo-leadership · Q1 2025 · $847M revenue · 22.1% EBITDA margin · 3 variance drivers highlighted · CFO and 4 Finance VPs notified · Posted 09:14',
+    },
+    {
+      sys: 'Email',
+      title: 'Email P&L Summary to Audit Committee',
+      desc: 'Send the Q1 2025 P&L summary, including revenue growth, EBITDA performance, and budget variance analysis, to the Audit Committee distribution list — providing the pre-read materials ahead of the quarterly audit review.',
+      result: 'Email sent · "Q1 2025 P&L Summary — Audit Pre-Read" · Audit Committee (5 members) · Revenue, EBITDA, variance sections included · Sent 09:16',
+    },
+  ],
+  'working-capital': [
+    {
+      sys: 'ERP',
+      title: 'Flag AR 90+ Days for Automated Collections Workflow',
+      desc: 'Create collection tasks in your ERP Accounts Receivable module for all invoices 90+ days past due — assigning them to the regional AR teams with the outstanding amounts and contact details pre-populated, so collections can begin immediately.',
+      result: 'Collections workflow triggered · 14 invoices flagged · $3.2M total past due · 3 regions assigned · Transaction FIAR-COLL-20250331-0000000051491001 confirmed · Due follow-up: 5 business days',
+    },
+    {
+      sys: 'ERP',
+      title: 'Update DPO Payment Terms for Top 5 Strategic Suppliers',
+      desc: 'Apply the renegotiated 45-day payment terms to the top 5 strategic suppliers in your ERP Vendor Master — extending DPO from the current 38-day average and releasing an estimated $4.1M of working capital.',
+      result: 'Payment terms updated · 5 suppliers · Terms extended to Net-45 · Estimated WC release $4.1M · Transaction FIAP-VEND-0000000051491050 confirmed · Effective next billing cycle',
+    },
+    {
+      sys: 'Teams',
+      title: 'Alert Treasury Team to Cash Conversion Cycle Deterioration',
+      desc: 'Post a working capital alert to the #treasury-ops channel covering the 3-day CCC increase — highlighting the DSO climb in EMEA and the DPO shortfall in APAC — with the recommended actions to restore the target CCC range.',
+      result: 'Alert posted to #treasury-ops · CCC +3 days vs target · EMEA DSO elevated · APAC DPO shortfall · Recommended actions attached · Treasury Lead T. Morales notified · Posted 09:21',
+    },
+  ],
+  cost: [
+    {
+      sys: 'ERP',
+      title: 'Create Budget Override Requests for Over-Budget Cost Centers',
+      desc: 'Raise formal budget adjustment requests in your ERP Controlling module for the 4 cost centers currently over budget — pre-populated with the Databricks-calculated variance amounts and the Finance Business Partner assignments for sign-off.',
+      result: '4 override requests created · Total variance $3.8M · G&A +$1.2M · IT +$0.9M · HR +$0.8M · Marketing +$0.9M · Transaction FICO-BUDR-0000000051493001 confirmed · Sent to Finance BPs',
+    },
+    {
+      sys: 'ERP',
+      title: 'Trigger Cost Review Workflow in Spend Management System',
+      desc: 'Initiate the quarterly cost review workflow in your ERP Spend Management module for all cost centers with variance > 5% — assigning review tasks to department Finance Business Partners with the variance analysis and supporting GL detail attached.',
+      result: 'Cost review workflow triggered · 6 cost centers in scope · Variance > 5% threshold · GL detail attached · Transaction FICO-REVW-0000000051493050 confirmed · Due: May 30',
+    },
+    {
+      sys: 'Teams',
+      title: 'Escalate G&A Variance to Department Finance Leads',
+      desc: 'Post a cost variance escalation to the #finance-bps channel, covering the top 4 over-budget cost centers — with the variance amount, root cause, and recommended corrective action for each department — so Finance Business Partners can act before month-end close.',
+      result: 'Escalation posted to #finance-bps · 4 cost centers · $3.8M total variance · Root causes and corrective actions attached · 4 Finance BPs notified · Posted 09:35',
+    },
+  ],
+};
+
+// ── Genie chat panel ─────────────────────────────────────────────────────────
+let _geniePanelOpen = false;
+function toggleGeniePanel() { _geniePanelOpen ? closeGeniePanel() : openGeniePanel(); }
+function openGeniePanel() {
+  _geniePanelOpen = true;
+  document.getElementById('genie-panel-overlay').classList.add('open');
+  document.getElementById('genie-chat-panel').classList.add('open');
+  initGenie();
+}
+function closeGeniePanel() {
+  _geniePanelOpen = false;
+  document.getElementById('genie-panel-overlay').classList.remove('open');
+  document.getElementById('genie-chat-panel').classList.remove('open');
+}
+
+function openAgentPanel() {
+  document.getElementById('agent-overlay').classList.remove('hidden');
+  document.getElementById('agent-panel').classList.remove('hidden');
+  renderAgentPanel(_activeTab);
+}
+function closeAgentPanel() {
+  document.getElementById('agent-overlay').classList.add('hidden');
+  document.getElementById('agent-panel').classList.add('hidden');
+}
+
+function renderAgentPanel(tab) {
+  const badge = document.getElementById('agent-tab-badge');
+  if (badge) badge.textContent = FIN_TAB_LABELS[tab] || tab;
+
+  const actions = AGENT_ACTIONS[tab] || AGENT_ACTIONS.pl;
+  const list = document.getElementById('agent-actions-list');
+  if (!list) return;
+  list.innerHTML = actions.map((a, i) => {
+    const sysClass = a.sys === 'ERP' ? 'badge-sap' : a.sys === 'Teams' ? 'badge-teams' : 'badge-email';
+    return `
+      <div class="agent-action-card" id="fin-agent-card-${tab}-${i}">
+        <div class="agent-action-header-row">
+          <span class="agent-sys-badge ${sysClass}">${escHtml(a.sys)}</span>
+          <div class="agent-action-title">${escHtml(a.title)}</div>
+        </div>
+        <div class="agent-action-desc">${escHtml(a.desc)}</div>
+        <button class="agent-approve-btn" onclick="runAgentAction('${tab}',${i})">Approve &amp; Execute</button>
+      </div>`;
+  }).join('');
+}
+
+function runAgentAction(tab, idx) {
+  const actions = AGENT_ACTIONS[tab] || AGENT_ACTIONS.pl;
+  const a = actions[idx];
+  if (!a) return;
+
+  const card = document.getElementById(`fin-agent-card-${tab}-${idx}`);
+  if (!card) return;
+
+  const btn = card.querySelector('.agent-approve-btn');
+  if (btn) btn.remove();
+
+  const running = document.createElement('div');
+  running.className = 'agent-running';
+  running.innerHTML = `<span class="spinner sm"></span><span>Executing — connecting to ${escHtml(a.sys)}…</span>`;
+  card.appendChild(running);
+
+  setTimeout(() => {
+    running.remove();
+    const result = document.createElement('div');
+    result.className = 'agent-result';
+    result.textContent = a.result;
+    card.appendChild(result);
+  }, 2200 + Math.random() * 600);
+}
+
+// ─── Finance ML Interactive Functions ───────────────────────────────────────
+
+function _finMlRunnerStart(btnId, thinkingId, steps, stepId, doneCallback) {
+  const btn = document.getElementById(btnId);
+  const thinking = document.getElementById(thinkingId);
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  if (thinking) thinking.style.display = 'flex';
+  steps.forEach((txt, i) => {
+    setTimeout(() => {
+      const el = document.getElementById(stepId);
+      if (el) el.textContent = txt;
+    }, i * 900);
+  });
+  setTimeout(() => {
+    if (thinking) thinking.style.display = 'none';
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    doneCallback();
+  }, steps.length * 900 + 500);
+}
+
+function _finRenderFeatureBars(containerId, features, accentColor) {
+  accentColor = accentColor || '#D4A017';
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = features.map(f => `
+    <div class="feature-row">
+      <div class="feature-label">${f.label}</div>
+      <div class="feature-bar-wrap"><div class="feature-bar" id="fbar-fin-${f.label.replace(/\W/g,'')}" style="background:${accentColor};"></div></div>
+      <div class="feature-pct">${f.pct}%</div>
+    </div>`).join('');
+  requestAnimationFrame(() => {
+    features.forEach(f => {
+      const b = document.getElementById('fbar-fin-' + f.label.replace(/\W/g,''));
+      if (b) b.style.width = f.pct + '%';
+    });
+  });
+}
+
+// P&L Scenario Modeler — live slider handler
+function updatePlScenario() {
+  const revAdj  = parseFloat(document.getElementById('scen-rev-slider').value)  || 0;
+  const cogsAdj = parseFloat(document.getElementById('scen-cogs-slider').value) || 0;
+  const opexAdj = parseFloat(document.getElementById('scen-opex-slider').value) || 0;
+
+  // Update display labels
+  const revLbl  = document.getElementById('scen-rev-val');
+  const cogsLbl = document.getElementById('scen-cogs-val');
+  const opexLbl = document.getElementById('scen-opex-val');
+  if (revLbl)  { revLbl.textContent  = (revAdj  >= 0 ? '+' : '') + revAdj  + '%'; revLbl.style.color  = revAdj  < 0 ? '#ef4444' : '#4CAF7D'; }
+  if (cogsLbl) { cogsLbl.textContent = (cogsAdj >= 0 ? '+' : '') + cogsAdj + '%'; cogsLbl.style.color = cogsAdj > 0 ? '#ef4444' : '#4CAF7D'; }
+  if (opexLbl) { opexLbl.textContent = (opexAdj >= 0 ? '+' : '') + opexAdj + '%'; opexLbl.style.color = opexAdj > 0 ? '#ef4444' : '#4CAF7D'; }
+
+  // Base FY25 numbers (approximate)
+  const baseRev   = 509.0;   // $M
+  const baseCOGS  = 313.5;   // $M (~61.6% of rev)
+  const baseOpEx  = 74.3;    // $M (~14.6% of rev)
+
+  const newRev   = baseRev   * (1 + revAdj  / 100);
+  const newCOGS  = baseCOGS  * (1 + cogsAdj / 100);
+  const newOpEx  = baseOpEx  * (1 + opexAdj / 100);
+  const newGP    = newRev - newCOGS;
+  const newGM    = (newGP / newRev) * 100;
+  const newEBITDA = newGP - newOpEx;
+  const newMargin = (newEBITDA / newRev) * 100;
+
+  const fmt = v => '$' + v.toFixed(1) + 'M';
+  const fmtPct = v => v.toFixed(1) + '%';
+
+  const revEl    = document.getElementById('scen-out-rev');
+  const gmEl     = document.getElementById('scen-out-gm');
+  const ebitdaEl = document.getElementById('scen-out-ebitda');
+  const marginEl = document.getElementById('scen-out-margin');
+
+  if (revEl)    revEl.textContent    = fmt(newRev);
+  if (gmEl)     gmEl.textContent     = fmtPct(newGM);
+  if (ebitdaEl) ebitdaEl.textContent = fmt(newEBITDA);
+  if (marginEl) {
+    marginEl.textContent = fmtPct(newMargin);
+    marginEl.className = 'scenario-impact-val ' + (newMargin >= 23.8 ? 'positive-text' : 'negative-text');
+  }
+}
+
+// Working Capital — scenario card selector
+function selectWcScenario(btn) {
+  document.querySelectorAll('.wc-scen-card').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const dsoEl = document.getElementById('wc-dso-slider');
+  const dpoEl = document.getElementById('wc-dpo-slider');
+  if (dsoEl) dsoEl.value = btn.dataset.dso || 0;
+  if (dpoEl) dpoEl.value = btn.dataset.dpo || 0;
+  updateWcImpact();
+}
+
+// Working Capital Impact Calculator — computes from hidden inputs
+function updateWcImpact() {
+  const dsoDays = parseFloat(document.getElementById('wc-dso-slider')?.value) || 0;
+  const dpoDays = parseFloat(document.getElementById('wc-dpo-slider')?.value) || 0;
+
+  // ~$509M annual revenue; daily revenue ≈ $1.39M
+  const dailyRev = 509.0 / 365;
+  // ~$313M COGS; daily COGS ≈ $0.86M
+  const dailyCOGS = 313.5 / 365;
+
+  const arImprovement = dsoDays * dailyRev;
+  const apExtension   = dpoDays * dailyCOGS;
+  const total         = arImprovement + apExtension;
+
+  const fmt = v => v > 0 ? '+$' + v.toFixed(1) + 'M' : '$0M';
+
+  const arEl    = document.getElementById('wc-out-ar');
+  const apEl    = document.getElementById('wc-out-ap');
+  const totalEl = document.getElementById('wc-out-total');
+
+  if (arEl)    arEl.textContent    = fmt(arImprovement);
+  if (apEl)    apEl.textContent    = fmt(apExtension);
+  if (totalEl) totalEl.textContent = fmt(total);
+}
+
+// [Cash Flow Forecaster removed]
+if (false) (function() {
+  _finMlRunnerStart('cf-forecast-btn', 'cf-forecast-thinking', [], 'cf-forecast-step', () => {
+    const p50Base = [8.2,9.1,7.8,10.4,8.9,9.7,11.2,10.1,8.6,12.3,10.8,9.4,11.9];
+    const spread  = [0.9,1.1,1.0,1.3,1.2,1.4,1.6,1.5,1.3,1.8,1.7,1.5,2.0];
+
+    // Generate weekly dates from today
+    const today = new Date();
+    const weekDates = p50Base.map((_, i) => {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i * 7);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+
+    const p10 = p50Base.map((v, i) => v - spread[i]);
+    const p90 = p50Base.map((v, i) => v + spread[i]);
+    const n = p50Base.length;
+
+    // Build SVG chart
+    const W = 560, H = 160, pL = 38, pR = 12, pT = 12, pB = 30;
+    const cw = W - pL - pR, ch = H - pT - pB;
+    const allVals = [...p10, ...p90];
+    const minV = Math.min(...allVals) * 0.85, maxV = Math.max(...allVals) * 1.1;
+    const xs = i => pL + (i / (n - 1)) * cw;
+    const ys = v => pT + ch - ((v - minV) / (maxV - minV)) * ch;
+    const pts = arr => arr.map((v, i) => `${xs(i)},${ys(v)}`).join(' ');
+
+    // P10–P90 band polygon
+    const bandPts = p90.map((v, i) => `${xs(i)},${ys(v)}`).join(' ') + ' ' +
+      [...p10].reverse().map((v, i) => `${xs(n-1-i)},${ys(v)}`).join(' ');
+
+    // Grid lines
+    let svgGrid = '';
+    for (let t = 0; t <= 4; t++) {
+      const v = minV + (maxV - minV) * (t / 4);
+      const y = ys(v);
+      svgGrid += `<line x1="${pL}" y1="${y}" x2="${W - pR}" y2="${y}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <text x="${pL - 4}" y="${y + 4}" text-anchor="end" font-size="9" fill="#555">$${v.toFixed(0)}M</text>`;
+    }
+
+    // X-axis labels (every other week)
+    let svgLabels = '';
+    weekDates.forEach((d, i) => {
+      if (i % 2 === 0) {
+        svgLabels += `<text x="${xs(i)}" y="${H - 4}" text-anchor="middle" font-size="9" fill="#666">${d}</text>`;
+      }
+    });
+
+    // Today marker
+    const todayLabel = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    svgLabels += `<line x1="${xs(0)}" y1="${pT}" x2="${xs(0)}" y2="${pT + ch}" stroke="rgba(212,160,23,0.5)" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <text x="${xs(0) + 3}" y="${pT + 10}" font-size="9" fill="#D4A017">${todayLabel}</text>`;
+
+    const svgChart = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible;">
+      ${svgGrid}${svgLabels}
+      <polygon points="${bandPts}" fill="rgba(212,160,23,0.08)" stroke="none"/>
+      <polyline points="${pts(p90)}" fill="none" stroke="rgba(212,160,23,0.25)" stroke-width="1" stroke-dasharray="3,2"/>
+      <polyline points="${pts(p10)}" fill="none" stroke="rgba(212,160,23,0.25)" stroke-width="1" stroke-dasharray="3,2"/>
+      <polyline points="${pts(p50Base)}" fill="none" stroke="#D4A017" stroke-width="2" stroke-linejoin="round"/>
+      ${p50Base.map((v, i) => `<circle cx="${xs(i)}" cy="${ys(v)}" r="3" fill="#D4A017"/>`).join('')}
+    </svg>`;
+
+    const drivers = [
+      {label:'AR Collection Timing',  pct:34},
+      {label:'Payroll & Benefits',     pct:24},
+      {label:'Supplier Payments',      pct:19},
+      {label:'Revenue Seasonality',    pct:13},
+      {label:'CapEx Commitments',      pct:10},
+    ];
+    const chips = [
+      {label:'Accelerate $12M AR — Q3 invoices', color:'green'},
+      {label:'Defer non-critical CapEx 30 days', color:'amber'},
+      {label:'Review payroll timing for Q3 end', color:'blue'},
+    ];
+
+    const el = document.getElementById('cf-forecast-results');
+    if (!el) return;
+    el.innerHTML = `
+      <div class="ml-result-summary" style="margin-bottom:12px;">
+        <div class="ml-result-kpi"><div style="font-size:18px;font-weight:700;color:#D4A017;">$9.8M</div><div style="font-size:11px;color:#aaa;">Avg Weekly P50</div></div>
+        <div class="ml-result-kpi"><div style="font-size:18px;font-weight:700;color:#10b981;">$127.5M</div><div style="font-size:11px;color:#aaa;">90-Day P50 Total</div></div>
+        <div class="ml-result-kpi"><div style="font-size:18px;font-weight:700;color:#ef4444;">±$18.2M</div><div style="font-size:11px;color:#aaa;">P10–P90 Range</div></div>
+      </div>
+      <div style="font-size:11px;color:#6b7280;margin-bottom:6px;display:flex;align-items:center;gap:12px;">
+        <span>Weekly Cash Flow Forecast — ARIMA P10/P50/P90 ($M)</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:16px;height:2px;background:#D4A017;"></span> P50</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:16px;height:8px;background:rgba(212,160,23,0.15);border-radius:2px;"></span> P10–P90 band</span>
+      </div>
+      <div style="margin-bottom:16px;">${svgChart}</div>
+      <div class="ml-divider"></div>
+      <div class="feature-importance-title">Top Forecast Drivers (ARIMA feature weights)</div>
+      <div id="cf-feat-bars"></div>
+      <div class="ml-divider"></div>
+      <div class="ml-action-chips">
+        ${chips.map(c => `<div class="ml-action-chip ${c.color}" onclick="this.style.opacity='0.4';this.textContent='✓ Queued'">${c.label}</div>`).join('')}
+      </div>`;
+    _finRenderFeatureBars('cf-feat-bars', drivers);
+  });
+})();
+
+// Spend Anomaly Detector — Isolation Forest simulation
+function runAnomalyDetect() {
+  const steps = [
+    'Loading 24 months of cost center history from finance_gold…',
+    'Normalizing spend patterns by department and category…',
+    'Running Isolation Forest anomaly detection…',
+    'Scoring 127 cost centers for statistical outliers…',
+    'Cross-referencing against approved budget variances…',
+  ];
+  _finMlRunnerStart('anomaly-btn', 'anomaly-thinking', steps, 'anomaly-step', () => {
+    const anomalies = [
+      {dept:'IT Infrastructure', category:'Cloud Hosting',      spend:'$1.84M', budget:'$1.12M', variance:'+64%', score:0.94, flag:'Critical'},
+      {dept:'Sales Operations',  category:'Travel & Ent.',      spend:'$0.61M', budget:'$0.38M', variance:'+61%', score:0.89, flag:'High'},
+      {dept:'R&D Engineering',   category:'Contract Labor',     spend:'$2.17M', budget:'$1.58M', variance:'+37%', score:0.83, flag:'High'},
+      {dept:'Marketing',         category:'Digital Advertising',spend:'$0.93M', budget:'$0.74M', variance:'+26%', score:0.71, flag:'Medium'},
+      {dept:'Operations',        category:'Freight & Logistics',spend:'$1.22M', budget:'$1.02M', variance:'+20%', score:0.64, flag:'Medium'},
+    ];
+
+    const flagColor = {Critical:'#ef4444', High:'#f59e0b', Medium:'#3b82f6'};
+    const rows = anomalies.map(a => `
+      <tr>
+        <td>${a.dept}</td>
+        <td>${a.category}</td>
+        <td style="text-align:right;">${a.spend}</td>
+        <td style="text-align:right;">${a.budget}</td>
+        <td style="text-align:right;color:#ef4444;font-weight:600;">${a.variance}</td>
+        <td style="text-align:center;">
+          <div style="display:inline-flex;align-items:center;gap:4px;">
+            <div style="width:34px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;">
+              <div style="width:${Math.round(a.score*100)}%;height:100%;background:${flagColor[a.flag] || '#888'};border-radius:3px;"></div>
+            </div>
+            <span style="font-size:11px;color:${flagColor[a.flag]};">${a.score.toFixed(2)}</span>
+          </div>
+        </td>
+        <td style="text-align:center;"><span style="font-size:11px;padding:2px 7px;border-radius:10px;background:${flagColor[a.flag]}22;color:${flagColor[a.flag]};font-weight:600;">${a.flag}</span></td>
+        <td><button style="font-size:10px;padding:3px 8px;border:1px solid rgba(212,160,23,0.4);background:transparent;color:#D4A017;border-radius:4px;cursor:pointer;" onclick="this.textContent='Investigating…';this.disabled=true;">Investigate</button></td>
+      </tr>`).join('');
+
+    const chips = [
+      {label:'Escalate IT Cloud overage to CFO', color:'green'},
+      {label:'Request R&D contract labor justification', color:'amber'},
+      {label:'Flag Sales Travel for Q3 budget review', color:'blue'},
+    ];
+
+    const el = document.getElementById('anomaly-results');
+    if (!el) return;
+    el.classList.add('visible');
+    el.innerHTML = `
+      <div class="ml-result-summary" style="margin-bottom:14px;">
+        <div class="ml-result-kpi"><div style="font-size:18px;font-weight:700;color:#ef4444;">5</div><div style="font-size:11px;color:#aaa;">Anomalies Found</div></div>
+        <div class="ml-result-kpi"><div style="font-size:18px;font-weight:700;color:#f59e0b;">$2.18M</div><div style="font-size:11px;color:#aaa;">Total Overrun</div></div>
+        <div class="ml-result-kpi"><div style="font-size:18px;font-weight:700;color:#D4A017;">127</div><div style="font-size:11px;color:#aaa;">Cost Centers Scanned</div></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="color:#888;border-bottom:1px solid rgba(255,255,255,0.08);">
+            <th style="padding:6px 8px;text-align:left;">Department</th>
+            <th style="padding:6px 8px;text-align:left;">Category</th>
+            <th style="padding:6px 8px;text-align:right;">Actual</th>
+            <th style="padding:6px 8px;text-align:right;">Budget</th>
+            <th style="padding:6px 8px;text-align:right;">Variance</th>
+            <th style="padding:6px 8px;text-align:center;">Anomaly Score</th>
+            <th style="padding:6px 8px;text-align:center;">Severity</th>
+            <th style="padding:6px 8px;"></th>
+          </tr></thead>
+          <tbody style="color:#e0e0e0;">${rows}</tbody>
+        </table>
+      </div>
+      <div class="ml-divider"></div>
+      <div class="ml-action-chips">
+        ${chips.map(c => `<div class="ml-action-chip ${c.color}" onclick="this.style.opacity='0.4';this.textContent='✓ Queued'">${c.label}</div>`).join('')}
+      </div>`;
+  });
 }

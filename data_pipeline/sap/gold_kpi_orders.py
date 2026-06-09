@@ -1,7 +1,7 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # SAP Gold KPI — sap_gold_kpi_orders
-# MAGIC High-level order KPIs: total orders, value, avg order value, unique customers.
+# MAGIC High-level order KPIs: total orders, revenue, avg order value, rejection rate, unique customers.
 
 # COMMAND ----------
 
@@ -15,24 +15,30 @@ print(f"Using catalog={catalog}, schema={schema}")
 
 from pyspark.sql import functions as F
 
-orders = spark.table(f"`{catalog}`.`{schema}`.sap_gold_business_orders")
+orders = spark.table(f"`{catalog}`.`{schema}`.sap_gold_orders")
 
 sap_gold_kpi_orders = orders.agg(
     F.count(F.lit(1)).alias("total_orders"),
-    F.coalesce(F.sum("total_value"), F.lit(0)).alias("total_order_value"),
-    F.coalesce(F.sum("total_qty"), F.lit(0)).alias("total_order_qty"),
-    F.countDistinct("kunnr").alias("unique_customers"),
-    F.sum("line_count").alias("total_order_lines"),
+    F.coalesce(F.sum("total_net_value_usd"), F.lit(0)).alias("total_revenue_usd"),
+    F.coalesce(F.sum("total_quantity"), F.lit(0)).alias("total_quantity_ordered"),
+    F.countDistinct("customer_number").alias("unique_customers"),
+    F.sum("total_line_items").alias("total_line_items"),
+    F.coalesce(F.sum(F.col("has_rejections").cast("int")), F.lit(0)).alias("rejected_orders"),
 ).withColumn(
-    "avg_order_value",
-    F.when(F.col("total_orders") > 0, F.col("total_order_value") / F.col("total_orders")).otherwise(F.lit(0)),
+    "avg_order_value_usd",
+    F.when(F.col("total_orders") > 0, F.col("total_revenue_usd") / F.col("total_orders")).otherwise(F.lit(0)),
+).withColumn(
+    "rejection_rate_pct",
+    F.when(F.col("total_orders") > 0, F.round(F.col("rejected_orders") / F.col("total_orders") * 100, 2)).otherwise(F.lit(0)),
 ).select(
     "total_orders",
-    "total_order_value",
-    "avg_order_value",
-    "total_order_qty",
-    "total_order_lines",
+    "total_revenue_usd",
+    "avg_order_value_usd",
+    "total_quantity_ordered",
+    "total_line_items",
     "unique_customers",
+    "rejected_orders",
+    "rejection_rate_pct",
 )
 
 sap_gold_kpi_orders.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(

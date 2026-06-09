@@ -1,7 +1,7 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # SAP Gold — sap_gold_business_orders
-# MAGIC Order-level totals from silver. One notebook per table for pipeline visibility.
+# MAGIC # SAP Gold — sap_gold_orders
+# MAGIC Order-level totals from silver with business-friendly column names.
 
 # COMMAND ----------
 
@@ -15,20 +15,24 @@ print(f"Using catalog={catalog}, schema={schema}")
 
 from pyspark.sql import functions as F
 
-orders_silver = spark.table(f"`{catalog}`.`{schema}`.sap_silver_analyst_orders")
+orders_silver = spark.table(f"`{catalog}`.`{schema}`.sap_silver_orders")
 
-sap_gold_business_orders = (
+sap_gold_orders = (
     orders_silver
-    .groupBy("vbeln", "kunnr", "audat")
+    .groupBy("sales_order_number", "customer_number", "order_date", "order_year_month")
     .agg(
-        F.count("posnr").alias("line_count"),
-        F.sum("kwmeng").alias("total_qty"),
-        F.sum("netwr").alias("total_value"),
-        F.first("edatu").alias("request_date"),
-        F.first("absta").alias("rejection_status"),
+        F.count("line_item_number").alias("total_line_items"),
+        F.sum("order_quantity").alias("total_quantity"),
+        F.sum("net_value_usd").alias("total_net_value_usd"),
+        F.first("requested_delivery_date").alias("requested_delivery_date"),
+        F.first("rejection_status").alias("rejection_status"),
+        F.max(F.col("is_rejected").cast("int")).alias("has_rejections"),
+        F.first("sales_organization").alias("sales_organization"),
     )
+    .withColumn("has_rejections", F.col("has_rejections").cast("boolean"))
 )
-sap_gold_business_orders.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(
-    f"`{catalog}`.`{schema}`.sap_gold_business_orders"
+
+sap_gold_orders.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(
+    f"`{catalog}`.`{schema}`.sap_gold_orders"
 )
-display(sap_gold_business_orders.limit(10))
+display(sap_gold_orders.limit(10))

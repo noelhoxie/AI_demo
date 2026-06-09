@@ -1,0 +1,10 @@
+{
+  "name": "Solution Studio",
+  "short_name": "Solution Studio",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "start_url": "/mobile/",
+  "icons": []
+}

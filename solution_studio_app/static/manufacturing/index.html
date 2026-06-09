@@ -4,31 +4,154 @@
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/manufacturing/favicon.svg"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Databricks Manufacturing Intelligence</title>
+  <title>Databricks Operational Excellence</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <link rel="stylesheet" href="/manufacturing/css/styles.css">
+  <link rel="stylesheet" href="/manufacturing/css/styles.css?v=20260525d">
+  <style>
+    @keyframes genie-fab-pulse {
+      0%,100% { box-shadow: 0 4px 20px rgba(255,54,33,0.42), 0 0 0 2px rgba(255,54,33,0.12); }
+      50%     { box-shadow: 0 4px 28px rgba(255,54,33,0.68), 0 0 0 6px rgba(255,54,33,0.06); }
+    }
+    .genie-fab { position:fixed; bottom:28px; right:28px; width:52px; height:52px; border-radius:16px; background:#fff; border:1.5px solid rgba(255,54,33,0.3); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:500; animation:genie-fab-pulse 2.2s ease-in-out infinite; transition:transform .15s; }
+    .genie-fab:hover  { transform:scale(1.07); animation:none; box-shadow:0 6px 24px rgba(255,54,33,0.55); }
+    .genie-fab:active { transform:scale(0.93); animation:none; }
+    .genie-panel-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,0.42); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .22s; }
+    .genie-panel-overlay.open { opacity:1; pointer-events:all; }
+    .genie-chat-panel { position:fixed; top:0; right:-460px; bottom:0; width:440px; z-index:501; background:#0d0d0d; border-left:1px solid rgba(255,54,33,0.12); display:flex; flex-direction:column; overflow:hidden; transition:right .28s cubic-bezier(0.32,0.72,0,1); box-shadow:-8px 0 32px rgba(0,0,0,0.45); }
+    .genie-chat-panel.open { right:0; }
+    .genie-chat-panel-hdr { display:flex; align-items:center; gap:11px; padding:15px 15px 13px; border-bottom:1px solid rgba(255,255,255,0.07); flex-shrink:0; }
+    .genie-chat-panel-icon { width:34px; height:34px; border-radius:9px; background:rgba(255,54,33,0.08); border:1px solid rgba(255,54,33,0.18); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .genie-chat-panel-title { font-size:13.5px; font-weight:700; color:#f0f0f0; }
+    .genie-chat-panel-sub   { font-size:11px; color:#6b7280; margin-top:1px; }
+    .genie-chat-panel-close { margin-left:auto; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:7px; color:#9ca3af; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; transition:all .15s; }
+    .genie-chat-panel-close:hover { background:rgba(255,255,255,0.12); color:#f0f0f0; }
+    .genie-chat-panel-body { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+
+    /* ── Loading screen ── */
+    @keyframes db-dot-bounce { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-7px);opacity:1} }
+    .mfg-load-screen{position:fixed;inset:0;z-index:9000;background:#080808;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .55s;}
+    .mfg-load-screen.fade{opacity:0;pointer-events:none;}
+    .mfg-load-screen.gone{display:none;}
+    .mfg-load-icon{width:72px;height:72px;border-radius:20px;background:rgba(255,54,33,.1);border:1px solid rgba(255,54,33,.25);display:flex;align-items:center;justify-content:center;}
+    .mfg-load-title{font-size:18px;font-weight:700;color:#f0f0f0;letter-spacing:-.01em;}
+    .mfg-load-sub{font-size:12px;color:#6b7280;}
+    .mfg-load-dots{display:flex;gap:8px;margin-top:4px;}
+    .mfg-load-dots span{width:7px;height:7px;border-radius:50%;background:#FF3621;display:block;animation:db-dot-bounce 1.15s ease-in-out infinite;}
+    .mfg-load-dots span:nth-child(2){animation-delay:.18s;}
+    .mfg-load-dots span:nth-child(3){animation-delay:.36s;}
+
+    /* ── Tutorial overlay ── */
+    .tut-overlay{position:fixed;inset:0;z-index:8500;background:rgba(0,0,0,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;}
+    .tut-overlay.hidden{display:none;}
+    .tut-card{background:#111;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:34px 38px;max-width:560px;width:90vw;box-shadow:0 24px 60px rgba(0,0,0,.65);}
+    .tut-hdr{display:flex;align-items:center;gap:13px;margin-bottom:26px;}
+    .tut-hdr-icon{width:46px;height:46px;border-radius:12px;background:rgba(255,54,33,.1);border:1px solid rgba(255,54,33,.22);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .tut-title{font-size:18px;font-weight:800;color:#f0f0f0;line-height:1.2;}
+    .tut-sub{font-size:11.5px;color:#6b7280;margin-top:2px;}
+    .tut-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:26px;}
+    .tut-feat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:13px;}
+    .tut-feat-name{font-size:12px;font-weight:700;color:#f0f0f0;margin-bottom:3px;}
+    .tut-feat-desc{font-size:11px;color:#9ca3af;line-height:1.5;}
+    .tut-footer{display:flex;align-items:center;justify-content:space-between;}
+    .tut-footer-note{font-size:11px;color:#4b5563;}
+    .tut-btn{background:#FF3621;border:none;border-radius:8px;color:#fff;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;font-family:inherit;}
+    .tut-btn:hover{opacity:.88;}
+  </style>
 </head>
 <body>
 
+<!-- ── Loading screen ────────────────────────────────────────────────────── -->
+<div id="mfg-load-screen" class="mfg-load-screen">
+  <div class="mfg-load-icon">
+    <svg width="38" height="38" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="#1A0500"/><path d="M24 8L8 17v8l16 9 16-9v-8L24 8z" fill="#FF3621"/><path d="M8 25v8l16 9 16-9v-8l-16 9-16-9z" fill="#FF6B35" opacity="0.8"/></svg>
+  </div>
+  <div class="mfg-load-title">Operational Excellence</div>
+  <div class="mfg-load-sub">Connecting to Databricks · Loading live plant data</div>
+  <div class="mfg-load-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- ── Tutorial overlay ──────────────────────────────────────────────────── -->
+<div id="tut-overlay" class="tut-overlay hidden">
+  <div class="tut-card">
+    <div class="tut-hdr">
+      <div class="tut-hdr-icon">
+        <svg width="26" height="26" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="#1A0500"/><path d="M24 8L8 17v8l16 9 16-9v-8L24 8z" fill="#FF3621"/><path d="M8 25v8l16 9 16-9v-8l-16 9-16-9z" fill="#FF6B35" opacity="0.8"/></svg>
+      </div>
+      <div>
+        <div class="tut-title">Welcome to Operational Excellence</div>
+        <div class="tut-sub">Powered by Databricks · Live manufacturing intelligence</div>
+      </div>
+    </div>
+    <div class="tut-grid">
+      <div class="tut-feat">
+        <div class="tut-feat-name">📊 Live Floor</div>
+        <div class="tut-feat-desc">Real-time machine status, OEE, and production alerts across all lines — refreshed every 30 seconds.</div>
+      </div>
+      <div class="tut-feat">
+        <div class="tut-feat-name">📈 OEE Analytics</div>
+        <div class="tut-feat-desc">Track availability, performance, and quality with drill-down by shift, plant, and time period.</div>
+      </div>
+      <div class="tut-feat">
+        <div class="tut-feat-name">🔧 Predictive Maintenance</div>
+        <div class="tut-feat-desc">ML-powered failure risk scores for every asset — act before breakdowns impact production.</div>
+      </div>
+      <div class="tut-feat">
+        <div class="tut-feat-name">✦ Ask Genie</div>
+        <div class="tut-feat-desc">Click the Genie icon (bottom-right) to ask natural language questions over your live plant data.</div>
+      </div>
+    </div>
+    <div class="tut-footer">
+      <span class="tut-footer-note">Press Esc to dismiss · won't show again</span>
+      <button class="tut-btn" onclick="dismissTutorial()">Get Started</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<!-- ── Identity bar — consistent across all Solution Studio apps ─────────── -->
 <header class="app-header">
   <div class="header-brand">
-    <div class="db-logo-mark">
+    <div class="db-logo-mark" style="display:none">
       <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="28" height="28">
         <path d="M16 3L4 10v6l12 7 12-7v-6L16 3z" fill="#FF3621"/>
         <path d="M4 16v6l12 7 12-7v-6l-12 7-12-7z" fill="#FF6B35" opacity="0.85"/>
       </svg>
     </div>
     <div class="header-title">
-      <div class="header-title-main">Databricks Manufacturing Intelligence</div>
-      <div class="header-title-sub">Automotive Manufacturing · Plant 1</div>
+      <div class="header-title-main">Operational Excellence</div>
+      <div class="header-title-sub">Powered by Databricks</div>
     </div>
   </div>
 
   <div class="header-divider"></div>
 
-  <div class="header-kpis">
+  <!-- AI Actions — left of All Apps -->
+  <button class="nav-agent-btn" id="nav-agent-btn" onclick="openAgentPanel()" style="margin-right:8px;">AI Actions</button>
+
+  <a href="/portal" style="font-size:11.5px;color:rgba(255,255,255,0.35);text-decoration:none;display:flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid rgba(255,255,255,0.08);border-radius:6px;transition:all .15s;white-space:nowrap;"
+     onmouseover="this.style.color='#f0f0f0';this.style.borderColor='rgba(255,255,255,0.2)'"
+     onmouseout="this.style.color='rgba(255,255,255,0.35)';this.style.borderColor='rgba(255,255,255,0.08)'">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    All Apps
+  </a>
+  <a href="/logout" style="font-size:11.5px;color:rgba(255,255,255,0.35);text-decoration:none;display:flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid rgba(255,255,255,0.08);border-radius:6px;margin-left:8px;transition:all .15s;white-space:nowrap;"
+     onmouseover="this.style.color='#f0f0f0';this.style.borderColor='rgba(239,68,68,0.4)'"
+     onmouseout="this.style.color='rgba(255,255,255,0.35)';this.style.borderColor='rgba(255,255,255,0.08)'">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Sign Out
+  </a>
+</header>
+
+<!-- ── Nav + live KPIs ─────────────────────────────────────────────────────── -->
+<nav class="app-nav">
+  <button class="nav-tab active" data-tab="floor"    onclick="switchTab('floor')">Live Floor</button>
+  <button class="nav-tab"        data-tab="oee"      onclick="switchTab('oee')">OEE Analytics</button>
+  <button class="nav-tab"        data-tab="downtime"    onclick="switchTab('downtime')">Downtime</button>
+  <button class="nav-tab"        data-tab="maintenance" onclick="switchTab('maintenance')">Predictive Maintenance <span class="ai-pip"></span></button>
+  <button class="nav-tab"        data-tab="quality"     onclick="switchTab('quality')">Quality Monitoring</button>
+  <!-- Live KPIs pushed to the right -->
+  <div class="header-kpis" style="margin-left:auto;">
     <div class="hdr-kpi">
       <div class="hdr-kpi-label">PLANT OEE</div>
       <div class="hdr-kpi-val" id="hdr-oee">—</div>
@@ -43,66 +166,88 @@
       <div class="hdr-kpi-label">FAULTS</div>
       <div class="hdr-kpi-val red" id="hdr-faults">—</div>
     </div>
-    <div class="hdr-sep"></div>
-    <div class="alarm-badge" id="hdr-alarms">
-      <div class="alarm-dot"></div>
-      <span id="hdr-alarm-count">—</span> ALARMS
-    </div>
   </div>
-
-  <div class="live-indicator">
+  <div class="live-indicator" style="margin-left:12px;">
     <div class="live-dot"></div>
     LIVE
   </div>
-
-  <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
-
-  <div class="header-powered">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#FF3621" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    Powered by Databricks
-  </div>
-</header>
-
-<!-- ── Nav ────────────────────────────────────────────────────────────────── -->
-<nav class="app-nav">
-  <button class="nav-tab active" data-tab="floor"    onclick="switchTab('floor')">Live Floor</button>
-  <button class="nav-tab"        data-tab="oee"      onclick="switchTab('oee')">OEE Analytics</button>
-  <button class="nav-tab"        data-tab="downtime"    onclick="switchTab('downtime')">Downtime</button>
-  <button class="nav-tab"        data-tab="maintenance" onclick="switchTab('maintenance')">Predictive Maintenance <span class="ai-pip"></span></button>
-  <button class="nav-tab"        data-tab="quality"     onclick="switchTab('quality')">Quality</button>
-  <button class="nav-tab"        data-tab="shift"    onclick="switchTab('shift')">
-    Ask SHIFT <span class="ai-pip"></span>
-  </button>
-  <button class="nav-tab"        data-tab="manuals"  onclick="switchTab('manuals')">
-    Equipment Manuals <span class="ai-pip"></span>
-  </button>
-  <button class="nav-agent-btn" id="nav-agent-btn" onclick="openAgentPanel()">
-    <!-- Databricks Genie star (4-point sparkle) -->
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2C12 7.8 7.8 12 2 12C7.8 12 12 16.2 12 22C12 16.2 16.2 12 22 12C16.2 12 12 7.8 12 2Z"/>
-    </svg>
-    Actions Taken
-  </button>
-  <!-- Back to portal -->
-  <a href="/portal" style="font-size:11.5px;color:rgba(255,255,255,0.35);text-decoration:none;display:flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid rgba(255,255,255,0.08);border-radius:6px;margin-left:auto;transition:all .15s;white-space:nowrap;"
-     onmouseover="this.style.color='#f0f0f0';this.style.borderColor='rgba(255,255,255,0.2)'"
-     onmouseout="this.style.color='rgba(255,255,255,0.35)';this.style.borderColor='rgba(255,255,255,0.08)'">
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    All Apps
-  </a>
+  <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode" style="margin-left:10px;">🌙</button>
 </nav>
 
-<!-- ── Talk Track FAB ────────────────────────────────────────────────────── -->
-<button class="talk-fab" id="talk-fab" onclick="openTalkTrack()" title="60-second talk track">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-  <span>Talk Track</span>
-</button>
+<!-- ── Filter Bar ────────────────────────────────────────────────────────── -->
+<div class="filter-bar" id="filter-bar">
+  <svg class="filter-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+  </svg>
+  <select class="filter-select" id="f-period" onchange="applyFilters()">
+    <option value="">Live</option>
+    <option value="24h">Last 24 Hours</option>
+    <option value="7d">Last 7 Days</option>
+    <option value="30d">Last 30 Days</option>
+  </select>
+  <select class="filter-select" id="f-plant" onchange="applyFilters()">
+    <option value="">All Plants</option>
+    <option value="p1">Plant 1 — Detroit</option>
+    <option value="p2">Plant 2 — Chicago</option>
+    <option value="p3">Plant 3 — Houston</option>
+    <option value="p4">Plant 4 — San Jose</option>
+  </select>
+  <select class="filter-select" id="f-shift" onchange="applyFilters()">
+    <option value="">All Shifts</option>
+    <option value="day">Day (06:00–14:00)</option>
+    <option value="eve">Evening (14:00–22:00)</option>
+    <option value="night">Night (22:00–06:00)</option>
+  </select>
+  <button class="filter-clear hidden" id="filter-clear" onclick="clearFilters()">✕ Clear</button>
+  <span class="filter-count hidden" id="filter-count"></span>
+</div>
+
 
 <!-- ── Main ───────────────────────────────────────────────────────────────── -->
 <div class="main-content">
 
   <!-- ═══════════════════ LIVE FLOOR ══════════════════════════════════════ -->
   <div id="tab-floor" class="tab-panel">
+    <div class="tab-info-bar">
+      <span class="tab-info-desc">Real-time plant floor — IoT telemetry from 14 machines across 3 production lines, refreshed every 30s from Delta Lake Gold tables</span>
+      <button class="tab-info-btn" onclick="openInfoPanel('floor')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        How data drives this
+      </button>
+    </div>
+
+    <!-- ── Plant Status Ticker ──────────────────────────────────────────── -->
+    <div class="floor-ticker">
+      <div class="floor-ticker-track">
+        <div class="floor-ticker-inner" id="floor-ticker-inner">
+          <span class="ftick-item">PLANT OEE <span class="ftick-val" id="ftick-oee">—</span></span>
+          <span class="ftick-sep">|</span>
+          <span class="ftick-item">RUNNING <span class="ftick-val green" id="ftick-running">—</span></span>
+          <span class="ftick-sep">|</span>
+          <span class="ftick-item">FAULTS <span class="ftick-val red" id="ftick-faults">—</span></span>
+          <span class="ftick-sep">|</span>
+          <span class="ftick-item">CRITICAL ALARMS <span class="ftick-val red" id="ftick-alarms">—</span></span>
+          <span class="ftick-sep">|</span>
+          <span class="ftick-item">LINE A <span class="ftick-val" id="ftick-linea">—</span></span>
+          <span class="ftick-sep">|</span>
+          <span class="ftick-item">LINE B <span class="ftick-val" id="ftick-lineb">—</span></span>
+          <span class="ftick-sep">|</span>
+          <span class="ftick-item">LINE C <span class="ftick-val" id="ftick-linec">—</span></span>
+          <span class="ftick-sep">|</span>
+          <span class="ftick-item">VBA <span class="ftick-val" id="ftick-vba">—</span></span>
+          <span class="ftick-sep">|</span>
+          <span class="ftick-item">PBU <span class="ftick-val" id="ftick-pbu">—</span></span>
+          <span class="ftick-sep">|</span>
+          <span class="ftick-item">PTM <span class="ftick-val" id="ftick-ptm">—</span></span>
+          <span class="ftick-sep">|</span>
+          <span class="ftick-item">SHIFT ELAPSED <span class="ftick-val" id="ftick-shift">—</span></span>
+          <span class="ftick-sep">||||</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 2/3 + 1/3 Layout ──────────────────────────────────────────────── -->
+    <div class="floor-layout">
 
     <!-- ── Interactive 2D Floor Map ─────────────────────────────────────── -->
     <div class="floor-map-outer" id="floor-map-outer">
@@ -208,11 +353,98 @@
 
     </div><!-- /floor-map-outer -->
 
+    <!-- ── Right Sidebar (1/3) ───────────────────────────────────────────── -->
+    <div class="floor-sidebar" id="floor-sidebar">
+
+      <!-- Plant Health KPIs -->
+      <div class="fsb-card">
+        <div class="fsb-card-title">Plant Health</div>
+        <div class="fsb-kpi-grid">
+          <div class="fsb-kpi">
+            <div class="fsb-kpi-val" id="fsb-oee">—</div>
+            <div class="fsb-kpi-label">Plant OEE</div>
+          </div>
+          <div class="fsb-kpi">
+            <div class="fsb-kpi-val green" id="fsb-running">—</div>
+            <div class="fsb-kpi-label">Running</div>
+          </div>
+          <div class="fsb-kpi">
+            <div class="fsb-kpi-val red" id="fsb-faults">—</div>
+            <div class="fsb-kpi-label">Faults</div>
+          </div>
+          <div class="fsb-kpi">
+            <div class="fsb-kpi-val amber" id="fsb-idle">—</div>
+            <div class="fsb-kpi-label">Idle</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Line Status -->
+      <div class="fsb-card">
+        <div class="fsb-card-title">Line Status</div>
+        <div id="fsb-lines">
+          <div class="fsb-line-row">
+            <span class="fsb-line-label">Line A · Body Shop</span>
+            <span class="fsb-line-oee" id="fsb-line-a">—</span>
+          </div>
+          <div class="fsb-line-bar-wrap"><div class="fsb-line-bar" id="fsb-bar-a"></div></div>
+          <div class="fsb-line-row" style="margin-top:8px">
+            <span class="fsb-line-label">Line B · Paint Shop</span>
+            <span class="fsb-line-oee" id="fsb-line-b">—</span>
+          </div>
+          <div class="fsb-line-bar-wrap"><div class="fsb-line-bar" id="fsb-bar-b"></div></div>
+          <div class="fsb-line-row" style="margin-top:8px">
+            <span class="fsb-line-label">Line C · Powertrain</span>
+            <span class="fsb-line-oee" id="fsb-line-c">—</span>
+          </div>
+          <div class="fsb-line-bar-wrap"><div class="fsb-line-bar" id="fsb-bar-c"></div></div>
+        </div>
+      </div>
+
+      <!-- Shift Output -->
+      <div class="fsb-card">
+        <div class="fsb-card-title">Shift Output</div>
+        <div id="fsb-production">
+          <div class="fsb-prod-row">
+            <span class="fsb-prod-label">VBA</span>
+            <div class="fsb-prod-bar-wrap"><div class="fsb-prod-bar" id="fsb-prod-vba"></div></div>
+            <span class="fsb-prod-val" id="fsb-prod-vba-val">—</span>
+          </div>
+          <div class="fsb-prod-row">
+            <span class="fsb-prod-label">PBU</span>
+            <div class="fsb-prod-bar-wrap"><div class="fsb-prod-bar" id="fsb-prod-pbu"></div></div>
+            <span class="fsb-prod-val" id="fsb-prod-pbu-val">—</span>
+          </div>
+          <div class="fsb-prod-row">
+            <span class="fsb-prod-label">PTM</span>
+            <div class="fsb-prod-bar-wrap"><div class="fsb-prod-bar" id="fsb-prod-ptm"></div></div>
+            <span class="fsb-prod-val" id="fsb-prod-ptm-val">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Alarms -->
+      <div class="fsb-card">
+        <div class="fsb-card-title">Active Alarms <span class="fsb-badge" id="fsb-alarm-badge"></span></div>
+        <div id="fsb-alarms"><div class="fsb-empty">Loading…</div></div>
+      </div>
+
+    </div><!-- /floor-sidebar -->
+
+    </div><!-- /floor-layout -->
+
   </div><!-- /floor -->
 
 
   <!-- ═══════════════════ OEE ANALYTICS ═══════════════════════════════════ -->
   <div id="tab-oee" class="tab-panel hidden">
+    <div class="tab-info-bar">
+      <span class="tab-info-desc">OEE analytics — Availability × Performance × Quality computed from MES and sensor data · click any bar to drill into A × P × Q factors</span>
+      <button class="tab-info-btn" onclick="openInfoPanel('oee')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        How data drives this
+      </button>
+    </div>
 
     <div class="kpi-row">
       <div class="kpi-card">
@@ -250,11 +482,46 @@
           <div class="section-sub">Click any bar to see Availability · Performance · Quality breakdown and improvement suggestions</div>
         </div>
         <div class="chart-card">
-          <canvas id="oee-machine-chart" height="130"></canvas>
+          <canvas id="oee-machine-chart" height="65"></canvas>
+        </div>
+
+        <!-- Click hint — visible before any bar is selected -->
+        <div class="oee-click-hint" id="oee-click-hint">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 9l5-7 1.5 4.5L20 8l-7 5 1 5-5-3.5L4 18l1-5z"/>
+          </svg>
+          Click any bar above to drill into the <strong>Availability × Performance × Quality</strong> breakdown and see specific improvement actions
         </div>
 
         <!-- OEE factors detail panel — shown on bar click -->
         <div class="oee-factors-panel hidden" id="oee-factors-panel"></div>
+
+        <!-- OEE Root Cause ML Runner -->
+        <div class="ml-runner-card" style="margin-top:18px;border-color:rgba(16,185,129,0.2);">
+          <div class="ml-runner-header">
+            <div>
+              <div class="ml-runner-title">OEE Root Cause Analysis</div>
+              <div class="ml-runner-sub">GradientBoosting model — identify top loss drivers across Availability, Performance &amp; Quality</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <select class="filter-select" id="oee-line-filter" onchange="filterOeeLine(this.value)" style="font-size:11.5px;padding:5px 10px;">
+                <option value="all">All Lines</option>
+                <option value="A">Line A — Body Shop</option>
+                <option value="B">Line B — Paint Shop</option>
+                <option value="C">Line C — Powertrain</option>
+              </select>
+              <button class="btn-run-model" id="oee-rca-btn" onclick="runOeeRootCause()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C12 7.8 7.8 12 2 12C7.8 12 12 16.2 12 22C12 16.2 16.2 12 22 12C16.2 12 12 7.8 12 2Z"/></svg>
+                Run Root Cause Analysis
+              </button>
+            </div>
+          </div>
+          <div class="ml-thinking" id="oee-rca-thinking">
+            <div class="spinner sm"></div>
+            <span id="oee-rca-step">Loading sensor telemetry from Delta Lake…</span>
+          </div>
+          <div class="ml-results" id="oee-rca-results"></div>
+        </div>
       </div>
 
       <div class="oee-sidebar">
@@ -271,6 +538,13 @@
 
   <!-- ═══════════════════ DOWNTIME ═════════════════════════════════════════ -->
   <div id="tab-downtime" class="tab-panel hidden">
+    <div class="tab-info-bar">
+      <span class="tab-info-desc">Downtime analysis — fault Pareto, MTBF/MTTR, and active alarms sourced from Unity Catalog event history</span>
+      <button class="tab-info-btn" onclick="openInfoPanel('downtime')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        How data drives this
+      </button>
+    </div>
 
     <div class="kpi-row">
       <div class="kpi-card">
@@ -382,6 +656,13 @@
 
   <!-- ═══════════════════ PREDICTIVE MAINTENANCE ══════════════════════════ -->
   <div id="tab-maintenance" class="tab-panel hidden">
+    <div class="tab-info-bar">
+      <span class="tab-info-desc">Predictive maintenance — GradientBoosting model scoring failure risk across 9 sensor features · click any card for 24h time-series detail</span>
+      <button class="tab-info-btn" onclick="openInfoPanel('maintenance')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        How data drives this
+      </button>
+    </div>
 
     <div class="pdm-header-row">
       <div>
@@ -390,6 +671,16 @@
       </div>
       <div class="pdm-header-right">
         <div class="pdm-summary-pills" id="pdm-summary-pills"></div>
+        <div class="pdm-view-toggle">
+          <button class="pdm-view-btn active" data-view="card" onclick="togglePdmView('card')" title="Card view">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Cards
+          </button>
+          <button class="pdm-view-btn" data-view="table" onclick="togglePdmView('table')" title="Table view">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            Table
+          </button>
+        </div>
         <div class="pdm-model-tag" id="pdm-model-tag">predictive-maintenance</div>
       </div>
     </div>
@@ -403,43 +694,18 @@
   </div><!-- /maintenance -->
 
 
-  <!-- ═══════════════════ QUALITY ══════════════════════════════════════════ -->
+  <!-- ═══════════════════ QUALITY MONITORING ══════════════════════════════ -->
   <div id="tab-quality" class="tab-panel hidden">
-
-    <!-- ── Vision AI Defect Detection ──────────────────────────────────── -->
-    <div class="vision-section">
-      <div class="vision-section-header">
-        <div>
-          <div class="section-title">Vision AI — E-Coat Defect Detection</div>
-          <div class="section-sub">Databricks Model Serving · UC Volume: <code>demo_nah_catalog.mfg_vision.inspection_images</code> · 10 body panels · current carrier lot</div>
-        </div>
-        <div class="vision-header-right">
-          <div class="vision-model-tag" id="vision-model-tag">databricks-ecoat-defect-v2</div>
-          <button class="btn-run-vision" id="vision-run-btn" onclick="runAllInspections()">Run Inspection Batch</button>
-        </div>
-      </div>
-      <div class="vision-grid" id="vision-grid">
-        <!-- Populated by JS -->
-      </div>
-      <div class="vision-summary hidden" id="vision-summary">
-        <span class="vsumm-stat vsumm-pass" id="vsumm-pass">— PASS</span>
-        <span class="vsumm-stat vsumm-fail" id="vsumm-fail">— DEFECT</span>
-        <span class="vsumm-stat vsumm-total" id="vsumm-total">— INSPECTED</span>
-        <span class="vsumm-stat vsumm-model" id="vsumm-model">—</span>
-      </div>
-
-      <!-- Production Impact Analysis — auto-shown for defective panels -->
-      <div class="impact-panel hidden" id="impact-panel">
-        <div class="impact-panel-header">
-          <div class="impact-panel-title">Production Impact Analysis</div>
-          <div class="impact-panel-sub">Machine time &amp; materials per defective panel</div>
-        </div>
-        <div class="impact-cards" id="impact-cards"></div>
-      </div>
+    <div class="tab-info-bar">
+      <span class="tab-info-desc">Vision AI defect detection — E-coat quality across body panels, first pass yield, and defect distribution from Unity Catalog Gold tables</span>
+      <button class="tab-info-btn" onclick="openInfoPanel('quality')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        How data drives this
+      </button>
     </div>
 
     <!-- ── Quality KPIs ─────────────────────────────────────────────────── -->
-    <div class="kpi-row" style="margin-top:20px;">
+    <div class="kpi-row">
       <div class="kpi-card">
         <div class="kpi-label">First Pass Yield</div>
         <div class="kpi-value" id="q-fpy">—</div>
@@ -468,6 +734,7 @@
       </div>
     </div>
 
+    <!-- ── Charts ───────────────────────────────────────────────────────── -->
     <div class="quality-layout" style="margin-top:12px;">
       <div class="quality-main">
         <div class="section-header">
@@ -475,7 +742,7 @@
           <div class="section-sub">Top defect types — current shift</div>
         </div>
         <div class="chart-card">
-          <canvas id="defect-chart" height="120"></canvas>
+          <canvas id="defect-chart" height="60"></canvas>
         </div>
       </div>
 
@@ -487,42 +754,115 @@
           <canvas id="defect-donut" height="200"></canvas>
         </div>
 
-        <div class="section-header" style="margin-top:8px;">
-          <div class="section-title">Quality by Product</div>
+      </div>
+    </div>
+
+    <!-- ── Quality Root Cause ML Runner ───────────────────────────────── -->
+    <div class="ml-runner-card" style="margin-bottom:0;border-color:rgba(16,185,129,0.2);">
+      <div class="ml-runner-header">
+        <div>
+          <div class="ml-runner-title">Defect Root Cause Analysis</div>
+          <div class="ml-runner-sub">Isolation Forest + causal model — traces defects to upstream process parameters</div>
         </div>
-        <div class="product-quality-cards">
-          <div class="pq-card">
-            <div class="pq-badge ppu">VBA</div>
-            <div class="pq-name">Vehicle Body Assemblies</div>
-            <div class="pq-fpy pq-fpy-red">FPY 71.2%</div>
-            <div class="pq-detail">124 weld porosity · 52 hemming dim.</div>
-          </div>
-          <div class="pq-card">
-            <div class="pq-badge dla">PBU</div>
-            <div class="pq-name">Painted Body Units</div>
-            <div class="pq-fpy pq-fpy-red">FPY 68.4%</div>
-            <div class="pq-detail">187 E-Coat adhesion · 28 contamination</div>
-          </div>
-          <div class="pq-card">
-            <div class="pq-badge gam">PTM</div>
-            <div class="pq-name">Powertrain Modules</div>
-            <div class="pq-fpy pq-fpy-yellow">FPY 82.1%</div>
-            <div class="pq-detail">88 torque non-conf. · 10 other</div>
-          </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <select class="filter-select" id="qual-line-filter" style="font-size:11.5px;padding:5px 10px;">
+            <option value="all">All Lines</option>
+            <option value="A">Line A — Body Shop</option>
+            <option value="B">Line B — Paint Shop</option>
+            <option value="C">Line C — Powertrain</option>
+          </select>
+          <select class="filter-select" id="qual-defect-filter" style="font-size:11.5px;padding:5px 10px;">
+            <option value="all">All Defect Types</option>
+            <option value="scratch">Surface Scratches</option>
+            <option value="dent">Dents &amp; Deformation</option>
+            <option value="weld">Weld Porosity</option>
+            <option value="paint">Paint Adhesion</option>
+            <option value="dim">Dimensional Variance</option>
+          </select>
+          <button class="btn-run-model" id="qual-rca-btn" onclick="runQualityRootCause()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C12 7.8 7.8 12 2 12C7.8 12 12 16.2 12 22C12 16.2 16.2 12 22 12C16.2 12 12 7.8 12 2Z"/></svg>
+            Analyze Root Causes
+          </button>
         </div>
+      </div>
+      <div class="ml-thinking" id="qual-rca-thinking">
+        <div class="spinner sm"></div>
+        <span id="qual-rca-step">Scanning defect event history from quality_gold table…</span>
+      </div>
+      <div class="ml-results" id="qual-rca-results"></div>
+    </div>
+
+    <!-- ── Vision AI Defect Detection ──────────────────────────────────── -->
+    <div class="vision-section" style="margin-top:20px;">
+      <div class="vision-section-header">
+        <div>
+          <div class="section-title">Vision AI — E-Coat Defect Detection</div>
+          <div class="section-sub">Computer vision models inspect every body panel for E-coat adhesion failures before they reach the paint shop — catching defects that average $2,400 per rework cycle and preventing downstream line stoppages</div>
+        </div>
+        <div class="vision-header-right">
+          <div class="vision-model-tag" id="vision-model-tag">databricks-ecoat-defect-v2</div>
+          <button class="btn-run-vision" id="vision-run-btn" onclick="runAllInspections()">Run Inspection Batch</button>
+        </div>
+      </div>
+      <div class="vision-grid" id="vision-grid">
+        <!-- Populated by JS -->
+      </div>
+      <div class="vision-summary hidden" id="vision-summary">
+        <span class="vsumm-stat vsumm-pass" id="vsumm-pass">— PASS</span>
+        <span class="vsumm-stat vsumm-fail" id="vsumm-fail">— DEFECT</span>
+        <span class="vsumm-stat vsumm-total" id="vsumm-total">— INSPECTED</span>
+        <span class="vsumm-stat vsumm-model" id="vsumm-model">—</span>
+      </div>
+
+      <!-- Production Impact Analysis — auto-shown for defective panels -->
+      <div class="impact-panel hidden" id="impact-panel">
+        <div class="impact-panel-header">
+          <div class="impact-panel-title">Production Impact Analysis</div>
+          <div class="impact-panel-sub">Machine time &amp; materials per defective panel</div>
+        </div>
+        <div class="impact-cards" id="impact-cards"></div>
       </div>
     </div>
 
   </div><!-- /quality -->
 
 
-  <!-- ═══════════════════ ASK SHIFT ════════════════════════════════════════ -->
-  <div id="tab-shift" class="tab-panel hidden">
+  <div id="tab-shift" class="tab-panel hidden"></div>
 
-    <div class="shift-panel">
+</div><!-- /main-content -->
+
+<!-- ── Genie FAB ────────────────────────────────────────────────────────────── -->
+<button class="genie-fab" id="genie-fab" onclick="toggleGeniePanel()" title="Ask Genie">
+  <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+    <path d="M14 1 L15.1 5.9 L20 7 L15.1 8.1 L14 13 L12.9 8.1 L8 7 L12.9 5.9 Z" fill="#FF3621"/>
+    <path d="M8 16 Q2.5 14.5 2.5 11.5 Q2.5 9 5 9 Q7 9 7.5 11.5 L8.5 14.5Z" fill="#F9A090"/>
+    <ellipse cx="16" cy="17.5" rx="8.5" ry="4.5" fill="#F9A090"/>
+    <path d="M24.5 15.5 Q27.5 16 27.5 18 Q27.5 20 24.5 20.5" stroke="#F9A090" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <rect x="10" y="21" width="12" height="3.5" rx="1.8" fill="#FF3621"/>
+  </svg>
+</button>
+<div class="genie-panel-overlay" id="genie-panel-overlay" onclick="closeGeniePanel()"></div>
+<div class="genie-chat-panel" id="genie-chat-panel">
+  <div class="genie-chat-panel-hdr">
+    <div class="genie-chat-panel-icon">
+      <svg width="20" height="20" viewBox="0 0 28 28" fill="none">
+        <path d="M14 1 L15.1 5.9 L20 7 L15.1 8.1 L14 13 L12.9 8.1 L8 7 L12.9 5.9 Z" fill="#FF3621"/>
+        <path d="M8 16 Q2.5 14.5 2.5 11.5 Q2.5 9 5 9 Q7 9 7.5 11.5 L8.5 14.5Z" fill="#F9A090"/>
+        <ellipse cx="16" cy="17.5" rx="8.5" ry="4.5" fill="#F9A090"/>
+        <path d="M24.5 15.5 Q27.5 16 27.5 18 Q27.5 20 24.5 20.5" stroke="#F9A090" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <rect x="10" y="21" width="12" height="3.5" rx="1.8" fill="#FF3621"/>
+      </svg>
+    </div>
+    <div>
+      <div class="genie-chat-panel-title">Ask Genie</div>
+      <div class="genie-chat-panel-sub">AI analytics · Databricks Operational Excellence</div>
+    </div>
+    <button class="genie-chat-panel-close" onclick="closeGeniePanel()">✕</button>
+  </div>
+  <div class="genie-chat-panel-body">
+    <div class="shift-panel" style="border-radius:0;border:none;box-shadow:none;">
       <div class="shift-chat-body">
         <div class="shift-chat-inner">
-
           <div id="shift-starters">
             <div class="shift-welcome">
               <div class="shift-welcome-icon">
@@ -532,19 +872,9 @@
                   <path d="M8 25v8l16 9 16-9v-8l-16 9-16-9z" fill="#FF6B35" opacity="0.8"/>
                 </svg>
               </div>
-              <div class="shift-welcome-title">SHIFT <span>Intelligence</span></div>
-              <div class="shift-welcome-sub">
-                Agentic AI for Databricks manufacturing — powered by Databricks AI &amp; LLM.<br>
-                Query live OEE, machine health, quality, and downtime data from your Delta Lake.
-              </div>
-              <div class="shift-caps">
-                <div class="shift-cap"><span>⚡</span> Live Delta Lake</div>
-                <div class="shift-cap"><span>🤖</span> Ask AI</div>
-                <div class="shift-cap"><span>🔮</span> Predictive AI</div>
-                <div class="shift-cap"><span>📊</span> Root Cause</div>
-              </div>
+              <div class="shift-welcome-title">Ask <span>AI</span></div>
+              <div class="shift-welcome-sub">Query live OEE, machine health, quality, and downtime data from your Delta Lake.</div>
             </div>
-
             <div class="shift-suggestions">
               <button class="shift-suggestion" onclick="setShiftQ(this)">What is causing the most downtime on Line A right now?</button>
               <button class="shift-suggestion" onclick="setShiftQ(this)">If FAL-ASM-01 goes down for 4 hours, how many vehicles are lost?</button>
@@ -554,110 +884,42 @@
               <button class="shift-suggestion" onclick="setShiftQ(this)">Which machine has the worst MTBF and what is the repair priority?</button>
             </div>
           </div>
-
           <div id="shift-thread" class="convo-thread hidden"></div>
-
           <div id="shift-loading" class="hidden" style="display:flex;align-items:center;gap:10px;padding:16px 0;color:var(--text-muted);font-size:13px;">
             <div class="spinner sm"></div>
-            <span>SHIFT is analyzing your manufacturing data…</span>
+            <span>AI is analyzing your manufacturing data…</span>
           </div>
-
         </div>
       </div>
-
       <div class="shift-input-area">
         <div class="shift-input-inner">
           <div class="shift-form">
             <textarea class="shift-textarea" id="shift-input" rows="2"
               placeholder="Ask about OEE, downtime root cause, quality trends, machine health, production forecast…"></textarea>
-            <button class="shift-btn" id="shift-btn" onclick="submitShift()">Ask SHIFT</button>
+            <button class="shift-btn" id="shift-btn" onclick="submitShift()">Ask AI</button>
           </div>
-          <div class="shift-hint">
-            Connected to <strong>auto_mfg_catalog — Databricks IoT Pipeline</strong> · Cmd+Enter to submit
-          </div>
+          <div class="shift-hint">Connected to <strong>auto_mfg_catalog — Databricks IoT Pipeline</strong> · Cmd+Enter to submit</div>
         </div>
       </div>
     </div>
-
-  </div><!-- /shift -->
-
-  <!-- ── Equipment Manuals Tab ─────────────────────────────────────────── -->
-  <div id="tab-manuals" class="tab-panel hidden">
-
-    <div class="manuals-layout">
-
-      <!-- Left: manual library cards -->
-      <div class="manuals-sidebar">
-        <div class="manuals-sidebar-title">Manual Library</div>
-        <div class="manuals-card-grid" id="manuals-card-grid">
-          <!-- populated by JS -->
-        </div>
-      </div>
-
-      <!-- Right: chat interface -->
-      <div class="manuals-chat-panel">
-        <div class="manuals-chat-header">
-          <div class="manuals-chat-icon">
-            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
-              <rect width="48" height="48" rx="10" fill="#1A0500"/>
-              <path d="M24 8L8 17v8l16 9 16-9v-8L24 8z" fill="#FF3621"/>
-              <path d="M8 25v8l16 9 16-9v-8l-16 9-16-9z" fill="#FF6B35" opacity="0.8"/>
-            </svg>
-          </div>
-          <div>
-            <div class="manuals-chat-title">Equipment Manual Assistant</div>
-            <div class="manuals-chat-sub">Ask any question about your equipment — maintenance procedures, fault codes, specifications, and more.</div>
-          </div>
-        </div>
-
-        <div class="manuals-chat-body" id="manuals-chat-body">
-          <div id="manuals-starters">
-            <div class="manuals-suggestions">
-              <button class="manuals-suggestion" onclick="setManualsQ(this)">How do I resolve fault E-047 on FAL-ASM-01?</button>
-              <button class="manuals-suggestion" onclick="setManualsQ(this)">What is the PM schedule for the FANUC welding robot?</button>
-              <button class="manuals-suggestion" onclick="setManualsQ(this)">Why is die lube pressure dropping on the stamping press?</button>
-              <button class="manuals-suggestion" onclick="setManualsQ(this)">How do I calibrate the vision inspection cameras?</button>
-              <button class="manuals-suggestion" onclick="setManualsQ(this)">What does the E-Coat over-voltage alarm mean?</button>
-              <button class="manuals-suggestion" onclick="setManualsQ(this)">What are the torque specs for the transfer car encoder?</button>
-            </div>
-          </div>
-          <div id="manuals-thread" class="manuals-thread hidden"></div>
-          <div id="manuals-loading" class="hidden manuals-loading">
-            <div class="spinner sm"></div>
-            <span>Searching manual library…</span>
-          </div>
-        </div>
-
-        <div class="manuals-input-area">
-          <div class="manuals-input-inner">
-            <textarea class="manuals-textarea" id="manuals-input" rows="2"
-              placeholder="Ask about maintenance procedures, fault codes, specifications, torque values…"></textarea>
-            <button class="manuals-btn" id="manuals-btn" onclick="submitManuals()">Ask</button>
-          </div>
-          <div class="manuals-hint">
-            Powered by <strong>Databricks RAG</strong> · 10 equipment manuals · Unity Catalog Vector Search
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-  </div><!-- /manuals -->
-
-</div><!-- /main-content -->
-
-<!-- ── Talk Track Modal ──────────────────────────────────────────────────── -->
-<div id="talk-overlay" class="talk-overlay hidden" onclick="closeTalkTrack()"></div>
-<div id="talk-modal" class="talk-modal hidden">
-  <div class="talk-modal-header">
-    <div class="talk-modal-title">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      60-Second Talk Track
-      <span class="talk-tab-badge" id="talk-tab-badge">—</span>
-    </div>
-    <button class="talk-modal-close" onclick="closeTalkTrack()">✕</button>
   </div>
-  <div class="talk-modal-body" id="talk-modal-body"></div>
+</div>
+
+<!-- ── Info Panel ─────────────────────────────────────────────────────────── -->
+<div class="info-overlay hidden" id="info-overlay" onclick="closeInfoPanel(event)">
+  <div class="info-panel" id="info-panel">
+    <div class="info-panel-hdr">
+      <div class="info-panel-hdr-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </div>
+      <div class="info-panel-hdr-text">
+        <div class="info-panel-badge">OPERATIONAL EXCELLENCE</div>
+        <div class="info-panel-title" id="info-panel-title">—</div>
+      </div>
+      <button class="info-panel-close" onclick="closeInfoPanel()">✕</button>
+    </div>
+    <div class="info-panel-body" id="info-panel-body"></div>
+  </div>
 </div>
 
 <!-- ── Machine Status Modal ──────────────────────────────────────────────── -->
@@ -718,6 +980,63 @@
   </div>
 </div>
 
-<script src="/manufacturing/js/app.js"></script>
+<!-- ── Image Lightbox ────────────────────────────────────────────────────── -->
+<div id="lightbox-overlay" class="lightbox-overlay hidden" onclick="closeLightbox()">
+  <div class="lightbox-img-wrap" onclick="event.stopPropagation()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightbox-img" src="" alt="">
+    <div class="lightbox-label" id="lightbox-label"></div>
+  </div>
+</div>
+
+
+<!-- ── Onboarding Tutorial ──────────────────────────────────────────────────── -->
+<div id="tut-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.82);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;">
+  <div id="tut-card" style="background:#171717;border:1px solid rgba(255,255,255,0.1);border-radius:20px;width:520px;max-width:calc(100vw - 40px);padding:40px;box-shadow:0 32px 80px rgba(0,0,0,0.7);position:relative;">
+    <!-- Skip -->
+    <button onclick="dismissTutorial()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#9ca3af;font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;font-family:inherit;">Skip</button>
+    <!-- Slides -->
+    <div id="tut-slides" style="min-height:220px;">
+      <!-- Slide 0 -->
+      <div class="tut-slide" id="tslide-0">
+        <div style="font-size:22px;font-weight:800;color:#f0f0f0;margin-bottom:12px;">Welcome to Operational Excellence</div>
+        <div style="font-size:14px;color:#9ca3af;line-height:1.7;">This live dashboard connects to your <strong style="color:#f0f0f0">Databricks lakehouse</strong> — streaming real-time OEE, machine health, quality, and downtime data from your plant floor.</div>
+      </div>
+      <!-- Slide 1 — Module Navigator -->
+      <div class="tut-slide" id="tslide-1" style="display:none">
+        <div style="font-size:18px;font-weight:800;color:#f0f0f0;margin-bottom:6px;">Where would you like to start?</div>
+        <div style="font-size:13px;color:#6b7280;margin-bottom:16px;">Click any module to jump there now</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div onclick="switchTab('oee');dismissTutorial()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s;" onmouseover="this.style.borderColor='#1B6FEB';this.style.background='rgba(27,111,235,0.1)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';this.style.background='rgba(255,255,255,0.05)'">
+            <div style="font-size:13px;font-weight:700;color:#f0f0f0;margin-bottom:3px;">OEE Analytics</div>
+            <div style="font-size:11px;color:#6b7280;line-height:1.4;">AI root cause analysis &amp; performance trends</div>
+          </div>
+          <div onclick="switchTab('maintenance');dismissTutorial()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s;" onmouseover="this.style.borderColor='#1B6FEB';this.style.background='rgba(27,111,235,0.1)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';this.style.background='rgba(255,255,255,0.05)'">
+            <div style="font-size:13px;font-weight:700;color:#f0f0f0;margin-bottom:3px;">Predictive Maintenance</div>
+            <div style="font-size:11px;color:#6b7280;line-height:1.4;">ML failure prediction &amp; health scores</div>
+          </div>
+          <div onclick="switchTab('quality');dismissTutorial()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s;" onmouseover="this.style.borderColor='#1B6FEB';this.style.background='rgba(27,111,235,0.1)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';this.style.background='rgba(255,255,255,0.05)'">
+            <div style="font-size:13px;font-weight:700;color:#f0f0f0;margin-bottom:3px;">Quality Monitoring</div>
+            <div style="font-size:11px;color:#6b7280;line-height:1.4;">Defect tracking, FPY &amp; inspection results</div>
+          </div>
+          <div onclick="switchTab('shift');dismissTutorial()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s;" onmouseover="this.style.borderColor='#1B6FEB';this.style.background='rgba(27,111,235,0.1)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';this.style.background='rgba(255,255,255,0.05)'">
+            <div style="font-size:13px;font-weight:700;color:#f0f0f0;margin-bottom:3px;">Ask AI</div>
+            <div style="font-size:11px;color:#6b7280;line-height:1.4;">Natural language queries on live plant data</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div style="display:flex;align-items:center;justify-content:center;margin-top:28px;">
+      <button id="tut-next-btn" onclick="tutNext()" style="background:linear-gradient(135deg,#1B6FEB,#0EA5E9);color:#fff;border:none;border-radius:9px;padding:11px 32px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Next →</button>
+    </div>
+  </div>
+</div>
+<style>
+  .tut-dot { width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);transition:background .2s,transform .2s; }
+  .tut-dot.active { background:#1B6FEB;transform:scale(1.25); }
+</style>
+
+<script src="/manufacturing/js/app.js?v=20260525d"></script>
 </body>
 </html>

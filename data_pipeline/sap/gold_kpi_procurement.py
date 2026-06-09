@@ -1,7 +1,7 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # SAP Gold KPI — sap_gold_kpi_procurement
-# MAGIC High-level procurement KPIs: total POs, spend, avg PO value, unique suppliers.
+# MAGIC High-level procurement KPIs: total POs, total spend, avg PO spend, unique suppliers.
 
 # COMMAND ----------
 
@@ -15,24 +15,28 @@ print(f"Using catalog={catalog}, schema={schema}")
 
 from pyspark.sql import functions as F
 
-proc = spark.table(f"`{catalog}`.`{schema}`.sap_gold_business_procurement")
+proc = spark.table(f"`{catalog}`.`{schema}`.sap_gold_procurement")
 
 sap_gold_kpi_procurement = proc.agg(
-    F.count(F.lit(1)).alias("total_pos"),
-    F.coalesce(F.sum("total_value"), F.lit(0)).alias("total_po_value"),
-    F.coalesce(F.sum("total_qty"), F.lit(0)).alias("total_po_qty"),
-    F.countDistinct("lifnr").alias("unique_suppliers"),
-    F.sum("line_count").alias("total_po_lines"),
+    F.count(F.lit(1)).alias("total_purchase_orders"),
+    F.coalesce(F.sum("total_net_value_usd"), F.lit(0)).alias("total_spend_usd"),
+    F.coalesce(F.sum("total_quantity"), F.lit(0)).alias("total_quantity_ordered"),
+    F.countDistinct("supplier_number").alias("unique_suppliers"),
+    F.sum("total_line_items").alias("total_line_items"),
 ).withColumn(
-    "avg_po_value",
-    F.when(F.col("total_pos") > 0, F.col("total_po_value") / F.col("total_pos")).otherwise(F.lit(0)),
+    "avg_po_spend_usd",
+    F.when(F.col("total_purchase_orders") > 0, F.col("total_spend_usd") / F.col("total_purchase_orders")).otherwise(F.lit(0)),
+).withColumn(
+    "avg_unit_cost",
+    F.when(F.col("total_quantity_ordered") > 0, F.col("total_spend_usd") / F.col("total_quantity_ordered")).otherwise(F.lit(0)),
 ).select(
-    "total_pos",
-    "total_po_value",
-    "avg_po_value",
-    "total_po_qty",
-    "total_po_lines",
+    "total_purchase_orders",
+    "total_spend_usd",
+    "avg_po_spend_usd",
+    "total_quantity_ordered",
+    "total_line_items",
     "unique_suppliers",
+    "avg_unit_cost",
 )
 
 sap_gold_kpi_procurement.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(

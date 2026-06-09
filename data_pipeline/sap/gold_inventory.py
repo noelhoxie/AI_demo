@@ -1,7 +1,7 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # SAP Gold — sap_gold_business_inventory
-# MAGIC Inventory summary by material/plant from silver. One notebook per table for pipeline visibility.
+# MAGIC # SAP Gold — sap_gold_inventory
+# MAGIC Inventory summary by material/plant with business-friendly column names.
 
 # COMMAND ----------
 
@@ -15,20 +15,28 @@ print(f"Using catalog={catalog}, schema={schema}")
 
 from pyspark.sql import functions as F
 
-inv_silver = spark.table(f"`{catalog}`.`{schema}`.sap_silver_analyst_inventory")
+inv_silver = spark.table(f"`{catalog}`.`{schema}`.sap_silver_inventory")
 
-sap_gold_business_inventory = (
+sap_gold_inventory = (
     inv_silver
-    .groupBy("matnr", "werks")
+    .groupBy("material_number", "plant")
     .agg(
-        F.sum("labst").alias("unrestricted_qty"),
-        F.sum("speme").alias("blocked_qty"),
-        F.sum("insme").alias("in_transit_qty"),
-        F.sum("eisbe").alias("safety_stock"),
-        (F.sum("labst") + F.sum("insme")).alias("total_available"),
+        F.sum("unrestricted_stock").alias("unrestricted_stock"),
+        F.sum("blocked_stock").alias("blocked_stock"),
+        F.sum("in_transit_stock").alias("in_transit_stock"),
+        F.sum("safety_stock_level").alias("safety_stock_level"),
+        F.sum("available_stock").alias("available_stock"),
+        F.sum("total_stock").alias("total_stock"),
+    )
+    .withColumn(
+        "inventory_health",
+        F.when(F.col("unrestricted_stock") < F.col("safety_stock_level"), F.lit("Critical"))
+        .when(F.col("unrestricted_stock") < F.col("safety_stock_level") * 2, F.lit("Low"))
+        .otherwise(F.lit("OK")),
     )
 )
-sap_gold_business_inventory.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(
-    f"`{catalog}`.`{schema}`.sap_gold_business_inventory"
+
+sap_gold_inventory.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(
+    f"`{catalog}`.`{schema}`.sap_gold_inventory"
 )
-display(sap_gold_business_inventory.limit(10))
+display(sap_gold_inventory.limit(10))

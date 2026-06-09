@@ -10,11 +10,11 @@ command:
 
 env:
   - name: DATABRICKS_WAREHOUSE_ID
-    value: "<your-warehouse-id>"   # Replace with your HTTP SQL Warehouse ID
+    value: "23720e4bb845c623"
   - name: DEFAULT_CATALOG
-    value: "main"
+    value: "demo_nah_catalog"
   - name: DEFAULT_SCHEMA
-    value: "default"
+    value: "wabash"
   - name: QUERY_ROW_LIMIT
     value: "500"
 

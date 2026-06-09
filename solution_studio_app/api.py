@@ -1,10 +1,11 @@
 """
 Solution Studio — consolidated Flask app
-Supply Chain Intelligence · Manufacturing Intelligence · Finance Intelligence
+Supply Chain Control Tower · Operational Excellence · Finance Intelligence
 Single login, shared session, one Databricks App deployment.
 Routes: /supply-chain/api/... · /manufacturing/api/... · /finance/api/...
 """
 
+import base64
 import hashlib
 import json
 import math
@@ -38,11 +39,21 @@ app.secret_key = _sk if _sk else hashlib.sha256(b"solution-studio-master-2024").
 DATABRICKS_HOST = os.getenv("DATABRICKS_HOST", "")
 COMPANY_NAME    = os.getenv("COMPANY_NAME", "")
 
+# Genie-specific host/token — defaults to DATABRICKS_HOST/TOKEN if not set.
+# Set GENIE_HOST + GENIE_TOKEN to route all three AI chats to a different workspace
+# (e.g. db-dais-2026.cloud.databricks.com) without changing logging/SQL connections.
+# For M2M OAuth set GENIE_CLIENT_ID + GENIE_CLIENT_SECRET instead of GENIE_TOKEN.
+GENIE_HOST          = os.getenv("GENIE_HOST",          "")
+GENIE_TOKEN         = os.getenv("GENIE_TOKEN",         "")
+GENIE_CLIENT_ID     = os.getenv("GENIE_CLIENT_ID",     "")
+GENIE_CLIENT_SECRET = os.getenv("GENIE_CLIENT_SECRET", "")
+
 # Delta logging (shared)
 LOG_HTTP_PATH = os.getenv("LOG_HTTP_PATH") or os.getenv("SC_SQL_WAREHOUSE_HTTP_PATH", "")
 LOG_CATALOG       = os.getenv("LOG_CATALOG", "solution_studio_catalog")
 LOG_SCHEMA        = os.getenv("LOG_SCHEMA", "solution_studio_logs")
 LOG_SHEETS_WEBHOOK = os.getenv("LOG_SHEETS_WEBHOOK", "")
+LOG_SHEET_ID       = os.getenv("LOG_SHEET_ID", "1IcUqjBdtb__MHmgozi2RgsVzmizN_SUZp0Fdt8ympDs")
 
 # Supply chain
 SC_GENIE_SPACE_ID          = os.getenv("SC_GENIE_SPACE_ID", "")
@@ -66,6 +77,311 @@ FIN_GENIE_SPACE_ID = os.getenv("FIN_GENIE_SPACE_ID", "")
 FIN_GOOGLE_API_KEY = os.getenv("FIN_GOOGLE_API_KEY", "")
 FIN_CATALOG        = os.getenv("FIN_CATALOG", "demo_nah_catalog")
 FIN_GOLD_SCHEMA    = os.getenv("FIN_GOLD_SCHEMA", "finance_gold")
+
+# Sales
+SALES_GENIE_SPACE_ID = os.getenv("SALES_GENIE_SPACE_ID", "")
+
+# ── Vertical app catalog ─────────────────────────────────────────────────────────
+VERTICAL_LABELS = {
+    "manufacturing": "Operations Intelligence Hub",
+    "retail":        "Retail Intelligence Hub",
+    "logistics":     "Logistics Operations Command",
+    "lifesciences":  "Life Sciences Intelligence Hub",
+    "utilities":     "Utility Operations Intelligence",
+    "financial":     "Financial Services Intelligence",
+}
+
+VERTICAL_APPS = {
+    "manufacturing": [
+        {
+            "name":     os.getenv("APP_1_NAME",     "Supply Chain Control Tower"),
+            "tagline":  os.getenv("APP_1_TAGLINE",  "IBP · Inventory · Demand · Orders"),
+            "desc":     os.getenv("APP_1_DESC",     "Supply chain leaders face mounting pressure from tariff volatility, supplier disruptions, and demand uncertainty. This app gives S&OP and procurement teams a unified command center — AI-driven demand sensing, real-time inventory visibility, and automated exception management to protect margins and service levels."),
+            "url":      "/supply-chain/",
+            "features": os.getenv("APP_1_FEATURES", "Integrated Business Planning,Inventory Optimization,Demand Forecasting AI,Order Automation").split(","),
+            "badge":    os.getenv("APP_1_BADGE",    "Supply Chain"),
+            "color":    os.getenv("APP_1_COLOR",    "#1B6FEB"),
+        },
+        {
+            "name":     os.getenv("APP_2_NAME",     "Operational Excellence"),
+            "tagline":  os.getenv("APP_2_TAGLINE",  "OEE · Quality · Predictive Maintenance"),
+            "desc":     os.getenv("APP_2_DESC",     "Plant managers and reliability engineers lose millions annually to unplanned downtime and quality escapes. This app unifies machine telemetry, vision-based defect detection, and predictive maintenance into a single real-time view — reducing unplanned downtime, cutting scrap rates, and shifting maintenance from reactive to predictive."),
+            "url":      "/manufacturing/",
+            "features": os.getenv("APP_2_FEATURES", "OEE Monitoring,Predictive Maintenance,Defect Detection AI,Quality Analytics").split(","),
+            "badge":    os.getenv("APP_2_BADGE",    "Manufacturing"),
+            "color":    os.getenv("APP_2_COLOR",    "#10b981"),
+        },
+        {
+            "name":     os.getenv("APP_3_NAME",     "Financial Intelligence"),
+            "tagline":  os.getenv("APP_3_TAGLINE",  "P&L · Cash Flow · Forecasting · Risk"),
+            "desc":     os.getenv("APP_3_DESC",     "CFOs and FP&A teams are flying blind when financial data is fragmented across ERPs, spreadsheets, and business units. This app consolidates P&L, cash flow, and cost center data into a live finance command center — enabling faster close cycles, AI-generated executive briefings, and proactive risk detection before it hits the bottom line."),
+            "url":      "/finance/",
+            "features": os.getenv("APP_3_FEATURES", "P&L Visibility,Cash Flow Forecasting,Variance Analysis,Risk Detection AI").split(","),
+            "badge":    os.getenv("APP_3_BADGE",    "Finance"),
+            "color":    os.getenv("APP_3_COLOR",    "#f59e0b"),
+        },
+        {
+            "name":     os.getenv("APP_4_NAME",     "Sales Optimization"),
+            "tagline":  os.getenv("APP_4_TAGLINE",  "Pricing · CPQ · Next Best Offer · Account Health"),
+            "desc":     os.getenv("APP_4_DESC",     "Sales teams lose margin through inconsistent pricing, slow quoting, and missed expansion signals. This app gives revenue leaders an AI-powered command center — dynamic price optimization, real-time configure-price-quote, ML-driven next best commercial offers, and a live account health dashboard to protect and grow revenue."),
+            "url":      "/sales/",
+            "features": os.getenv("APP_4_FEATURES", "Dynamic Pricing AI,Configure Price Quote,Next Best Offer,Account Service Dashboard").split(","),
+            "badge":    os.getenv("APP_4_BADGE",    "Sales"),
+            "color":    os.getenv("APP_4_COLOR",    "#6366f1"),
+        },
+    ],
+    "retail": [
+        {
+            "name":     "Demand Intelligence",
+            "tagline":  "Forecasting · Replenishment · Seasonal Planning",
+            "desc":     "Retailers lose margin to stockouts and overstock in equal measure. This app combines machine learning demand forecasting, automated replenishment triggers, and seasonal trend detection to help merchandising and planning teams maintain optimal shelf availability — reducing excess inventory by up to 20% while improving in-stock rates.",
+            "url":      "",
+            "features": ["ML Demand Forecasting", "Automated Replenishment", "Seasonal Trend Detection", "Markdown Optimization AI"],
+            "badge":    "Demand Planning",
+            "color":    "#f97316",
+        },
+        {
+            "name":     "Supply Chain Control Tower",
+            "tagline":  "Vendor · Logistics · Inventory · Orders",
+            "desc":     "From vendor lead times to last-mile delivery, retail supply chains have never been more complex. This command center gives supply chain teams real-time visibility across purchase orders, DC throughput, and store inventory levels — with AI-powered exception management to catch disruptions before they reach the shelf.",
+            "url":      "/supply-chain/",
+            "features": ["Vendor Performance Tracking", "DC & Store Inventory", "Order Exception Management", "AI Disruption Detection"],
+            "badge":    "Supply Chain",
+            "color":    "#1B6FEB",
+        },
+        {
+            "name":     "Financial Intelligence",
+            "tagline":  "P&L · Margin · Shrink · Store Performance",
+            "desc":     "Retail finance teams need granular P&L visibility by category, banner, and store — not just at the company level. This app delivers live gross margin analysis, shrink tracking, promotional ROI, and AI-generated insights that help FP&A teams identify where profitability is leaking before it shows up in the quarterly results.",
+            "url":      "/finance/",
+            "features": ["Category P&L Analytics", "Shrink & Loss Prevention", "Promotional ROI Analysis", "Store Performance Benchmarking"],
+            "badge":    "Finance",
+            "color":    "#f59e0b",
+        },
+        {
+            "name":     "Customer Revenue",
+            "tagline":  "CLV · Loyalty · Next Best Offer · Churn",
+            "desc":     "Retail revenue growth comes from knowing your best customers and keeping them. This app uses ML-driven customer lifetime value scoring, next best offer recommendations, and churn risk signals to help marketing and commercial teams personalize engagement, protect high-value relationships, and grow basket size with precision targeting.",
+            "url":      "/sales/",
+            "features": ["Customer Lifetime Value AI", "Next Best Offer Engine", "Churn Risk Scoring", "Loyalty Program Analytics"],
+            "badge":    "Sales",
+            "color":    "#8b5cf6",
+        },
+    ],
+    "logistics": [
+        {
+            "name":     "Fleet & Dispatch Intelligence",
+            "tagline":  "Route Optimization · Asset Tracking · SLA",
+            "desc":     "Logistics operators lose margin to empty miles, late deliveries, and reactive dispatch decisions. This app combines real-time GPS telemetry, AI-driven route optimization, and predictive driver scheduling into a single dispatch command center — reducing fuel costs, improving on-time delivery, and maximizing asset utilization.",
+            "url":      "",
+            "features": ["Route Optimization AI", "Real-time Asset Tracking", "Driver Performance Analytics", "Fuel & Cost per Mile"],
+            "badge":    "Fleet Ops",
+            "color":    "#06b6d4",
+        },
+        {
+            "name":     "Supply Chain Control Tower",
+            "tagline":  "Network · Capacity · Demand · Exceptions",
+            "desc":     "Network complexity is the defining challenge of modern logistics. This control tower gives operations leaders a unified view of freight demand, capacity availability, carrier performance, and exception events — with AI-generated re-route and re-tender recommendations to protect SLAs under disruption.",
+            "url":      "/supply-chain/",
+            "features": ["Carrier Performance Tracking", "Capacity Planning AI", "Network Optimization", "Exception Management"],
+            "badge":    "Supply Chain",
+            "color":    "#1B6FEB",
+        },
+        {
+            "name":     "Financial Intelligence",
+            "tagline":  "Lane Profitability · Cost Analytics · Forecasting",
+            "desc":     "Logistics finance teams need profitability visibility at the lane and customer level, not just the P&L summary. This app delivers cost-per-shipment analysis, lane margin benchmarking, accessorial charge tracking, and AI-written financial narratives — giving CFOs and pricing teams the data to protect margins on every load.",
+            "url":      "/finance/",
+            "features": ["Lane Profitability Analysis", "Cost Per Shipment Analytics", "Accessorial Charge Tracking", "Revenue Forecasting AI"],
+            "badge":    "Finance",
+            "color":    "#f59e0b",
+        },
+        {
+            "name":     "Customer SLA Dashboard",
+            "tagline":  "On-Time Delivery · Claims · Account Health",
+            "desc":     "Customer retention in logistics depends on SLA performance transparency. This app tracks on-time delivery by customer and lane, surfaces at-risk shipments before they miss windows, manages claims workflows, and generates account health scores — so account managers can have proactive conversations instead of reactive apologies.",
+            "url":      "",
+            "features": ["On-Time Delivery Tracking", "Claims & Exception Management", "Account Health Scoring", "SLA Risk Alerts"],
+            "badge":    "Customer Ops",
+            "color":    "#6366f1",
+        },
+    ],
+    "lifesciences": [
+        {
+            "name":     "Clinical Supply Chain",
+            "tagline":  "Clinical Trials · Cold Chain · Compliance",
+            "desc":     "Clinical supply chain failures can delay trials, waste millions in investigational product, and put patient safety at risk. This app gives clinical operations teams real-time visibility into IMP inventory, cold chain integrity monitoring, and site resupply forecasting — ensuring the right material reaches the right site at the right time.",
+            "url":      "",
+            "features": ["IMP Inventory Visibility", "Cold Chain Monitoring", "Site Resupply Forecasting", "Expiry & Waste Reduction"],
+            "badge":    "Clinical Ops",
+            "color":    "#ec4899",
+        },
+        {
+            "name":     "Quality & Compliance",
+            "tagline":  "GxP · Deviation Management · Regulatory Filing",
+            "desc":     "Quality failures in life sciences carry regulatory, financial, and reputational consequences that no other industry faces. This app centralizes deviation tracking, CAPA workflows, batch release analytics, and inspection readiness dashboards — giving quality leaders the visibility to close gaps before an FDA audit or product release.",
+            "url":      "/manufacturing/",
+            "features": ["Deviation & CAPA Tracking", "Batch Release Analytics", "Inspection Readiness AI", "Regulatory Submission Status"],
+            "badge":    "Quality",
+            "color":    "#10b981",
+        },
+        {
+            "name":     "Financial Intelligence",
+            "tagline":  "R&D Spend · Revenue · Pipeline Valuation",
+            "desc":     "Life sciences finance requires tracking R&D investment against pipeline probability, managing revenue cliffs, and modeling patent expiry scenarios. This app delivers program-level spend analysis, peak sales forecasting, and AI-generated portfolio valuation narratives to help CFOs and investors understand true enterprise value.",
+            "url":      "/finance/",
+            "features": ["R&D Spend by Program", "Pipeline NPV Modeling", "Revenue Cliff Analysis", "Patent Expiry Scenarios"],
+            "badge":    "Finance",
+            "color":    "#f59e0b",
+        },
+        {
+            "name":     "R&D Analytics",
+            "tagline":  "Portfolio · Trial Outcomes · Competitive Intel",
+            "desc":     "R&D leaders need to allocate capital to the programs with the highest probability of technical and commercial success. This app combines clinical trial outcome analysis, competitive pipeline intelligence, and portfolio risk scoring to help scientific leadership make faster, more defensible portfolio decisions.",
+            "url":      "",
+            "features": ["Clinical Trial Analytics", "Portfolio Risk Scoring", "Competitive Pipeline Intel", "Success Probability Modeling"],
+            "badge":    "R&D",
+            "color":    "#8b5cf6",
+        },
+    ],
+    "utilities": [
+        {
+            "name":     "Grid & Asset Operations",
+            "tagline":  "Asset Health · Outage Management · Reliability",
+            "desc":     "Utility operations teams face increasing grid complexity from distributed energy resources, aging infrastructure, and extreme weather events. This app delivers real-time asset health monitoring, outage cause analysis, and reliability KPI tracking — giving grid operators the intelligence to maintain service continuity and regulatory compliance.",
+            "url":      "",
+            "features": ["Asset Health Monitoring", "Outage Cause Analysis", "SAIDI/SAIFI Tracking", "Grid Reliability AI"],
+            "badge":    "Grid Ops",
+            "color":    "#8b5cf6",
+        },
+        {
+            "name":     "Predictive Maintenance",
+            "tagline":  "Failure Prediction · Work Orders · Risk Ranking",
+            "desc":     "Transformer failures, substation faults, and line equipment degradation are predictable with the right data. This app ingests sensor telemetry, inspection records, and historical failure data to predict equipment end-of-life, rank maintenance risk, and auto-generate work orders — shifting utility maintenance from time-based to condition-based.",
+            "url":      "/manufacturing/",
+            "features": ["Equipment Failure Prediction", "Condition-Based Maintenance", "Work Order Automation", "Asset Risk Ranking"],
+            "badge":    "Maintenance",
+            "color":    "#10b981",
+        },
+        {
+            "name":     "Financial Intelligence",
+            "tagline":  "Rate Cases · CapEx · Regulatory Cost Recovery",
+            "desc":     "Utility finance teams operate under regulatory oversight that requires meticulous cost tracking and rate case justification. This app tracks O&M and CapEx spend against regulatory allowances, models rate case scenarios, and generates the financial narratives that support both internal decisions and regulatory filings.",
+            "url":      "/finance/",
+            "features": ["O&M vs CapEx Tracking", "Rate Case Scenario Modeling", "Regulatory Cost Recovery", "CapEx Justification AI"],
+            "badge":    "Finance",
+            "color":    "#f59e0b",
+        },
+        {
+            "name":     "Sustainability Hub",
+            "tagline":  "Emissions · Carbon Credits · ESG Reporting",
+            "desc":     "Utilities are at the center of the energy transition, with decarbonization commitments that require granular emissions tracking and credible reporting. This app monitors Scope 1 and 2 emissions by generation asset, tracks renewable energy certificate portfolios, and generates investor-grade ESG narratives aligned to TCFD and GRI frameworks.",
+            "url":      "",
+            "features": ["Emissions by Generation Asset", "REC Portfolio Tracking", "Net Zero Pathway Modeling", "ESG Narrative AI"],
+            "badge":    "Sustainability",
+            "color":    "#06b6d4",
+        },
+    ],
+    "financial": [
+        {
+            "name":     "Risk & Compliance",
+            "tagline":  "Market Risk · Credit · Regulatory Capital",
+            "desc":     "Financial institutions face regulatory expectations that demand real-time risk visibility, consistent capital measurement, and audit-ready documentation. This app consolidates market risk, credit exposure, and regulatory capital calculations into a single command center — with AI-generated risk narratives for stress testing and board reporting.",
+            "url":      "",
+            "features": ["Market Risk Dashboard", "Credit Exposure Analytics", "Regulatory Capital (Basel)", "Stress Testing AI"],
+            "badge":    "Risk",
+            "color":    "#ef4444",
+        },
+        {
+            "name":     "Fraud Detection",
+            "tagline":  "Real-time Scoring · Investigation · AML",
+            "desc":     "Financial crime costs institutions billions annually, and the speed of detection is the primary variable in loss containment. This app delivers real-time transaction scoring, network analysis for AML pattern detection, and AI-assisted case investigation workflows — reducing false positive rates while catching more true fraud at transaction speed.",
+            "url":      "",
+            "features": ["Real-time Transaction Scoring", "AML Network Analysis", "Case Investigation Workflows", "False Positive Reduction AI"],
+            "badge":    "Fraud & AML",
+            "color":    "#f97316",
+        },
+        {
+            "name":     "Financial Intelligence",
+            "tagline":  "P&L · Revenue · Cost Attribution · Forecasting",
+            "desc":     "Financial services finance teams need visibility into profitability by product, segment, and geography — not just consolidated P&L. This app delivers net interest margin analysis, fee revenue decomposition, cost-to-income ratios, and AI-generated variance narratives that give CFOs and business line leaders the context to act.",
+            "url":      "/finance/",
+            "features": ["Net Interest Margin Analytics", "Fee Revenue Decomposition", "Cost-to-Income Tracking", "Forecast Variance AI"],
+            "badge":    "Finance",
+            "color":    "#f59e0b",
+        },
+        {
+            "name":     "Customer Intelligence",
+            "tagline":  "CLV · Churn · Next Product · Wallet Share",
+            "desc":     "Retail banking and wealth management growth comes from deepening relationships with existing customers. This app uses ML-driven customer lifetime value scoring, product propensity modeling, and churn risk detection to help relationship managers and marketing teams prioritize outreach, grow wallet share, and protect their most valuable customer relationships.",
+            "url":      "/sales/",
+            "features": ["Customer Lifetime Value AI", "Product Propensity Modeling", "Churn Risk Detection", "Wallet Share Analytics"],
+            "badge":    "Customer",
+            "color":    "#6366f1",
+        },
+    ],
+}
+
+
+_ENERGY_KEYWORDS = {
+    "oil", "gas", "energy", "petroleum", "petro", "fuel", "refin", "lng", "lpg",
+    "exxon", "shell", "chevron", "bp ", " bp", "total", "conocophillips", "conoco",
+    "halliburton", "schlumberger", "slb", "baker hughes", "marathon", "valero",
+    "phillips", "hess", "pioneer", "devon", "diamondback", "coterra", "ovintiv",
+    "woodside", "santos", "origin energy", "repsol", "eni ", " eni", "equinor",
+    "expro", "vistra", "entergy", "enersys", "duke energy", "dominion",
+    "aramco", "adnoc", "lukoil", "rosneft", "gazprom",
+}
+
+
+def _classify_vertical(company_name: str) -> str:
+    """Use Claude Haiku to classify a company name into an industry vertical."""
+    # Fast keyword pre-filter before hitting the LLM
+    lower = company_name.lower()
+    if any(kw in lower for kw in _ENERGY_KEYWORDS):
+        return "energy"
+
+    api_key = os.getenv("ANTHROPIC_API_KEY", "")
+    if not api_key or not company_name:
+        return "manufacturing"
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=10,
+            messages=[{
+                "role": "user",
+                "content": (
+                    "Classify this company name into exactly ONE of these industry verticals: "
+                    "manufacturing, energy, retail, logistics, lifesciences, utilities, financial. "
+                    f"Company name: {company_name}. "
+                    "Reply with only the single vertical word in lowercase, nothing else."
+                ),
+            }],
+        )
+        result = msg.content[0].text.strip().lower()
+        if result not in VERTICAL_APPS:
+            return "manufacturing"
+        return result
+    except Exception as e:
+        app.logger.warning(f"vertical classification failed for '{company_name}': {e}")
+        return "manufacturing"
+
+
+# Maps verticals to a direct app URL when a specific app exists for that industry.
+# Falls back to /portal (the full Design Studio) for anything not listed or with no URL set.
+_VERTICAL_DIRECT_URLS: dict[str, str] = {
+}
+
+
+def _get_post_login_redirect(vertical: str) -> str:
+    """Return the URL to redirect to after login based on the detected vertical."""
+    direct = _VERTICAL_DIRECT_URLS.get(vertical, "")
+    if direct:
+        return direct
+    return "/portal"
+
 
 # ── Auth ────────────────────────────────────────────────────────────────────────
 def login_required(f):
@@ -110,8 +426,7 @@ def _auto_auth():
 # ── Company Logo ─────────────────────────────────────────────────────────────────
 
 def _clearbit_logo(name: str) -> str:
-    """Return a logo URL for the given company name via Clearbit autocomplete (free, no key).
-    Autocomplete returns logo=null but always returns domain; construct the logo URL from it."""
+    """Return a Brandfetch logo URL for the given company name via Clearbit autocomplete domain lookup."""
     if not name:
         return ""
     try:
@@ -123,7 +438,7 @@ def _clearbit_logo(name: str) -> str:
         results = r.json()
         if results and isinstance(results, list) and results[0].get("domain"):
             domain = results[0]["domain"]
-            return f"https://logo.clearbit.com/{domain}"
+            return f"https://cdn.brandfetch.io/domain/{domain}?c=1idGdcDDyuPmwhnhURl"
     except Exception:
         pass
     return ""
@@ -142,13 +457,14 @@ def _creds():
 
 
 def _genie_creds():
-    """Credentials for Genie API — uses app service-principal (PAT or M2M OAuth)."""
-    raw  = os.environ.get("DATABRICKS_HOST", "").rstrip("/")
+    """Credentials for Genie API — prefers GENIE_HOST/GENIE_TOKEN, falls back to DATABRICKS_HOST/TOKEN.
+    For M2M OAuth, set GENIE_CLIENT_ID + GENIE_CLIENT_SECRET (preferred) or DATABRICKS_CLIENT_ID + DATABRICKS_CLIENT_SECRET."""
+    raw  = (GENIE_HOST or os.environ.get("DATABRICKS_HOST", "")).rstrip("/")
     host = raw if raw.startswith("http") else f"https://{raw}"
-    token = os.environ.get("DATABRICKS_TOKEN", "")
+    token = GENIE_TOKEN or os.environ.get("DATABRICKS_TOKEN", "")
     if not token:
-        client_id     = os.getenv("DATABRICKS_CLIENT_ID", "")
-        client_secret = os.getenv("DATABRICKS_CLIENT_SECRET", "")
+        client_id     = GENIE_CLIENT_ID     or os.getenv("DATABRICKS_CLIENT_ID", "")
+        client_secret = GENIE_CLIENT_SECRET or os.getenv("DATABRICKS_CLIENT_SECRET", "")
         if client_id and client_secret:
             try:
                 r = requests.post(
@@ -162,6 +478,26 @@ def _genie_creds():
             except Exception as e:
                 print(f"[Genie] M2M token error: {e}", flush=True)
     return host, {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+
+# ── Warehouse warm-up ────────────────────────────────────────────────────────────
+_GENIE_WAREHOUSE_ID = "b8b2917a7e6a5a3c"
+
+def _warm_warehouse():
+    """Fire a lightweight SELECT 1 against the Genie warehouse to prevent cold-start latency."""
+    try:
+        host, hdrs = _genie_creds()
+        if not host or "Bearer " not in hdrs.get("Authorization", ""):
+            return
+        requests.post(
+            f"{host}/api/2.0/sql/statements",
+            headers=hdrs,
+            json={"warehouse_id": _GENIE_WAREHOUSE_ID, "statement": "SELECT 1", "wait_timeout": "5s"},
+            timeout=12,
+        )
+        print("[warm] warehouse ping sent", flush=True)
+    except Exception as e:
+        print(f"[warm] warehouse ping failed: {e}", flush=True)
 
 
 # ── Delta logging ────────────────────────────────────────────────────────────────
@@ -204,14 +540,76 @@ def _delta_log_write(sql, params=()):
 
 
 def _sheets_log_write(data: dict):
-    if not LOG_SHEETS_WEBHOOK:
-        return False
-    try:
-        requests.post(LOG_SHEETS_WEBHOOK, json=data, timeout=10)
-        return True
-    except Exception as e:
-        print(f"[Sheets] Write failed: {e}", flush=True)
-        return False
+    """Fire-and-forget: append a row to Google Sheets using service account credentials."""
+    def _do_write():
+        try:
+            raw = os.getenv("GOOGLE_CREDENTIALS_B64") or os.getenv("GOOGLE_CREDENTIALS_JSON", "")
+            if not raw:
+                return
+            try:
+                creds_info = json.loads(base64.b64decode(raw).decode("utf-8"))
+            except Exception:
+                creds_info = json.loads(raw)
+            from google.oauth2.service_account import Credentials
+            from google.auth.transport.requests import Request as GRequest
+            creds = Credentials.from_service_account_info(
+                creds_info, scopes=["https://www.googleapis.com/auth/spreadsheets"]
+            )
+            creds.refresh(GRequest())
+            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+            row = [
+                timestamp,
+                data.get("type", ""),
+                data.get("username", ""),
+                data.get("company_name", ""),
+                data.get("page", data.get("email", "")),
+                data.get("seconds_spent", ""),
+                data.get("app_name", "Design Studio"),
+                data.get("click_count", ""),
+            ]
+            url = (f"https://sheets.googleapis.com/v4/spreadsheets/{LOG_SHEET_ID}"
+                   f"/values/Sheet1!A1:H1:append?valueInputOption=USER_ENTERED")
+            resp = requests.post(
+                url, json={"values": [row]},
+                headers={"Authorization": f"Bearer {creds.token}"},
+                timeout=10,
+            )
+            app.logger.info(f"[Sheets] {data.get('type','?')} for {data.get('username','?')} → {resp.status_code}")
+        except Exception as e:
+            app.logger.warning(f"[Sheets] write failed: {e}")
+    threading.Thread(target=_do_write, daemon=True).start()
+
+
+def _sheets_log_question(username: str, company: str, app_name: str, question: str, answer: str, tokens: int = None):
+    """Fire-and-forget: append a Q&A row to the Questions tab in Google Sheets."""
+    def _do_write():
+        try:
+            raw = os.getenv("GOOGLE_CREDENTIALS_B64") or os.getenv("GOOGLE_CREDENTIALS_JSON", "")
+            if not raw:
+                return
+            try:
+                creds_info = json.loads(base64.b64decode(raw).decode("utf-8"))
+            except Exception:
+                creds_info = json.loads(raw)
+            from google.oauth2.service_account import Credentials
+            from google.auth.transport.requests import Request as GRequest
+            creds = Credentials.from_service_account_info(
+                creds_info, scopes=["https://www.googleapis.com/auth/spreadsheets"]
+            )
+            creds.refresh(GRequest())
+            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+            row = [timestamp, username, company, app_name, question, tokens if tokens is not None else ""]
+            url = (f"https://sheets.googleapis.com/v4/spreadsheets/{LOG_SHEET_ID}"
+                   f"/values/Questions!A:F:append?valueInputOption=USER_ENTERED")
+            resp = requests.post(
+                url, json={"values": [row]},
+                headers={"Authorization": f"Bearer {creds.token}"},
+                timeout=10,
+            )
+            app.logger.info(f"[Sheets/Questions] {app_name} Q from {username} ({tokens or '—'} tokens) → {resp.status_code}")
+        except Exception as e:
+            app.logger.warning(f"[Sheets/Questions] write failed: {e}")
+    threading.Thread(target=_do_write, daemon=True).start()
 
 
 def _ensure_log_tables():
@@ -223,6 +621,11 @@ def _ensure_log_tables():
         "(username STRING, company_name STRING, page STRING, "
         "seconds_spent INT, app_name STRING, recorded_at TIMESTAMP) USING DELTA"
     )
+    # ADD COLUMN — IF NOT EXISTS is not supported in Delta SQL; ignore failure if column already exists
+    _delta_sql_exec(
+        f"ALTER TABLE {LOG_CATALOG}.{LOG_SCHEMA}.page_time_log "
+        "ADD COLUMN click_count INT"
+    )
     _delta_sql_exec(
         f"CREATE TABLE IF NOT EXISTS {LOG_CATALOG}.{LOG_SCHEMA}.contact_submissions "
         "(name STRING, company STRING, email STRING, role STRING, "
@@ -231,7 +634,8 @@ def _ensure_log_tables():
     print("[Delta] Log tables ready", flush=True)
 
 
-_ensure_log_tables()
+# Run in background thread so gunicorn workers start (and pass health check) immediately
+threading.Thread(target=_ensure_log_tables, daemon=True).start()
 
 # ── Utilities ───────────────────────────────────────────────────────────────────
 _DAY_SEED = int(time.time() / 86400)
@@ -263,7 +667,10 @@ def login():
             session["authenticated"] = True
             session["username"]      = auto_user
             session["company_name"]  = auto_company
-            return redirect("/portal")
+            vertical = _classify_vertical(auto_company)
+            session["vertical"]      = vertical
+            threading.Thread(target=_warm_warehouse, daemon=True).start()
+            return redirect(_get_post_login_redirect(vertical))
         return send_from_directory(str(STATIC_DIR), "login.html")
     # POST
     username     = (request.form.get("username") or "").strip()
@@ -273,9 +680,15 @@ def login():
         session["authenticated"] = True
         session["username"]      = username
         session["company_name"]  = company_name
+        vertical = _classify_vertical(company_name)
+        session["vertical"]      = vertical
         if email and email != "other":
             session["email"] = email
-        return redirect("/portal")
+        _sheets_log_write({"type": "login", "username": username,
+                           "company_name": company_name, "email": email,
+                           "app_name": "Design Studio"})
+        threading.Thread(target=_warm_warehouse, daemon=True).start()
+        return redirect(_get_post_login_redirect(vertical))
     return send_from_directory(str(STATIC_DIR), "login.html"), 401
 
 
@@ -300,50 +713,338 @@ def portal():
     return send_from_directory(str(STATIC_DIR), "portal.html")
 
 
+def _claude_ask_desktop(system_prompt: str, question: str, context_dict: dict) -> tuple:
+    """Call Claude Haiku for desktop ask endpoints. Returns (answer, follow_ups, tokens)."""
+    import anthropic
+    api_key = os.getenv("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        raise ValueError("ANTHROPIC_API_KEY not set")
+    client = anthropic.Anthropic(api_key=api_key)
+    user_msg = f"Question: {question}\n\nLive data context:\n{json.dumps(context_dict, indent=2)}"
+    resp = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=500,
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_msg}],
+    )
+    raw = resp.content[0].text.strip()
+    if raw.startswith("```"):
+        raw = raw[raw.find("{"):]
+        raw = raw[:raw.rfind("}") + 1]
+    parsed  = json.loads(raw)
+    tokens  = resp.usage.input_tokens + resp.usage.output_tokens
+    return parsed.get("answer", ""), parsed.get("follow_ups", []), tokens
+
+
+@app.route("/mobile")
+@app.route("/mobile/")
+def mobile():
+    """Mobile SPA — auto-authenticates for QR code demos, no login required."""
+    if not session.get("authenticated"):
+        session["authenticated"] = True
+        session["username"]      = request.args.get("auto_user", "Demo User")
+        session["company_name"]  = request.args.get("auto_company", COMPANY_NAME or "Databricks")
+    return send_from_directory(str(STATIC_DIR / "mobile"), "index.html")
+
+
+_MOBILE_GENIE_SPACES = {
+    "fin":   "01f163fffd161220a7f76e9968093b68",
+    "mfg":   "01f163fffd5e15108101b47325134dd5",
+    "sales": "01f163fffd8a184dbe8a8c2de132913b",
+    "sc":    "01f160fc046619db8379001c11fe5511",
+}
+
+_MOBILE_TAB_LABELS = {
+    "mfg":   "Manufacturing / Operational Excellence",
+    "sc":    "Supply Chain Control Tower",
+    "fin":   "Financial Intelligence",
+    "sales": "Sales Optimization",
+}
+
+_MOBILE_FOLLOW_UPS = {
+    "mfg":   ["Which machine has the worst MTBF?", "What's driving the most downtime?", "How is OEE trending this week?"],
+    "sc":    ["Which SKUs are critically low?", "Who are our top late suppliers?", "What's our current fill rate?"],
+    "fin":   ["Which plant is over budget?", "How is EBITDA trending vs last quarter?", "What's our free cash flow YTD?"],
+    "sales": ["Which deals are most likely to close?", "Which accounts are at high churn risk?", "Where are our biggest pricing gaps?"],
+}
+
+
+def _mobile_genie_ask(host, hdrs, space_id, question, conversation_id=None):
+    """Ask a question to a Genie space and poll for the answer."""
+    if conversation_id:
+        r = requests.post(
+            f"{host}/api/2.0/genie/spaces/{space_id}/conversations/{conversation_id}/messages",
+            headers=hdrs, json={"content": question}, timeout=30,
+        )
+    else:
+        r = requests.post(
+            f"{host}/api/2.0/genie/spaces/{space_id}/start-conversation",
+            headers=hdrs, json={"content": question}, timeout=30,
+        )
+    if r.status_code not in (200, 201):
+        raise RuntimeError(f"Genie {r.status_code}: {r.text[:200]}")
+    resp_json       = r.json()
+    conversation_id = resp_json.get("conversation_id") or conversation_id
+    message_id      = resp_json.get("message_id") or resp_json.get("id")
+    # Poll until complete
+    deadline = time.time() + 90
+    while time.time() < deadline:
+        pr = requests.get(
+            f"{host}/api/2.0/genie/spaces/{space_id}/conversations/{conversation_id}/messages/{message_id}",
+            headers=hdrs, timeout=30,
+        )
+        if pr.status_code == 200:
+            msg = pr.json()
+            if msg.get("status") in ("COMPLETED", "FAILED", "CANCELLED"):
+                # Extract text from attachments
+                for att in msg.get("attachments", []):
+                    content = (att.get("text") or {}).get("content") or att.get("content")
+                    if content:
+                        content = content.replace("**", "").replace("__", "")
+                        return content, conversation_id
+                plain = msg.get("content", "No answer returned.").replace("**", "").replace("__", "")
+                return plain, conversation_id
+        time.sleep(3)
+    raise RuntimeError("Genie response timed out after 90s")
+
+
+@app.route("/mobile/api/ask", methods=["POST"])
+def mobile_ask():
+    """Genie-powered AI assistant for the mobile dashboard, falls back to Claude Haiku."""
+    data            = request.get_json(force=True, silent=True) or {}
+    question        = str(data.get("question", "")).strip()[:500]
+    tab             = str(data.get("tab", "mfg"))
+    conversation_id = data.get("conversation_id") or None
+    ctx             = data.get("context", {})
+
+    if not question:
+        return jsonify({"error": "No question provided"}), 400
+
+    tab_label  = _MOBILE_TAB_LABELS.get(tab, "Operations")
+    follow_ups = _MOBILE_FOLLOW_UPS.get(tab, [])
+    space_id   = _MOBILE_GENIE_SPACES.get(tab)
+
+    # ── Try Databricks Genie first ────────────────────────────────────────────
+    if space_id:
+        try:
+            host, hdrs = _genie_creds()
+            if host and "Bearer " in hdrs.get("Authorization", ""):
+                answer, new_conv_id = _mobile_genie_ask(host, hdrs, space_id, question, conversation_id)
+                _sheets_log_question(
+                    session.get("username", ""), session.get("company_name", ""),
+                    f"Mobile / {tab_label}", question, answer,
+                )
+                return jsonify({
+                    "answer":          answer,
+                    "follow_ups":      follow_ups,
+                    "conversation_id": new_conv_id,
+                    "source":          "genie",
+                })
+        except Exception as e:
+            print(f"[Mobile Genie] {tab} error: {e} — falling back to Claude", flush=True)
+
+    # ── Claude Haiku fallback ─────────────────────────────────────────────────
+    api_key = os.getenv("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        return jsonify({"error": "No API key configured"}), 503
+    try:
+        import anthropic
+        system = (
+            f"You are an AI analytics assistant embedded in a {tab_label} dashboard. "
+            "Answer the user's question using the live data context provided. "
+            "Be concise (2-3 sentences). Use <strong> tags around key numbers. "
+            "End with <em>Source: synthetic demo data</em>. "
+            "Respond ONLY with valid JSON: "
+            '{"answer": "<html string>", "follow_ups": ["Q1", "Q2", "Q3"]}'
+        )
+        client = anthropic.Anthropic(api_key=api_key)
+        resp   = client.messages.create(
+            model="claude-haiku-4-5-20251001", max_tokens=450, system=system,
+            messages=[{"role": "user", "content": f"Question: {question}\n\nContext:\n{json.dumps(ctx, indent=2)}"}],
+        )
+        raw = resp.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw[raw.find("{"):raw.rfind("}") + 1]
+        parsed = json.loads(raw)
+        _sheets_log_question(
+            session.get("username", ""), session.get("company_name", ""),
+            f"Mobile / {tab_label}", question, parsed.get("answer", ""), resp.usage.input_tokens + resp.usage.output_tokens,
+        )
+        return jsonify({"answer": parsed.get("answer", ""), "follow_ups": parsed.get("follow_ups", []), "source": "claude"})
+    except Exception as e:
+        print(f"[Mobile Ask] fallback error: {e}", flush=True)
+        return jsonify({"error": str(e)}), 500
+
+
+
+@app.route("/mobile/api/exec-briefing", methods=["POST"])
+def mobile_exec_briefing():
+    """Generate a Claude-powered executive briefing for CEO, CFO, or COO."""
+    data    = request.get_json(silent=True) or {}
+    role    = str(data.get("role", "CEO")).strip()[:10]
+    company = session.get("company_name", "the company")
+
+    api_key = os.getenv("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        return jsonify({"error": "No API key configured"}), 503
+
+    ctx = {
+        "company": company,
+        "role": role,
+        "operations": {
+            "plant_oee_pct": 71.3, "oee_target_pct": 85.0,
+            "machines_running": 24, "machines_fault": 3, "machines_idle": 5,
+            "critical_alarms": 4, "fpy_pct": 96.2,
+        },
+        "supply_chain": {
+            "on_time_delivery_pct": 91.3, "fill_rate_pct": 97.2,
+            "plan_attainment_pct": 91.4, "inventory_turns": 8.4,
+            "forecast_mape_pct": 9.1, "open_exceptions": 47,
+            "excess_inventory_m": 12.4,
+        },
+        "finance": {
+            "revenue_q1_m": 509.4, "ebitda_margin_pct": 23.2,
+            "revenue_yoy_growth_pct": 12.6, "dso_days": 38.2,
+            "fcf_ytd_m": 87.2, "cogs_variance_m": 4.2,
+        },
+        "sales": {
+            "pipeline_value_m": 8.4, "win_rate_pct": 38.4,
+            "quota_attainment_pct": 82.0, "avg_deal_size_k": 127,
+            "at_risk_accounts": 3,
+        },
+    }
+
+    role_focus = {
+        "CEO": "Focus on overall business health, strategic priorities, cross-functional risks, and key decisions needed this week.",
+        "CFO": "Focus on financial performance, EBITDA, cash flow, working capital, cost variances, and forecasting risks.",
+        "COO": "Focus on operational execution — OEE, supply chain performance, delivery, exceptions, and throughput.",
+    }.get(role, "Focus on overall business performance.")
+
+    system = (
+        f"You are generating a concise executive briefing for the {role} of {company}. "
+        f"{role_focus} Use the live data context provided. Be specific with numbers. "
+        "Include 3-4 KPIs most relevant to this role. Include 2-3 sections with 2-3 bullets each. "
+        "Use <strong> tags around key numbers in bullets."
+    )
+
+    # Tool schema forces structured output — no JSON parse errors possible
+    briefing_tool = {
+        "name": "executive_briefing",
+        "description": "Structured executive briefing output",
+        "input_schema": {
+            "type": "object",
+            "required": ["headline", "summary", "kpis", "sections"],
+            "properties": {
+                "headline": {"type": "string", "description": "One sentence overall status"},
+                "summary":  {"type": "string", "description": "Two sentence assessment"},
+                "kpis": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["label", "value"],
+                        "properties": {
+                            "label": {"type": "string"},
+                            "value": {"type": "string"},
+                            "delta": {"type": "string"},
+                            "up":    {"type": "boolean"},
+                        },
+                    },
+                },
+                "sections": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["title", "bullets"],
+                        "properties": {
+                            "title":   {"type": "string"},
+                            "bullets": {"type": "array", "items": {"type": "string"}},
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+        user_msg = f"Generate the {role} briefing.\n\nData:\n{json.dumps(ctx, indent=2)}"
+
+        resp = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1024,
+            system=system,
+            tools=[briefing_tool],
+            tool_choice={"type": "tool", "name": "executive_briefing"},
+            messages=[{"role": "user", "content": user_msg}],
+        )
+
+        # tool_use block is always valid — no json.loads needed
+        parsed = next(b.input for b in resp.content if b.type == "tool_use")
+
+        if not isinstance(parsed.get("sections"), list):
+            parsed["sections"] = []
+        if not isinstance(parsed.get("kpis"), list):
+            parsed["kpis"] = []
+        tokens = resp.usage.input_tokens + resp.usage.output_tokens
+        _sheets_log_question(
+            session.get("username", "anonymous"), company,
+            f"Mobile / Executive ({role})", f"Generate {role} briefing", str(parsed.get("headline", "")), tokens
+        )
+        return jsonify(parsed)
+    except Exception as e:
+        print(f"[Exec Briefing] error: {e}", flush=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/mobile/api/log-event", methods=["POST"])
+def mobile_log_event():
+    """Log mobile navigation, action clicks, and Genie questions to Google Sheets."""
+    data    = request.get_json(silent=True) or {}
+    etype   = str(data.get("type", ""))[:32]       # nav | action | question
+    page    = str(data.get("page", ""))[:64]        # tab or sub-tab label
+    detail  = str(data.get("detail", ""))[:256]     # action label or question text
+    answer  = str(data.get("answer", ""))[:512]     # Genie answer (questions only)
+    user    = session.get("username", data.get("username", "anonymous"))
+    company = session.get("company_name", data.get("company", ""))
+    tokens_raw = data.get("tokens")
+    tokens  = int(tokens_raw) if tokens_raw is not None else None
+
+    if etype == "question":
+        _sheets_log_question(user, company, f"Mobile / {page}", detail, answer, tokens)
+    else:
+        _sheets_log_write({
+            "type":         f"mobile_{etype}",
+            "username":     user,
+            "company_name": company,
+            "page":         page,
+            "seconds_spent": "",
+            "click_count":  detail,
+            "app_name":     "Mobile Dashboard",
+        })
+    return jsonify({"status": "ok"})
+
+
 @app.route("/api/config")
 @login_required
 def config():
-    apps = [
-        {
-            "name":     os.getenv("APP_1_NAME",     "Supply Chain Intelligence"),
-            "tagline":  os.getenv("APP_1_TAGLINE",  "IBP · Inventory · Demand · Orders"),
-            "desc":     os.getenv("APP_1_DESC",     "Supply chain leaders face mounting pressure from tariff volatility, supplier disruptions, and demand uncertainty. This app gives S&OP and procurement teams a unified command center — AI-driven demand sensing, real-time inventory visibility, and automated exception management to protect margins and service levels."),
-            "url":      "/supply-chain/",
-            "features": os.getenv("APP_1_FEATURES", "Integrated Business Planning,Inventory Optimization,Demand Forecasting AI,Order Automation").split(","),
-            "badge":    os.getenv("APP_1_BADGE",    "Supply Chain"),
-            "color":    os.getenv("APP_1_COLOR",    "#1B6FEB"),
-        },
-        {
-            "name":     os.getenv("APP_2_NAME",     "Manufacturing Intelligence"),
-            "tagline":  os.getenv("APP_2_TAGLINE",  "OEE · Quality · Predictive Maintenance"),
-            "desc":     os.getenv("APP_2_DESC",     "Plant managers and reliability engineers lose millions annually to unplanned downtime and quality escapes. This app unifies machine telemetry, vision-based defect detection, and predictive maintenance into a single real-time view — reducing unplanned downtime, cutting scrap rates, and shifting maintenance from reactive to predictive."),
-            "url":      "/manufacturing/",
-            "features": os.getenv("APP_2_FEATURES", "OEE Monitoring,Predictive Maintenance,Defect Detection AI,Quality Analytics").split(","),
-            "badge":    os.getenv("APP_2_BADGE",    "Manufacturing"),
-            "color":    os.getenv("APP_2_COLOR",    "#10b981"),
-        },
-        {
-            "name":     os.getenv("APP_3_NAME",     "Finance Intelligence"),
-            "tagline":  os.getenv("APP_3_TAGLINE",  "P&L · Cash Flow · Forecasting · Risk"),
-            "desc":     os.getenv("APP_3_DESC",     "CFOs and FP&A teams are flying blind when financial data is fragmented across ERPs, spreadsheets, and business units. This app consolidates P&L, cash flow, and cost center data into a live finance command center — enabling faster close cycles, AI-generated executive briefings, and proactive risk detection before it hits the bottom line."),
-            "url":      "/finance/",
-            "features": os.getenv("APP_3_FEATURES", "P&L Visibility,Cash Flow Forecasting,Variance Analysis,Risk Detection AI").split(","),
-            "badge":    os.getenv("APP_3_BADGE",    "Finance"),
-            "color":    os.getenv("APP_3_COLOR",    "#f59e0b"),
-        },
-    ]
+    vertical = session.get("vertical", "manufacturing")
+    apps     = VERTICAL_APPS.get(vertical, VERTICAL_APPS["manufacturing"])
     return jsonify({
-        "company_name": session.get("company_name", COMPANY_NAME),
-        "username":     session.get("username", ""),
-        "company_logo": session.get("company_logo", ""),
-        "launch_token": os.getenv("DATABRICKS_TOKEN", ""),
-        "apps":         apps,
+        "company_name":    session.get("company_name", COMPANY_NAME),
+        "username":        session.get("username", ""),
+        "company_logo":    session.get("company_logo", ""),
+        "launch_token":    os.getenv("DATABRICKS_TOKEN", ""),
+        "vertical":        vertical,
+        "portal_headline": VERTICAL_LABELS.get(vertical, "Operations Intelligence Hub"),
+        "apps":            apps,
     })
 
 
 @app.route("/supply-chain/api/config")
 @app.route("/manufacturing/api/config")
 @app.route("/finance/api/config")
+@app.route("/sales/api/config")
 @login_required
 def app_config():
     return jsonify({
@@ -372,6 +1073,268 @@ def contact():
     _sheets_log_write({"type": "contact", "username": name, "company_name": company,
                        "email": email, "role": role, "interest": interest, "message": message})
     return jsonify({"status": "ok", "stored": stored})
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SALES — /sales/
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.route("/sales/")
+@app.route("/sales")
+@login_required
+def sales_index():
+    return send_from_directory(str(STATIC_DIR / "sales"), "index.html")
+
+
+@app.route("/sales/api/kpis")
+@login_required
+def sales_kpis():
+    rng = random.Random(_DAY_SEED + 80)
+    return jsonify({
+        "pipeline_value":      f"${round(_j(8.4), 1)}M",
+        "win_rate":            f"{round(_j(38.4, 0.03), 1)}%",
+        "avg_deal_size":       f"${round(_j(127, 0.04))}K",
+        "price_realization":   f"{round(_j(93.1, 0.02), 1)}%",
+        "quota_attainment":    f"{round(_j(87.2, 0.03), 1)}%",
+        "revenue_opportunity": f"${round(_j(2.4, 0.05), 1)}M",
+        "csat":                f"{round(_j(4.6, 0.015), 1)}/5",
+    })
+
+
+@app.route("/sales/api/pricing")
+@login_required
+def sales_pricing():
+    rng = random.Random(_DAY_SEED + 81)
+
+    def jp(base): return round(base * (1 + (rng.random() - 0.5) * 0.03))
+
+    products = [
+        {"id": "pump",      "name": "Industrial Pump Series A",   "current_price": jp(4250), "recommended_price": jp(4650), "variance": 9.4,  "elasticity": "0.3"},
+        {"id": "hydraulic", "name": "Hydraulic Manifold Pro",     "current_price": jp(1890), "recommended_price": jp(1750), "variance": -7.4, "elasticity": "1.8"},
+        {"id": "valve",     "name": "Precision Valve Kit",        "current_price": jp(340),  "recommended_price": jp(395),  "variance": 16.2, "elasticity": "0.4"},
+        {"id": "filter",    "name": "Filter Assembly Bundle",     "current_price": jp(890),  "recommended_price": jp(945),  "variance": 6.2,  "elasticity": "0.9"},
+        {"id": "actuator",  "name": "Actuator Control Module",    "current_price": jp(2100), "recommended_price": jp(2340), "variance": 11.4, "elasticity": "0.35"},
+        {"id": "sensor",    "name": "Sensor Array Unit",          "current_price": jp(560),  "recommended_price": jp(510),  "variance": -8.9, "elasticity": "1.7"},
+        {"id": "coupling",  "name": "Coupling Adapter Set",       "current_price": jp(180),  "recommended_price": jp(195),  "variance": 8.3,  "elasticity": "0.8"},
+        {"id": "pressure",  "name": "Pressure Gauge Pro",         "current_price": jp(95),   "recommended_price": jp(88),   "variance": -7.4, "elasticity": "2.1"},
+    ]
+
+    rules = [
+        {"title": "Market Index Drift",  "color": "#6366f1", "desc": "5 SKUs are priced >6% below current market composite index — elasticity models confirm safe to raise."},
+        {"title": "Competitor Price Cut","color": "#f59e0b", "desc": "Hydraulic and Sensor lines face a 12% competitor undercut. Defensive pricing applied to high-elasticity items."},
+        {"title": "Volume Velocity",     "color": "#4CAF7D", "desc": "Valve Kit and Pressure Gauge showing 40%+ volume increase — demand signal supports price optimization."},
+        {"title": "Margin Floor Alert",  "color": "#E05252", "desc": "3 pending quotes are below margin floor after manual discount override. Escalation to VP Sales queued."},
+    ]
+
+    months = ["Dec-24", "Jan-25", "Feb-25", "Mar-25", "Apr-25", "May-25"]
+    sparkline = []
+    market_base, internal_base = 100, 96
+    for m in months:
+        market_base   += (rng.random() - 0.3) * 2
+        internal_base += (rng.random() - 0.45) * 1.5
+        sparkline.append({"label": m[:3], "market": round(market_base, 1), "internal": round(internal_base, 1)})
+
+    return jsonify({
+        "revenue_opportunity": f"${round(_j(2.4, 0.05), 1)}M",
+        "avg_price_gap":       f"+{round(_j(6.8, 0.04), 1)}%",
+        "items_underpriced":   5,
+        "total_items":         8,
+        "model_accuracy":      f"{round(_j(94.2, 0.015), 1)}%",
+        "products":            products,
+        "rules":               rules,
+        "sparkline":           sparkline,
+    })
+
+
+@app.route("/sales/api/quotes")
+@login_required
+def sales_quotes():
+    quotes = [
+        {"id": "QUOTE-2025-0892", "account": "TechDyn Corporation",       "product": "Industrial Pump Series A", "value": 127500, "stage": "Approval",     "close_date": "May 28"},
+        {"id": "QUOTE-2025-0887", "account": "Vertex Manufacturing",       "product": "Hydraulic Suite",          "value":  84200, "stage": "Negotiation",  "close_date": "Jun 2"},
+        {"id": "QUOTE-2025-0881", "account": "Apex Systems",               "product": "Valve Kit Bundle",         "value":  42600, "stage": "Sent",         "close_date": "Jun 5"},
+        {"id": "QUOTE-2025-0876", "account": "CoreMfg Inc.",               "product": "Sensor Array Unit",        "value":  31800, "stage": "Draft",        "close_date": "Jun 10"},
+        {"id": "QUOTE-2025-0871", "account": "Horizon Industrial",         "product": "Actuator Control Module",  "value":  63000, "stage": "Negotiation",  "close_date": "Jun 12"},
+        {"id": "QUOTE-2025-0865", "account": "Summit Fabrication",         "product": "Filter Assembly Bundle",   "value":  22250, "stage": "Sent",         "close_date": "Jun 15"},
+        {"id": "QUOTE-2025-0858", "account": "PacificWest Industries",     "product": "Precision Valve Kit",      "value":  17000, "stage": "Approval",     "close_date": "Jun 18"},
+        {"id": "QUOTE-2025-0851", "account": "Allied Engineering Group",   "product": "Hydraulic Manifold Pro",   "value":  56700, "stage": "Draft",        "close_date": "Jun 22"},
+    ]
+    return jsonify({"quotes": quotes})
+
+
+@app.route("/sales/api/recommendations")
+@login_required
+def sales_recommendations():
+    top3 = [
+        {
+            "account":    "TechDyn Corporation",
+            "arr":        "$1.2M",
+            "csm":        "Jordan M.",
+            "priority":   "High",
+            "offer":      "Premium Support Upgrade + Actuator Control Module expansion (50 units) — account is in growth mode with 34% usage increase QoQ and renewal in 90 days.",
+            "uplift":     "+$184K",
+            "confidence": "91%",
+        },
+        {
+            "account":    "Vertex Manufacturing",
+            "arr":        "$840K",
+            "csm":        "Sam R.",
+            "priority":   "High",
+            "offer":      "3-year renewal with IoT Sensor Bundle (200 units) — product adoption breadth is high, competitive displacement risk if not locked in multi-year.",
+            "uplift":     "+$127K",
+            "confidence": "87%",
+        },
+        {
+            "account":    "Apex Systems",
+            "arr":        "$560K",
+            "csm":        "Taylor K.",
+            "priority":   "Medium",
+            "offer":      "Annual Service Contract + Hydraulic Manifold Suite — account has been evaluating the manifold line for 60 days. Service contract creates stickiness.",
+            "uplift":     "+$94K",
+            "confidence": "82%",
+        },
+    ]
+    all_recos = [
+        {"account": "TechDyn Corporation",     "tier": "Strategic",  "arr": "$1.2M",  "offer": "Premium Support + Actuator Expansion",    "uplift": "+$184K", "confidence": "91%", "churn": "Low"},
+        {"account": "Vertex Manufacturing",    "tier": "Enterprise", "arr": "$840K",  "offer": "3-Year Renewal + IoT Sensor Bundle",       "uplift": "+$127K", "confidence": "87%", "churn": "Low"},
+        {"account": "Apex Systems",            "tier": "Enterprise", "arr": "$560K",  "offer": "Service Contract + Hydraulic Suite",       "uplift": "+$94K",  "confidence": "82%", "churn": "Medium"},
+        {"account": "Horizon Industrial",      "tier": "Enterprise", "arr": "$420K",  "offer": "Valve Kit Volume Expansion",               "uplift": "+$58K",  "confidence": "78%", "churn": "Medium"},
+        {"account": "Summit Fabrication",      "tier": "Mid-Market", "arr": "$310K",  "offer": "Multi-Year Renewal + Filter Bundle",       "uplift": "+$42K",  "confidence": "75%", "churn": "Low"},
+        {"account": "CoreMfg Inc.",            "tier": "Enterprise", "arr": "$720K",  "offer": "Retention Offer — Discount + Executive QBR","uplift": "+$0K",  "confidence": "72%", "churn": "High"},
+        {"account": "PacificWest Industries",  "tier": "Mid-Market", "arr": "$280K",  "offer": "Pressure Gauge Standardization Deal",      "uplift": "+$31K",  "confidence": "69%", "churn": "Low"},
+        {"account": "Meridian Tech",           "tier": "Enterprise", "arr": "$490K",  "offer": "Renewal Intervention — Risk of loss",      "uplift": "+$0K",   "confidence": "65%", "churn": "High"},
+        {"account": "Allied Engineering Group","tier": "Mid-Market", "arr": "$195K",  "offer": "Coupling Adapter Set Volume Deal",          "uplift": "+$22K",  "confidence": "61%", "churn": "Low"},
+        {"account": "BlueLine Systems",        "tier": "Enterprise", "arr": "$380K",  "offer": "Competitive Retention + Product Expansion", "uplift": "+$0K",  "confidence": "58%", "churn": "High"},
+    ]
+    return jsonify({
+        "total_opportunities": 12,
+        "total_uplift":        "$405K",
+        "churn_risk_count":    4,
+        "avg_confidence":      "76%",
+        "top3":                top3,
+        "all":                 all_recos,
+    })
+
+
+@app.route("/sales/api/accounts")
+@login_required
+def sales_accounts():
+    accounts = [
+        {"name": "TechDyn Corporation",     "tier": "Strategic",  "health": 88, "arr": "$1.2M",  "tickets": 2,  "renewal": "Aug 2025", "csm": "Jordan M.",  "risk": "Low"},
+        {"name": "Vertex Manufacturing",    "tier": "Enterprise", "health": 82, "arr": "$840K",  "tickets": 1,  "renewal": "Sep 2025", "csm": "Sam R.",     "risk": "Low"},
+        {"name": "Apex Systems",            "tier": "Enterprise", "health": 74, "arr": "$560K",  "tickets": 3,  "renewal": "Oct 2025", "csm": "Taylor K.",  "risk": "Medium"},
+        {"name": "CoreMfg Inc.",            "tier": "Enterprise", "health": 43, "arr": "$720K",  "tickets": 7,  "renewal": "Jul 2025", "csm": "Jordan M.",  "risk": "High"},
+        {"name": "Horizon Industrial",      "tier": "Enterprise", "health": 79, "arr": "$420K",  "tickets": 2,  "renewal": "Nov 2025", "csm": "Sam R.",     "risk": "Medium"},
+        {"name": "Summit Fabrication",      "tier": "Mid-Market", "health": 91, "arr": "$310K",  "tickets": 0,  "renewal": "Jan 2026", "csm": "Taylor K.",  "risk": "Low"},
+        {"name": "PacificWest Industries",  "tier": "Mid-Market", "health": 85, "arr": "$280K",  "tickets": 1,  "renewal": "Dec 2025", "csm": "Jordan M.",  "risk": "Low"},
+        {"name": "Meridian Tech",           "tier": "Enterprise", "health": 51, "arr": "$490K",  "tickets": 5,  "renewal": "Jun 2025", "csm": "Sam R.",     "risk": "High"},
+        {"name": "Allied Engineering Group","tier": "Mid-Market", "health": 77, "arr": "$195K",  "tickets": 1,  "renewal": "Feb 2026", "csm": "Taylor K.",  "risk": "Medium"},
+        {"name": "BlueLine Systems",        "tier": "Enterprise", "health": 58, "arr": "$380K",  "tickets": 4,  "renewal": "Jul 2025", "csm": "Jordan M.",  "risk": "High"},
+    ]
+    escalations = [
+        {"account": "TechDyn Corporation",  "priority": "P0", "summary": "Pump system failure — production line down", "age": "18 hrs"},
+        {"account": "CoreMfg Inc.",         "priority": "P1", "summary": "Actuator module calibration failure",          "age": "2 days"},
+        {"account": "Meridian Tech",        "priority": "P1", "summary": "Hydraulic manifold seal degradation",         "age": "3 days"},
+        {"account": "BlueLine Systems",     "priority": "P2", "summary": "Billing discrepancy on recent order",          "age": "4 days"},
+        {"account": "Apex Systems",         "priority": "P2", "summary": "Valve kit compatibility question",             "age": "1 day"},
+    ]
+    ticket_breakdown = [
+        {"label": "P0 — Critical",  "count": 1,  "color": "#E05252"},
+        {"label": "P1 — High",      "count": 6,  "color": "#F5A623"},
+        {"label": "P2 — Medium",    "count": 9,  "color": "#6366f1"},
+        {"label": "P3 — Low",       "count": 7,  "color": "#4CAF7D"},
+    ]
+    return jsonify({
+        "csat":              f"{round(_j(4.6, 0.015), 1)}/5",
+        "open_tickets":      23,
+        "open_tickets_delta":"↑ 3 vs. last week",
+        "sla_compliance":    f"{round(_j(97.4, 0.015), 1)}%",
+        "avg_resolution":    f"{round(_j(1.8, 0.04), 1)} days",
+        "accounts":          accounts,
+        "escalations":       escalations,
+        "ticket_breakdown":  ticket_breakdown,
+    })
+
+
+_SALES_ACTIONS = [
+    {"id": "SALES-001", "label": "Apply AI Pricing Recommendations",   "description": "Stage the 5 AI-recommended price adjustments for VP Sales approval — projected to recover $2.4M revenue opportunity this quarter.", "impact_usd": 2400000, "priority": "High",     "owner": "Pricing Team",  "keywords": ["pric", "margin", "gap", "under", "opport", "recommend"]},
+    {"id": "SALES-002", "label": "Schedule CoreMfg Executive Outreach", "description": "Create CSM task: executive sponsorship call with CoreMfg within 7 days — 87% churn probability, $720K ARR at risk.",               "impact_usd": 720000,  "priority": "Critical", "owner": "Jordan M.",     "keywords": ["churn", "risk", "retain", "attrition", "losing", "corem"]},
+    {"id": "SALES-003", "label": "Initiate Meridian Tech Renewal",      "description": "Open renewal opportunity in CRM for Meridian Tech (expires Jun 2025) — schedule QBR to protect $490K ARR.",                           "impact_usd": 490000,  "priority": "Critical", "owner": "Sam R.",        "keywords": ["churn", "risk", "renew", "meridian", "expir", "retain"]},
+    {"id": "SALES-004", "label": "Clear Approval Queue",                "description": "3 quotes pending approval (oldest 4 days) — escalate to VP Sales to unblock $2.1M in pipeline.",                                       "impact_usd": 2100000, "priority": "High",     "owner": "Sales Ops",     "keywords": ["quote", "pipeline", "pending", "approval", "deal", "open"]},
+    {"id": "SALES-005", "label": "Generate TechDyn Expansion Quote",    "description": "Create quote for TechDyn Corporation — Premium Support + Actuator Module. Confidence 91%, projected uplift $184K.",                    "impact_usd": 184000,  "priority": "High",     "owner": "Jordan M.",     "keywords": ["expan", "best offer", "next best", "upsell", "cross", "recommend"]},
+    {"id": "SALES-006", "label": "Schedule Rep Coaching Sessions",      "description": "2 reps below 70% quota attainment — schedule coaching sessions focused on discount discipline and competitive positioning.",             "impact_usd": 0,       "priority": "Medium",   "owner": "Sales Manager", "keywords": ["win", "quota", "attain", "close", "convert"]},
+    {"id": "SALES-007", "label": "Escalate TechDyn P0 Ticket",         "description": "TechDyn P0 pump system failure is 18 hours old — escalate to engineering with executive visibility to prevent churn escalation.",        "impact_usd": 0,       "priority": "Critical", "owner": "CSM Team",      "keywords": ["csat", "service", "ticket", "support", "sla", "satisf", "nps"]},
+]
+_sales_action_status: dict[str, str] = {}
+
+
+@app.route("/sales/api/actions/suggest", methods=["POST"])
+@login_required
+def sales_suggest_actions():
+    data  = request.get_json(silent=True) or {}
+    question = data.get("question", "")
+    answer   = data.get("answer", "")
+    text  = (question + " " + answer).lower()
+    scored = [(sum(1 for kw in a["keywords"] if kw in text), a)
+              for a in _SALES_ACTIONS if _sales_action_status.get(a["id"]) not in ("approved", "dismissed")]
+    scored = sorted([(s, a) for s, a in scored if s], key=lambda x: (-x[0], -x[1]["impact_usd"]))
+    if question:
+        threading.Thread(target=_sheets_log_question, args=(
+            session.get("username", ""), session.get("company_name", ""), "Sales", question, answer
+        ), daemon=True).start()
+    return jsonify([{**{k: v for k, v in a.items() if k != "keywords"},
+                     "status": _sales_action_status.get(a["id"], "pending")} for _, a in scored[:3]])
+
+
+@app.route("/sales/api/genie/ask", methods=["POST"])
+@login_required
+def sales_genie_ask():
+    question = (request.get_json() or {}).get("question", "").strip()
+    if not question:
+        return jsonify({"error": "question required"}), 400
+    if not SALES_GENIE_SPACE_ID:
+        return jsonify({"error": "Sales Genie space not configured"}), 503
+
+    host, hdrs = _genie_creds()
+    try:
+        r = requests.post(
+            f"{host}/api/2.0/genie/spaces/{SALES_GENIE_SPACE_ID}/start-conversation",
+            json={"content": question}, headers=hdrs, timeout=30,
+        )
+        if r.status_code not in (200, 201):
+            return jsonify({"error": f"Genie error {r.status_code}"}), 502
+        resp            = r.json()
+        conversation_id = resp.get("conversation_id")
+        message_id      = resp.get("message_id")
+        if not conversation_id or not message_id:
+            return jsonify({"error": "Unexpected Genie response"}), 502
+
+        poll_url = f"{host}/api/2.0/genie/spaces/{SALES_GENIE_SPACE_ID}/conversations/{conversation_id}/messages/{message_id}"
+        for _ in range(30):
+            time.sleep(3)
+            p  = requests.get(poll_url, headers=hdrs, timeout=15)
+            st = p.json() if p.text else {}
+            status = st.get("status")
+            if status == "COMPLETED":
+                parts = []
+                for att in (st.get("attachments") or []):
+                    if isinstance(att, dict):
+                        txt = att.get("text", {})
+                        parts.append(txt.get("content", "") if isinstance(txt, dict) else str(txt))
+                answer = "\n\n".join(p for p in parts if p).strip().replace("**", "").replace("__", "")
+                threading.Thread(target=_sheets_log_question, args=(
+                    session.get("username", ""), session.get("company_name", ""), "Sales", question, answer
+                ), daemon=True).start()
+                return jsonify({"answer": answer or "No data returned.", "conversation_id": conversation_id,
+                                "source": "genie",
+                                "follow_ups": ["Which rep has the highest quota attainment?",
+                                               "What is our pipeline win rate this quarter?",
+                                               "Which accounts are at churn risk?"]})
+            if status in ("FAILED", "CANCELLED"):
+                return jsonify({"error": f"Query failed: {st.get('error', '')}"}), 502
+        return jsonify({"error": "Query timed out"}), 504
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -768,11 +1731,38 @@ def sc_ai_chat():
                         if payload.get("status") in ("COMPLETED", "FAILED", "CANCELLED"):
                             content = next((a["text"]["content"] for a in payload.get("attachments", []) if a.get("text")), "")
                             if content:
+                                content = content.replace("**", "").replace("__", "")
+                                _sheets_log_question(session.get("username", ""), session.get("company_name", ""), "Supply Chain", question, content)
                                 return jsonify({"answer": content, "sources": ["genie"], "follow_ups": []})
                             break
         except Exception as e:
             print(f"[SC Genie] exception: {e}", flush=True)
+    # Claude fallback
+    try:
+        _sc_ctx = {
+            "on_time_delivery_pct":  91.3,
+            "fill_rate_pct":         97.2,
+            "plan_attainment_pct":   91.4,
+            "inventory_turns":       8.4,
+            "forecast_mape_pct":     9.1,
+            "order_automation_pct":  78.4,
+            "open_exceptions":       47,
+            "excess_inventory_m":    12.4,
+        }
+        _sc_system = (
+            "You are an AI analytics assistant embedded in a Supply Chain Control Tower. "
+            "Answer the user's question using the live data context. Be concise (2-4 sentences). "
+            "Use <strong> tags around key numbers and metric names. "
+            "Suggest 3 short follow-up questions a supply chain leader might ask (max 8 words each). "
+            'Respond ONLY with valid JSON: {"answer": "<html string>", "follow_ups": ["Q1","Q2","Q3"]}'
+        )
+        _ca, _cfu, _ct = _claude_ask_desktop(_sc_system, question, _sc_ctx)
+        _sheets_log_question(session.get("username", ""), session.get("company_name", ""), "Supply Chain", question, _ca, _ct)
+        return jsonify({"answer": _ca, "sources": ["claude"], "follow_ups": _cfu})
+    except Exception as _ce:
+        print(f"[SC Claude] error: {_ce}", flush=True)
     fb = _pick_fallback(question)
+    _sheets_log_question(session.get("username", ""), session.get("company_name", ""), "Supply Chain", question, fb["answer"])
     return jsonify({"answer": fb["answer"], "sources": ["supply_chain_delta_lake"],
                     "follow_ups": fb.get("follow_ups", []), "simulated": True})
 
@@ -815,16 +1805,17 @@ def sc_log_page_time():
     data    = request.get_json(silent=True) or {}
     page    = str(data.get("page", ""))[:64]
     seconds = int(data.get("seconds_spent", 0))
+    clicks  = int(data.get("click_count", 0))
     user    = session.get("username", "anonymous")
     company = session.get("company_name", "")
     _delta_log_write(
         f"INSERT INTO {LOG_CATALOG}.{LOG_SCHEMA}.page_time_log "
-        "(username, company_name, page, seconds_spent, app_name, recorded_at) "
-        "VALUES (%s, %s, %s, %s, %s, current_timestamp())",
-        (user, company, page, seconds, "Supply Chain Intelligence"),
+        "(username, company_name, page, seconds_spent, click_count, app_name, recorded_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s, current_timestamp())",
+        (user, company, page, seconds, clicks, "Supply Chain Control Tower"),
     )
     _sheets_log_write({"type": "page_view", "username": user, "company_name": company,
-                       "page": page, "seconds_spent": seconds, "app_name": "Supply Chain Intelligence"})
+                       "page": page, "seconds_spent": seconds, "click_count": clicks, "app_name": "Supply Chain Control Tower"})
     return jsonify({"status": "ok"})
 
 
@@ -975,10 +1966,10 @@ def _mfg_shift_elapsed_minutes():
     elapsed      = (hour_of_day - 6.0) % 24
     return max(0, elapsed * 60)
 
-def _mfg_units_produced(rate_per_hour, seed=0):
+def _mfg_units_produced(rate_per_hour, seed=0, oee=100.0):
     elapsed_hrs = _mfg_shift_elapsed_minutes() / 60
-    base  = int(rate_per_hour * elapsed_hrs)
-    noise = int(5 * math.sin(time.time() * 0.07 + seed))
+    base  = int(rate_per_hour * elapsed_hrs * (oee / 100.0))
+    noise = int(3 * math.sin(time.time() * 0.07 + seed))
     return max(0, base + noise)
 
 def _mfg_machine_live_state(machine_id, base_state):
@@ -1235,6 +2226,16 @@ MFG_ALARMS_STATIC = [
      "category": "Maintenance Due", "triggered_min_ago": 95, "acknowledged": True,
      "impact": "SPC chart out of control — bore diameter Cpk 0.84, below 1.33 target. Quality risk in next 40 parts.",
      "ai_root_cause": "Accelerated wear from coolant concentration drop to 6% (target 8-9%). Correct coolant concentration immediately and replace spindle #4 insert before next 40 parts."},
+    {"id": "ALM-008", "machine_id": "FAL-ASM-03", "severity": "LOW", "code": "I-2201",
+     "message": "Torque wrench calibration due in 48 hrs — station 7 approaching PM interval.",
+     "category": "Preventive Maintenance", "triggered_min_ago": 210, "acknowledged": True,
+     "impact": "No current production impact. Calibration overdue after next shift change.",
+     "ai_root_cause": "Scheduled PM interval reached. Book calibration during planned downtime window to avoid unplanned stoppage."},
+    {"id": "ALM-009", "machine_id": "PNT-OVN-01", "severity": "LOW", "code": "I-8801",
+     "message": "Paint oven zone 3 temperature variance ±3.2°C — within spec but trending toward upper limit.",
+     "category": "Process Deviation", "triggered_min_ago": 145, "acknowledged": True,
+     "impact": "Cure quality within spec. Monitor — if variance reaches ±5°C, process hold required.",
+     "ai_root_cause": "Minor burner flame sensor drift in zone 3. Schedule sensor inspection during next planned maintenance window."},
 ]
 
 
@@ -1245,8 +2246,8 @@ def _mfg_build_live_machines():
         live_state = _mfg_machine_live_state(m["id"], m["base_state"])
         is_running = live_state == "running"
         seed  = int(_hl2.md5(m["id"].encode()).hexdigest()[:4], 16)
-        units = _mfg_units_produced(m["target_units_hr"], seed) if is_running else 0
         oee   = _mfg_live_oee(m["base_oee"], m["id"]) if is_running else 0
+        units = _mfg_units_produced(m["target_units_hr"], seed, oee) if is_running else 0
         temp  = _mfg_live_temp(m["base_temp"], m["id"])
         cycle = _mfg_live_cycle(m["std_cycle_sec"], m["id"]) if is_running else m["std_cycle_sec"]
         machines.append({
@@ -1303,11 +2304,11 @@ MFG_OEE_TREND = [
 ]
 
 MFG_DOWNTIME_PARETO = [
-    {"reason": "Final Assembly Conveyor Fault",  "minutes": 312, "pct": 38.2},
-    {"reason": "Equipment Fault (BDY / PTN)",    "minutes": 241, "pct": 29.5},
-    {"reason": "E-Coat Bath Contamination Hold", "minutes": 148, "pct": 18.1},
-    {"reason": "Quality Rework / Retest Loop",   "minutes": 82,  "pct": 10.0},
-    {"reason": "Planned Maintenance",            "minutes": 34,  "pct": 4.2},
+    {"reason": "Final Assembly Conveyor Fault",  "minutes": 34, "pct": 38.2},
+    {"reason": "Equipment Fault (BDY / PTN)",    "minutes": 26, "pct": 29.2},
+    {"reason": "E-Coat Bath Contamination Hold", "minutes": 16, "pct": 18.0},
+    {"reason": "Quality Rework / Retest Loop",   "minutes":  9, "pct": 10.1},
+    {"reason": "Planned Maintenance",            "minutes":  4, "pct":  4.5},
 ]
 
 MFG_MACHINE_MTBF = [
@@ -1349,7 +2350,7 @@ def _mfg_generate_ai_recommendation(machine_id: str) -> str:
         hdrs  = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
         alarm_text = "\n".join(f"- [{a['severity']}] {a['message']}" for a in alarms) or "No active alarms."
         prompt = (
-            f"You are the Databricks Manufacturing Intelligence AI — an expert in automotive manufacturing operations.\n\n"
+            f"You are the Databricks Operational Excellence AI — an expert in automotive manufacturing operations.\n\n"
             f"MACHINE: {machine['id']} — {machine['name']}\nLINE: {machine['line_name']}\n"
             f"PRODUCT: {machine['product']}\nCURRENT STATE: {machine['base_state'].upper()}\n"
             f"DESCRIPTION: {machine['description']}\nSENSOR TAGS: {', '.join(machine['sensor_tags'])}\n\n"
@@ -1411,8 +2412,8 @@ def _mfg_extract_answer(msg):
     for att in msg.get("attachments", []):
         content = (att.get("text") or {}).get("content") or att.get("content")
         if content:
-            return content
-    return msg.get("content", "No answer returned.")
+            return content.replace("**", "").replace("__", "")
+    return msg.get("content", "No answer returned.").replace("**", "").replace("__", "")
 
 
 # ── Manufacturing routes ───────────────────────────────────────────────────────
@@ -1496,7 +2497,7 @@ def mfg_ask():
             token = os.environ["DATABRICKS_TOKEN"]
             hdrs  = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
             context = (
-                f"You are SHIFT, the Databricks Manufacturing Intelligence AI. "
+                f"You are SHIFT, the Databricks Operational Excellence AI. "
                 f"Plant OEE: {kpi['plant_oee']}% (target {kpi['oee_target']}%). "
                 f"Machines: {kpi['running']} running / {kpi['fault']} fault / {kpi['idle']} idle. "
                 f"Critical alarms: {kpi['critical_alarms']}. "
@@ -1517,12 +2518,58 @@ def mfg_ask():
             )
             if r.status_code == 200:
                 answer = r.json().get("choices", [{}])[0].get("message", {}).get("content", "")
+                _sheets_log_question(session.get("username", ""), session.get("company_name", ""), "Manufacturing", question, answer)
                 return jsonify({"answer": answer, "conversation_id": None, "source": "LLM",
                                 "follow_ups": ["Which machine has the worst MTBF?",
                                                "What is the projected shift output if faults resolve in 2 hours?",
                                                "Which defect type is causing the most scrap on Line B?"]})
         except Exception:
             pass
+        # Claude fallback — richer, context-aware answer
+        try:
+            _claude_ctx = {
+                "plant_oee":       kpi["plant_oee"],
+                "oee_target":      kpi["oee_target"],
+                "running":         kpi["running"],
+                "fault":           kpi["fault"],
+                "idle":            kpi["idle"],
+                "critical_alarms": kpi["critical_alarms"],
+                "shift_output":    {
+                    "vba": f"{kpi['vba_shift_units']}/{kpi['vba_target_shift']}",
+                    "pbu": f"{kpi['pbu_shift_units']}/{kpi['pbu_target_shift']}",
+                    "ptm": f"{kpi['ptm_shift_units']}/{kpi['ptm_target_shift']}",
+                },
+                "critical_faults": [
+                    {"machine": a["machine_id"], "message": a["message"], "root_cause": a["ai_root_cause"]}
+                    for a in MFG_ALARMS_STATIC if a["severity"] == "CRITICAL"
+                ],
+            }
+            _claude_system = (
+                "You are SHIFT, the Databricks Operational Excellence AI for an automotive plant with 3 lines: "
+                "Body Shop (VBA), Paint Shop (PBU), Powertrain (PTM) converging at Final Assembly (FAL-ASM-01). "
+                "Use precise automotive manufacturing terminology. Be concise (2-4 sentences). "
+                "Use <strong> tags around key numbers and metric names. "
+                "Suggest 3 short follow-up questions a plant manager might ask (max 8 words each). "
+                'Respond ONLY with valid JSON: {"answer": "<html string>", "follow_ups": ["Q1","Q2","Q3"]}'
+            )
+            _ca, _cfu, _ct = _claude_ask_desktop(_claude_system, question, _claude_ctx)
+            _sheets_log_question(session.get("username", ""), session.get("company_name", ""), "Manufacturing", question, _ca, _ct)
+            return jsonify({"answer": _ca, "conversation_id": None, "source": "claude", "follow_ups": _cfu})
+        except Exception as _ce:
+            print(f"[MFG Claude] error: {_ce}", flush=True)
+        _demo_answer = (
+            f"**SHIFT Intelligence — Plant Status**\n\n"
+            f"**Plant OEE:** {kpi['plant_oee']}% vs. {kpi['oee_target']}% target ⚠ CRITICAL\n\n"
+            f"**Machine Status:** {kpi['running']} running | {kpi['fault']} fault | "
+            f"{kpi['idle']} idle | {kpi['maintenance']} maintenance\n\n"
+            f"**Root Cause:** FAL-ASM-01 conveyor fault (52 min) has cascaded — ALL 3 lines blocked.\n\n"
+            f"**Shift Output:** VBA {kpi['vba_shift_units']}/{kpi['vba_target_shift']} | "
+            f"PBU {kpi['pbu_shift_units']}/{kpi['pbu_target_shift']} | "
+            f"PTM {kpi['ptm_shift_units']}/{kpi['ptm_target_shift']}\n\n"
+            f"**Quality:** FPY 76.9% vs. 98.5% target — 224 scrapped, 430 rework units this shift.\n\n"
+            f"Set `MFG_GENIE_SPACE_ID` in app.yaml for live Delta Lake queries."
+        )
+        _sheets_log_question(session.get("username", ""), session.get("company_name", ""), "Manufacturing", question, _demo_answer)
         return jsonify({
             "answer": (
                 f"**SHIFT Intelligence — Plant Status**\n\n"
@@ -1542,12 +2589,7 @@ def mfg_ask():
                            "Why is the cold test dyno failure rate at 43%?"],
         })
 
-    try:
-        host  = os.environ["DATABRICKS_HOST"].rstrip("/")
-        token = os.environ["DATABRICKS_TOKEN"]
-        hdrs  = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    except KeyError as e:
-        return jsonify({"error": f"Missing env var: {e}"}), 500
+    host, hdrs = _genie_creds()
 
     try:
         prefix = (
@@ -1571,8 +2613,10 @@ def mfg_ask():
         resp_json       = r.json()
         conversation_id = resp_json.get("conversation_id") or conversation_id
         message_id      = resp_json.get("message_id") or resp_json.get("id")
-        msg             = _mfg_poll_genie(host, hdrs, MFG_GENIE_SPACE_ID, conversation_id, message_id)
-        return jsonify({"answer": _mfg_extract_answer(msg), "conversation_id": conversation_id,
+        msg        = _mfg_poll_genie(host, hdrs, MFG_GENIE_SPACE_ID, conversation_id, message_id)
+        mfg_answer = _mfg_extract_answer(msg)
+        _sheets_log_question(session.get("username", ""), session.get("company_name", ""), "Manufacturing", question, mfg_answer)
+        return jsonify({"answer": mfg_answer, "conversation_id": conversation_id,
                         "source": "genie",
                         "follow_ups": ["Which machine has the worst MTBF?",
                                        "What is the shift OEE trend for Line A?",
@@ -2019,17 +3063,60 @@ def mfg_log_page_time():
     data    = request.get_json(silent=True) or {}
     page    = str(data.get("page", ""))[:64]
     seconds = int(data.get("seconds_spent", 0))
+    clicks  = int(data.get("click_count", 0))
     user    = session.get("username", "anonymous")
     company = session.get("company_name", "")
     _delta_log_write(
         f"INSERT INTO {LOG_CATALOG}.{LOG_SCHEMA}.page_time_log "
-        "(username, company_name, page, seconds_spent, app_name, recorded_at) "
-        "VALUES (%s, %s, %s, %s, %s, current_timestamp())",
-        (user, company, page, seconds, "Manufacturing Intelligence"),
+        "(username, company_name, page, seconds_spent, click_count, app_name, recorded_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s, current_timestamp())",
+        (user, company, page, seconds, clicks, "Operational Excellence"),
     )
     _sheets_log_write({"type": "page_view", "username": user, "company_name": company,
-                       "page": page, "seconds_spent": seconds, "app_name": "Manufacturing Intelligence"})
+                       "page": page, "seconds_spent": seconds, "click_count": clicks, "app_name": "Operational Excellence"})
     return jsonify({"status": "ok"})
+
+
+@app.route("/manufacturing/api/machine-history")
+@login_required
+def mfg_machine_history():
+    """Return 24-hour hourly OEE history for all machines (synthetic, seeded by machine ID)."""
+    import hashlib as _hl
+    now_hour = int(time.time() // 3600)
+    result = []
+    for m in MFG_MACHINES_STATIC:
+        seed = int(_hl.md5(m["id"].encode()).hexdigest()[:4], 16)
+        hours = []
+        for h in range(23, -1, -1):   # 23 hours ago → current
+            hour_seed = (seed + now_hour - h) % 65535
+            # Base OEE varies by machine; faults drop OEE to 0
+            base = m["base_oee"]
+            # Inject occasional fault hours (seeded so stable)
+            fault_chance = (hour_seed * 7919) % 100
+            if m["base_state"] == "fault":
+                oee = 0
+            elif fault_chance < 8:     # ~8% chance of a bad hour
+                oee = round(max(0, base - 25 - (hour_seed % 15)), 1)
+            elif fault_chance < 18:    # ~10% chance of degraded
+                oee = round(max(40, base - 8 - (hour_seed % 8)), 1)
+            else:
+                noise = ((hour_seed * 1031) % 100) / 100 * 6 - 3   # ±3%
+                oee = round(min(99.9, max(0, base + noise)), 1)
+            hours.append(oee)
+        # Compute 24h averages
+        running_hrs = [v for v in hours if v > 0]
+        avg_oee = round(sum(running_hrs) / len(running_hrs), 1) if running_hrs else 0
+        uptime_pct = round(len(running_hrs) / 24 * 100)
+        result.append({
+            "id":         m["id"],
+            "name":       m["name"],
+            "product":    m["product"],
+            "line":       m["line"],
+            "hours":      hours,          # list of 24 OEE values, oldest→newest
+            "avg_oee":    avg_oee,
+            "uptime_pct": uptime_pct,
+        })
+    return jsonify(result)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2070,12 +3157,12 @@ def _fin_sql(query: str) -> tuple[bool, list]:
 
 def _fin_genie_ask(question: str) -> tuple[bool, str]:
     """Ask a question to the Finance Genie space and poll for the answer."""
-    base = DATABRICKS_HOST.rstrip("/")
+    base, genie_hdrs = _genie_creds()
     try:
         r = requests.post(
             f"{base}/api/2.0/genie/spaces/{FIN_GENIE_SPACE_ID}/start-conversation",
             json={"content": question},
-            headers=_fin_headers(),
+            headers=genie_hdrs,
             timeout=30,
         )
         if r.status_code not in (200, 201):
@@ -2093,7 +3180,7 @@ def _fin_genie_ask(question: str) -> tuple[bool, str]:
     for _ in range(60):
         time.sleep(2)
         try:
-            p  = requests.get(poll_url, headers=_fin_headers(), timeout=30)
+            p  = requests.get(poll_url, headers=genie_hdrs, timeout=30)
             st = p.json() if p.text else {}
         except Exception as e:
             return False, str(e)
@@ -2104,7 +3191,7 @@ def _fin_genie_ask(question: str) -> tuple[bool, str]:
                 if isinstance(att, dict):
                     txt = att.get("text", {})
                     parts.append(txt.get("content", "") if isinstance(txt, dict) else str(txt))
-            answer = "\n\n".join(p for p in parts if p).strip()
+            answer = "\n\n".join(p for p in parts if p).strip().replace("**", "").replace("__", "")
             query_result = None
             for att in (st.get("attachments") or []):
                 if isinstance(att, dict) and att.get("query"):
@@ -2120,10 +3207,21 @@ def _fin_genie_ask(question: str) -> tuple[bool, str]:
 
 
 _FIN_BRIEFING_FALLBACK = (
-    "Q1 2025 fleet performance: North America is tracking 3.2% above revenue plan at $214M "
-    "with EBITDA margin of 24.1%. EMEA is 1.8% below budget driven by FX headwinds. "
-    "Specialty continues strong growth at +8.4% YoY. Working capital is healthy — DSO improved "
-    "to 38 days vs 44 days prior year. Free cash flow YTD stands at $87M across all entities."
+    "Q1 2025 consolidated revenue reached $847M, tracking 2.4% above plan with North America "
+    "leading at $214M — 3.2% favorable to budget — on the strength of automotive and specialty segments. "
+    "EBITDA margin came in at 22.1%, within the 21–23% target band, with gross margin holding at 38.6% "
+    "despite a 120bps headwind from raw material inflation absorbed in Q4. "
+    "EMEA remains the primary watch item, posting $112M in revenue — 1.8% below budget — driven by "
+    "EUR/USD FX drag and softer demand in the German automotive corridor; the team has identified $4M "
+    "in discretionary cost levers to partially offset the shortfall. "
+    "Working capital improved meaningfully: DSO contracted to 38 days from 44 days prior year, "
+    "releasing $18M in cash, while inventory turns accelerated to 6.2x on tighter MRP discipline. "
+    "Free cash flow YTD stands at $87M, ahead of the $79M plan, giving the balance sheet capacity "
+    "to fund the $32M capex pipeline and maintain the dividend without incremental debt. "
+    "Key action items for the quarter: (1) close the EMEA gap through price recovery conversations "
+    "with three Tier 1 OEM customers, (2) accelerate the Specialty segment upsell pipeline currently "
+    "at $28M to capture the +8.4% YoY demand tailwind, and (3) lock in $45M of FX hedging for H2 "
+    "before rate volatility widens further."
 )
 
 
@@ -2135,9 +3233,14 @@ def _fin_gemini_briefing(kpi_context: str) -> str:
         genai.configure(api_key=FIN_GOOGLE_API_KEY)
         model = genai.GenerativeModel("gemini-2.0-flash")
         prompt = f"""You are a CFO. Based on the following financial KPI data,
-write a concise 4-sentence executive briefing covering: (1) overall revenue vs plan,
-(2) EBITDA margin health, (3) one working capital insight, (4) one risk or action item.
-Be specific with numbers. Use a confident, executive tone.
+write a comprehensive 6-8 sentence executive briefing covering:
+(1) overall revenue performance vs plan with regional highlights,
+(2) EBITDA margin health and gross margin drivers,
+(3) any underperforming regions or segments and the root cause,
+(4) working capital metrics (DSO, inventory turns, free cash flow),
+(5) key risks or headwinds for the remainder of the year,
+(6) 2-3 specific action items leadership should prioritize this quarter.
+Be specific with numbers and percentages. Use a confident, executive tone. Write in flowing prose — no bullet points.
 
 Financial Data:
 {kpi_context}"""
@@ -2226,6 +3329,10 @@ def fin_pl_trend():
         {"period_key":"FY2024-Q3","revenue_m":503.4,"ebitda_m":117.2,"margin_pct":23.3},
         {"period_key":"FY2024-Q4","revenue_m":572.8,"ebitda_m":136.0,"margin_pct":23.7},
         {"period_key":"FY2025-Q1","revenue_m":509.4,"ebitda_m":118.2,"margin_pct":23.2},
+        {"period_key":"FY2025-Q2","revenue_m":531.7,"ebitda_m":124.8,"margin_pct":23.5},
+        {"period_key":"FY2025-Q3","revenue_m":518.2,"ebitda_m":120.1,"margin_pct":23.2},
+        {"period_key":"FY2025-Q4","revenue_m":589.6,"ebitda_m":141.3,"margin_pct":24.0},
+        {"period_key":"FY2026-Q1","revenue_m":527.3,"ebitda_m":126.9,"margin_pct":24.1},
     ])
 
 
@@ -2336,24 +3443,114 @@ def fin_genie_ask():
 
     ok, raw = _fin_genie_ask(question)
     if not ok:
+        # Claude fallback
+        try:
+            _fin_ctx = {
+                # P&L Summary — Q1 2025
+                "period": "Q1 2025",
+                "total_revenue_q1_m": 509.4,
+                "revenue_vs_plan_pct": 3.2,
+                "revenue_vs_plan_m": 16.3,
+                "revenue_yoy_growth_pct": 12.5,
+                "revenue_na_m": 214.2,
+                "revenue_emea_m": 168.3,
+                "revenue_specialty_m": 126.9,
+                "revenue_yoy_growth_na": 12.6,
+                "revenue_yoy_growth_emea": 9.4,
+                "revenue_yoy_growth_specialty": 18.2,
+                # EBITDA
+                "ebitda_total_m": 118.2,
+                "ebitda_margin_pct": 23.2,
+                "ebitda_na_m": 62.1,
+                "ebitda_na_margin_pct": 29.0,
+                "ebitda_emea_m": 38.4,
+                "ebitda_emea_margin_pct": 22.8,
+                "ebitda_specialty_m": 17.7,
+                "ebitda_specialty_margin_pct": 13.9,
+                "ebitda_vs_budget_m": 4.8,
+                # Cost & COGS
+                "cogs_total_m": 312.4,
+                "cogs_variance_vs_plan_m": 4.2,
+                "gross_margin_pct": 38.7,
+                "opex_total_m": 78.8,
+                "sga_m": 44.1,
+                "rd_expense_m": 18.6,
+                "depreciation_amortization_m": 22.4,
+                # Top cost center overages Q1 2025
+                "cost_center_na_manufacturing_over_m": 2.1,
+                "cost_center_na_manufacturing_over_pct": 8.4,
+                "cost_center_emea_marketing_over_m": 1.4,
+                "cost_center_emea_marketing_over_pct": 12.1,
+                "cost_center_na_it_over_m": 0.8,
+                "cost_center_na_it_over_pct": 9.7,
+                # Working Capital & AR
+                "dso_na_days": 38.2,
+                "dso_emea_days": 44.5,
+                "dso_apac_days": 52.1,
+                "dso_prior_year_na_days": 44.0,
+                "ar_total_m": 238.6,
+                "ar_over_90_days_m": 12.4,
+                "ar_over_90_days_pct": 5.2,
+                "inventory_turns": 8.4,
+                "payable_days": 42.0,
+                # Cash Flow
+                "fcf_ytd_total_m": 87.2,
+                "fcf_us_m": 61.2,
+                "fcf_emea_m": 18.4,
+                "fcf_apac_m": 7.6,
+                "capex_ytd_m": 24.6,
+                "cash_conversion_cycle_days": 48.2,
+                # Balance Sheet
+                "total_assets_m": 1842.0,
+                "total_debt_m": 486.0,
+                "net_debt_m": 412.0,
+                "debt_to_ebitda": 0.87,
+                "current_ratio": 1.84,
+                # Full-year forecast
+                "fy2025_revenue_forecast_m": 2148.0,
+                "fy2025_ebitda_forecast_m": 502.0,
+                "fy2025_ebitda_margin_forecast_pct": 23.4,
+                "fy2025_fcf_forecast_m": 368.0,
+            }
+            _fin_system = (
+                "You are an AI analytics assistant for a Financial Intelligence dashboard. "
+                "Answer the user's question using the provided live financial data. Be concise (2-4 sentences). "
+                "Use <strong> tags around key numbers and metric names. "
+                "IMPORTANT: Always provide a substantive answer — never say 'data is unavailable' or 'not provided'. "
+                "If a specific metric isn't in the context, answer using related metrics that ARE available "
+                "and note any assumptions. "
+                "Suggest 3 short follow-up questions a CFO or FP&A leader might ask (max 8 words each). "
+                'Respond ONLY with valid JSON: {"answer": "<html string>", "follow_ups": ["Q1","Q2","Q3"]}'
+            )
+            _ca, _cfu, _ct = _claude_ask_desktop(_fin_system, question, _fin_ctx)
+            _sheets_log_question(session.get("username", ""), session.get("company_name", ""), "Finance", question, _ca, _ct)
+            return jsonify({"ok": True, "answer": _ca, "query": None, "gemini_context": "", "follow_ups": _cfu})
+        except Exception as _ce:
+            print(f"[Fin Claude] error: {_ce}", flush=True)
         q_lower = question.lower()
         if any(w in q_lower for w in ["ebitda", "budget"]):
-            raw = json.dumps({"answer": "EBITDA for Q1 2025: North America $62.1M (24.1% margin, +4.2% vs budget). EMEA $38.4M (22.8%, -2.1% vs budget). Specialty $17.7M (28.3%, +1.8% vs budget).", "query": None})
+            raw = json.dumps({"answer": "EBITDA for Q1 2025: North America $62.1M (24.1% margin, +4.2% vs budget). EMEA $38.4M (22.8%, -2.1% vs budget). Specialty $17.7M (28.3%, +1.8% vs budget).", "query": None,
+                              "follow_ups": ["Which cost driver is causing EMEA to miss EBITDA budget?", "What is the full-year EBITDA forecast vs budget?"]})
             ok  = True
         elif any(w in q_lower for w in ["revenue", "growth"]):
-            raw = json.dumps({"answer": "Q1 2025 total revenue: $509.4M. YoY growth: +12.6% NA, +9.4% EMEA, +18.2% Specialty.", "query": None})
+            raw = json.dumps({"answer": "Q1 2025 total revenue: $509.4M. YoY growth: +12.6% NA, +9.4% EMEA, +18.2% Specialty.", "query": None,
+                              "follow_ups": ["Which product line drove the highest revenue growth?", "How does Q1 2025 revenue compare to the annual plan?"]})
             ok  = True
         elif any(w in q_lower for w in ["cash", "flow", "fcf"]):
-            raw = json.dumps({"answer": "Free cash flow YTD: US entity $61.2M, EMEA $18.4M, APAC $7.6M. Total: $87.2M.", "query": None})
+            raw = json.dumps({"answer": "Free cash flow YTD: US entity $61.2M, EMEA $18.4M, APAC $7.6M. Total: $87.2M.", "query": None,
+                              "follow_ups": ["What is the projected cash position at end of Q2?", "Which entity has the highest cash conversion cycle?"]})
             ok  = True
         elif any(w in q_lower for w in ["ar", "receivable", "dso"]):
-            raw = json.dumps({"answer": "DSO Q1 2025: North America 38.2 days, EMEA 44.5 days, APAC 52.1 days. AR over 90 days: $12.4M (5.2% of total AR).", "query": None})
+            raw = json.dumps({"answer": "DSO Q1 2025: North America 38.2 days, EMEA 44.5 days, APAC 52.1 days. AR over 90 days: $12.4M (5.2% of total AR).", "query": None,
+                              "follow_ups": ["Which customers represent the largest overdue AR balance?", "What is the impact of current DSO on working capital?"]})
             ok  = True
         elif any(w in q_lower for w in ["cost center", "over"]):
-            raw = json.dumps({"answer": "Top over-budget cost centers Q1 2025: NA Manufacturing (+$2.1M, +8.4%), EMEA Marketing (+$1.4M, +12.1%), NA IT (+$0.8M, +9.7%).", "query": None})
+            raw = json.dumps({"answer": "Top over-budget cost centers Q1 2025: NA Manufacturing (+$2.1M, +8.4%), EMEA Marketing (+$1.4M, +12.1%), NA IT (+$0.8M, +9.7%).", "query": None,
+                              "follow_ups": ["What corrective actions are planned for NA Manufacturing?", "Which cost centers are trending favorably vs budget?"]})
             ok  = True
         else:
-            raw = json.dumps({"answer": "Based on Q1 2025 data across all business units, the company is performing ahead of plan on revenue (+3.2%) with strong EBITDA margin of 23.2%.", "query": None})
+            raw = json.dumps({"answer": "Based on Q1 2025 data across all business units, the company is performing ahead of plan on revenue (+3.2%) with strong EBITDA margin of 23.2%.", "query": None,
+                              "follow_ups": ["What is the biggest risk to the full-year plan?", "Which BU has the strongest margin performance?"]})
             ok  = True
 
     try:
@@ -2363,12 +3560,14 @@ def fin_genie_ask():
 
     answer_text    = parsed.get("answer", raw)
     gemini_context = _fin_gemini_answer_context(question, answer_text) if ok else ""
+    _sheets_log_question(session.get("username", ""), session.get("company_name", ""), "Finance", question, answer_text)
 
     return jsonify({
         "ok":             ok,
         "answer":         answer_text,
         "query":          parsed.get("query"),
         "gemini_context": gemini_context,
+        "follow_ups":     parsed.get("follow_ups", ["What is the biggest risk to the full-year plan?", "Which BU has the strongest margin performance?"]),
     })
 
 
@@ -2414,19 +3613,41 @@ def fin_log_page_time():
     data    = request.get_json(silent=True) or {}
     page    = str(data.get("page", ""))[:64]
     seconds = int(data.get("seconds_spent", 0))
+    clicks  = int(data.get("click_count", 0))
     user    = session.get("username", "anonymous")
     company = session.get("company_name", "")
     _delta_log_write(
         f"INSERT INTO {LOG_CATALOG}.{LOG_SCHEMA}.page_time_log "
-        "(username, company_name, page, seconds_spent, app_name, recorded_at) "
-        "VALUES (%s, %s, %s, %s, %s, current_timestamp())",
-        (user, company, page, seconds, "Finance Intelligence"),
+        "(username, company_name, page, seconds_spent, click_count, app_name, recorded_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s, current_timestamp())",
+        (user, company, page, seconds, clicks, "Finance Intelligence"),
     )
     _sheets_log_write({"type": "page_view", "username": user, "company_name": company,
-                       "page": page, "seconds_spent": seconds, "app_name": "Finance Intelligence"})
+                       "page": page, "seconds_spent": seconds, "click_count": clicks, "app_name": "Finance Intelligence"})
     return jsonify({"status": "ok"})
 
 
+@app.route("/sales/api/log-page-time", methods=["POST"])
+@login_required
+def sales_log_page_time():
+    data    = request.get_json(silent=True) or {}
+    page    = str(data.get("page", ""))[:64]
+    seconds = int(data.get("seconds_spent", 0))
+    clicks  = int(data.get("click_count", 0))
+    user    = session.get("username", "anonymous")
+    company = session.get("company_name", "")
+    _delta_log_write(
+        f"INSERT INTO {LOG_CATALOG}.{LOG_SCHEMA}.page_time_log "
+        "(username, company_name, page, seconds_spent, click_count, app_name, recorded_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s, current_timestamp())",
+        (user, company, page, seconds, clicks, "Sales Optimization"),
+    )
+    _sheets_log_write({"type": "page_view", "username": user, "company_name": company,
+                       "page": page, "seconds_spent": seconds, "click_count": clicks, "app_name": "Sales Optimization"})
+    return jsonify({"status": "ok"})
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # ══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":

@@ -1,8 +1,11 @@
-/* ── Databricks Manufacturing Intelligence — App Logic ───────────────────── */
+/* ── Databricks Operational Excellence — App Logic ───────────────────── */
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let allMachines       = [];
 let allAlarms         = [];
+let _mtbfRaw          = [];
+let _paretoRaw        = [];   // raw downtime pareto for filter re-renders
+let _qualityRaw       = null; // raw quality data for filter re-renders
 let selectedMachineId = null;
 let shiftConvId       = null;
 let liveInterval      = null;
@@ -18,6 +21,18 @@ let calcHours     = 4;
 let calcMachineId = 'BDY-SLD-01';
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
+// ── Tutorial ──────────────────────────────────────────────────────────────────
+function showTutorialIfNew() {
+  if (!localStorage.getItem('mfg-tutorial-seen')) {
+    document.getElementById('tut-overlay').classList.remove('hidden');
+  }
+}
+function dismissTutorial() {
+  localStorage.setItem('mfg-tutorial-seen', '1');
+  document.getElementById('tut-overlay').classList.add('hidden');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') dismissTutorial(); });
+
 document.addEventListener('DOMContentLoaded', () => {
   // Apply saved theme before any render
   const savedTheme = localStorage.getItem('mfg-theme');
@@ -32,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   startLivePolling();
   initCalculator();
   loadAppConfig();
+  showTutorialIfNew();
 
   document.getElementById('shift-input').addEventListener('keydown', e => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') submitShift();
@@ -44,7 +60,7 @@ async function loadAppConfig() {
     if (d.company_name) {
       const sub = document.querySelector('.header-title-sub');
       if (sub) sub.textContent = d.company_name + ' · Manufacturing';
-      document.title = d.company_name + ' — Manufacturing Intelligence';
+      document.title = d.company_name + ' — Operational Excellence';
     }
     if (d.company_name) {
       fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(d.company_name)}`)
@@ -52,12 +68,23 @@ async function loadAppConfig() {
         .then(results => {
           if (!results || !results[0] || !results[0].domain) return;
           const img = document.createElement('img');
-          img.src = `https://logo.clearbit.com/${results[0].domain}`;
           img.alt = d.company_name;
-          img.style.cssText = 'width:28px;height:28px;border-radius:5px;object-fit:contain;background:#fff;padding:2px;margin-left:10px;flex-shrink:0;';
-          img.onerror = () => img.remove();
-          const brand = document.querySelector('.header-brand');
-          if (brand) brand.appendChild(img);
+          img.style.cssText = 'width:28px;height:28px;border-radius:6px;object-fit:contain;flex-shrink:0;';
+          img.onload = () => {
+            // db-logo-mark wraps the SVG — replace the whole div
+            const logoMark = document.querySelector('.db-logo-mark');
+            if (logoMark) logoMark.replaceWith(img);
+            else {
+              const brand = document.querySelector('.header-brand');
+              const brandSvg = brand ? brand.querySelector('svg') : null;
+              if (brandSvg) brandSvg.replaceWith(img);
+              else if (brand) brand.prepend(img);
+            }
+            const titleMain = document.querySelector('.header-title-main');
+            if (titleMain) titleMain.textContent = 'Operational Excellence';
+          };
+          img.onerror = () => {};
+          img.src = `https://cdn.brandfetch.io/domain/${results[0].domain}?c=1idGdcDDyuPmwhnhURl`;
         })
         .catch(() => {});
     }
@@ -80,12 +107,14 @@ async function loadStatic() {
     fetch('/manufacturing/api/downtime').then(r => r.json()),
     fetch('/manufacturing/api/quality').then(r => r.json()),
   ]);
-  allAlarms = alarms;
+  allAlarms   = alarms;
+  _mtbfRaw    = downtime.mtbf;
+  _paretoRaw  = downtime.pareto;
+  _qualityRaw = quality;
 
   renderAlarmList(alarms);
-  renderMtbfTable(downtime.mtbf);
-  renderParetoChart(downtime.pareto);
-  renderQuality(quality);
+  _renderSidebarAlarms(alarms);
+  applyFilters();
 }
 
 function startLivePolling() {
@@ -97,12 +126,125 @@ async function fetchLive() {
   const data = await fetch('/manufacturing/api/live').then(r => r.json()).catch(() => null);
   if (!data) return;
 
+  // Dismiss loading screen on first successful data load
+  const ls = document.getElementById('mfg-load-screen');
+  if (ls && !ls.classList.contains('gone')) {
+    ls.classList.add('fade');
+    setTimeout(() => ls.classList.add('gone'), 560);
+  }
+
   allMachines = data.machines;
   const kpi   = data.kpi;
 
   updateHeader(kpi);
   renderMachineGrids(data.machines);
   updateOeeTab(kpi, data.machines);
+  updateFloorTicker(kpi, data.machines);
+  updateFloorSidebar(kpi, data.machines);
+}
+
+// ── Floor Ticker ──────────────────────────────────────────────────────────────
+function updateFloorTicker(kpi, machines) {
+  const lineAvg = (line) => {
+    const ms = machines.filter(m => m.line === line && m.state === 'running' && m.oee > 0);
+    return ms.length ? +(ms.reduce((s, m) => s + m.oee, 0) / ms.length).toFixed(1) : null;
+  };
+  const la = lineAvg('A'), lb = lineAvg('B'), lc = lineAvg('C');
+  const oeeColor = kpi.plant_oee >= 88 ? 'green' : kpi.plant_oee >= 80 ? 'amber' : 'red';
+
+  function setTick(id, val, cls) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = val;
+    el.className = 'ftick-val' + (cls ? ' ' + cls : '');
+  }
+  setTick('ftick-oee',     kpi.plant_oee + '%', oeeColor);
+  setTick('ftick-running', kpi.running + '/' + kpi.total_machines, 'green');
+  setTick('ftick-faults',  kpi.fault, kpi.fault > 0 ? 'red' : 'green');
+  setTick('ftick-alarms',  kpi.critical_alarms, kpi.critical_alarms > 0 ? 'red' : 'green');
+  setTick('ftick-linea',   la != null ? la + '%' : 'OFFLINE', la != null ? (la >= 85 ? 'green' : la >= 75 ? 'amber' : 'red') : 'red');
+  setTick('ftick-lineb',   lb != null ? lb + '%' : 'OFFLINE', lb != null ? (lb >= 85 ? 'green' : lb >= 75 ? 'amber' : 'red') : 'red');
+  setTick('ftick-linec',   lc != null ? lc + '%' : 'OFFLINE', lc != null ? (lc >= 85 ? 'green' : lc >= 75 ? 'amber' : 'red') : 'red');
+  setTick('ftick-vba',     `${kpi.vba_shift_units}/${kpi.vba_target_shift}`, kpi.vba_shift_units >= kpi.vba_target_shift * 0.9 ? 'green' : 'amber');
+  setTick('ftick-pbu',     `${kpi.pbu_shift_units}/${kpi.pbu_target_shift}`, kpi.pbu_shift_units >= kpi.pbu_target_shift * 0.9 ? 'green' : 'amber');
+  setTick('ftick-ptm',     `${kpi.ptm_shift_units}/${kpi.ptm_target_shift}`, kpi.ptm_shift_units >= kpi.ptm_target_shift * 0.9 ? 'green' : 'amber');
+  setTick('ftick-shift',   Math.floor(kpi.shift_elapsed_min || 0) + ' MIN', null);
+
+  // Duplicate inner content for seamless loop
+  const inner = document.getElementById('floor-ticker-inner');
+  if (inner && !inner.dataset.doubled) {
+    inner.dataset.doubled = '1';
+    inner.innerHTML += inner.innerHTML;
+  }
+}
+
+// ── Floor Sidebar ─────────────────────────────────────────────────────────────
+function updateFloorSidebar(kpi, machines) {
+  const lineAvg = (line) => {
+    const ms = machines.filter(m => m.line === line && m.state === 'running' && m.oee > 0);
+    return ms.length ? +(ms.reduce((s, m) => s + m.oee, 0) / ms.length).toFixed(1) : 0;
+  };
+  const la = lineAvg('A'), lb = lineAvg('B'), lc = lineAvg('C');
+  const oeeColor = kpi.plant_oee >= 88 ? 'green' : kpi.plant_oee >= 80 ? 'amber' : 'red';
+
+  // Plant health KPIs
+  const oeeEl = document.getElementById('fsb-oee');
+  if (oeeEl) { oeeEl.textContent = kpi.plant_oee + '%'; oeeEl.className = 'fsb-kpi-val ' + oeeColor; }
+  const runEl = document.getElementById('fsb-running');
+  if (runEl) runEl.textContent = kpi.running + '/' + kpi.total_machines;
+  const fltEl = document.getElementById('fsb-faults');
+  if (fltEl) { fltEl.textContent = kpi.fault; fltEl.className = 'fsb-kpi-val ' + (kpi.fault > 0 ? 'red' : 'green'); }
+  const idlEl = document.getElementById('fsb-idle');
+  if (idlEl) idlEl.textContent = kpi.idle;
+
+  // Line bars
+  function setLineBar(labelId, barId, pct) {
+    const lbl = document.getElementById(labelId);
+    const bar = document.getElementById(barId);
+    if (!lbl || !bar) return;
+    lbl.textContent = pct > 0 ? pct + '%' : 'OFFLINE';
+    lbl.style.color = pct >= 85 ? '#22c55e' : pct >= 75 ? '#f59e0b' : '#ef4444';
+    bar.style.width = pct + '%';
+    bar.style.background = pct >= 85 ? '#22c55e' : pct >= 75 ? '#f59e0b' : '#ef4444';
+  }
+  setLineBar('fsb-line-a', 'fsb-bar-a', la);
+  setLineBar('fsb-line-b', 'fsb-bar-b', lb);
+  setLineBar('fsb-line-c', 'fsb-bar-c', lc);
+
+  // Shift output bars
+  function setProdBar(barId, valId, actual, target) {
+    const bar = document.getElementById(barId);
+    const val = document.getElementById(valId);
+    const pct = target > 0 ? Math.min(100, (actual / target) * 100) : 0;
+    if (bar) { bar.style.width = pct + '%'; bar.style.background = pct >= 90 ? '#22c55e' : pct >= 70 ? '#3b82f6' : '#f59e0b'; }
+    if (val) val.textContent = actual + ' / ' + target;
+  }
+  setProdBar('fsb-prod-vba', 'fsb-prod-vba-val', kpi.vba_shift_units, kpi.vba_target_shift);
+  setProdBar('fsb-prod-pbu', 'fsb-prod-pbu-val', kpi.pbu_shift_units, kpi.pbu_target_shift);
+  setProdBar('fsb-prod-ptm', 'fsb-prod-ptm-val', kpi.ptm_shift_units, kpi.ptm_target_shift);
+
+  // Alarms
+  if (allAlarms && allAlarms.length) _renderSidebarAlarms(allAlarms);
+}
+
+function _renderSidebarAlarms(alarms) {
+  const container = document.getElementById('fsb-alarms');
+  const badge     = document.getElementById('fsb-alarm-badge');
+  if (!container) return;
+  const top = alarms.slice(0, 5);
+  if (badge) badge.textContent = alarms.length;
+  container.innerHTML = top.map(a => {
+    const dotCls = a.severity === 'CRITICAL' ? 'critical' : a.severity === 'HIGH' ? 'high' : 'medium';
+    const ago = a.triggered_min_ago < 60 ? a.triggered_min_ago + 'm ago' : Math.floor(a.triggered_min_ago / 60) + 'h ago';
+    return `<div class="fsb-alarm-row">
+      <div class="fsb-alarm-dot ${dotCls}"></div>
+      <div class="fsb-alarm-body">
+        <div class="fsb-alarm-machine">${a.machine_id} · ${a.severity}</div>
+        <div class="fsb-alarm-msg" title="${a.message}">${a.message}</div>
+      </div>
+      <div class="fsb-alarm-time">${ago}</div>
+    </div>`;
+  }).join('');
 }
 
 /** OEE traffic light class */
@@ -122,18 +264,24 @@ function lineAvgOeePct(machines, line) {
 // ── Tab ───────────────────────────────────────────────────────────────────────
 let _visionRan = false;
 let _pdmRan    = false;
+let _pdmData   = null;
+let _pdmView   = 'card';
 
 let _activeTab    = 'floor';
 let _tabStartTime = null;
+let _clickCount   = 0;
+document.addEventListener('click', () => { _clickCount++; });
 
 // ── Page time logging ─────────────────────────────────────────────────────────
 async function _logPageTime(page, seconds) {
   if (seconds < 1) return;
+  const clicks = _clickCount;
+  _clickCount = 0;
   try {
     await fetch('/manufacturing/api/log-page-time', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ page, seconds_spent: seconds }),
+      body: JSON.stringify({ page, seconds_spent: seconds, click_count: clicks }),
     });
   } catch (_) {}
 }
@@ -150,6 +298,8 @@ function switchTab(tab) {
   document.getElementById(`tab-${tab}`).classList.remove('hidden');
   document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
   _activeTab = tab;
+  const filterBar = document.getElementById('filter-bar');
+  if (filterBar) filterBar.style.display = '';
 
   if (tab === 'quality' && !_visionRan) {
     _visionRan = true;
@@ -159,10 +309,14 @@ function switchTab(tab) {
     _pdmRan = true;
     setTimeout(loadPdmPredictions, 400);
   }
+  // Re-render downtime chart when tab becomes visible (canvas was hidden during initial load)
+  if (tab === 'downtime') {
+    setTimeout(() => applyFilters(), 50);
+  }
 
-  // Refresh agent panel and talk track if open
+  // Refresh agent panel and info panel if open
   if (!document.getElementById('agent-panel').classList.contains('hidden')) renderAgentPanel(tab);
-  if (!document.getElementById('talk-modal').classList.contains('hidden')) renderTalkTrack(tab);
+  if (!document.getElementById('info-overlay').classList.contains('hidden')) openInfoPanel(tab);
 }
 
 // ── Header ────────────────────────────────────────────────────────────────────
@@ -173,7 +327,7 @@ function updateHeader(kpi) {
   oeeEl.className   = 'hdr-kpi-val ' + oeeTrafficClass(kpi.plant_oee, tgt);
   document.getElementById('hdr-running').textContent    = `${kpi.running}/${kpi.total_machines}`;
   document.getElementById('hdr-faults').textContent     = kpi.fault;
-  document.getElementById('hdr-alarm-count').textContent = kpi.critical_alarms;
+  const alarmEl = document.getElementById('hdr-alarm-count'); if (alarmEl) alarmEl.textContent = kpi.critical_alarms;
 }
 
 // ── Plant KPI Strip ───────────────────────────────────────────────────────────
@@ -484,25 +638,9 @@ function closeMachineStatus() {
 }
 
 // ── OEE Tab ───────────────────────────────────────────────────────────────────
-function updateOeeTab(kpi, machines) {
-  const lineOee = (line) => {
-    const ms = machines.filter(m => m.line === line && m.state === 'running' && m.oee > 0);
-    return ms.length ? +(ms.reduce((s, m) => s + m.oee, 0) / ms.length).toFixed(1) : 0;
-  };
-
-  const plant = kpi.plant_oee;
-  const la    = lineOee('A');
-  const lb    = lineOee('B');
-  const lc    = lineOee('C');
-
-  document.getElementById('oee-plant').textContent  = plant + '%';
-  document.getElementById('oee-plant').className    = 'kpi-value ' + (plant >= 88 ? 'green' : plant >= 80 ? 'yellow' : 'red');
-  document.getElementById('oee-line-a').textContent = la + '%';
-  document.getElementById('oee-line-b').textContent = lb + '%';
-  document.getElementById('oee-line-c').textContent = lc + '%';
-
-  renderMachineOeeChart(machines);
-  renderOeeBreakdownCards(machines);
+function updateOeeTab(_kpi, _machines) {
+  // Delegate to applyFilters so period/shift/plant filters are always respected
+  applyFilters();
 }
 
 // Theme-aware chart colors
@@ -616,7 +754,7 @@ function showOeeFactors(machine) {
         <span class="oee-f-op">=</span>
         <span class="oee-f-oee" style="color:${oeeColor}">${oeeCalc}%</span>
       </div>
-      <button class="oee-factors-close" onclick="document.getElementById('oee-factors-panel').classList.add('hidden')">✕</button>
+      <button class="oee-factors-close" onclick="document.getElementById('oee-factors-panel').classList.add('hidden');document.getElementById('oee-click-hint').classList.remove('hidden')">✕</button>
     </div>
     <div class="oee-factors-body">
       <div class="oee-factor-block">
@@ -648,6 +786,7 @@ function showOeeFactors(machine) {
       `).join('')}
     </div>
   `;
+  document.getElementById('oee-click-hint')?.classList.add('hidden');
   panel.classList.remove('hidden');
 }
 
@@ -662,8 +801,29 @@ function renderMachineOeeChart(machines) {
     m.oee >= 80         ? '#FFD600' : '#FF8C00'
   );
 
+  const barValueLabels = {
+    id: 'barValueLabels',
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      chart.data.datasets.forEach((dataset, i) => {
+        const meta = chart.getDatasetMeta(i);
+        meta.data.forEach((bar, j) => {
+          const val = dataset.data[j];
+          ctx.save();
+          ctx.fillStyle = 'rgba(255,255,255,0.72)';
+          ctx.font = '700 9px -apple-system, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(val + '%', bar.x, bar.y - 3);
+          ctx.restore();
+        });
+      });
+    },
+  };
+
   machineChart = new Chart(ctx, {
     type: 'bar',
+    plugins: [barValueLabels],
     data: {
       labels: running.map(m => m.id),
       datasets: [{ label: 'OEE %', data: running.map(m => m.oee), backgroundColor: colors, borderRadius: 3 }],
@@ -681,8 +841,8 @@ function renderMachineOeeChart(machines) {
           callbacks: { footer: () => 'Click to see A × P × Q breakdown' } },
       },
       scales: {
-        x: { ticks: { color: chartTickColor(), font: { size: 9 }, maxRotation: 45 }, grid: { color: chartGridColor() } },
-        y: { min: 0, max: 100, ticks: { color: chartTickColor(), font: { size: 10 } }, grid: { color: chartGridColor() } },
+        x: { ticks: { color: chartTickColor(), font: { size: 9 }, maxRotation: 45 }, grid: { display: false } },
+        y: { min: 0, max: 100, display: false },
       },
     },
   });
@@ -848,7 +1008,7 @@ function initVisionGrid() {
   if (!grid) return;
   grid.innerHTML = VISION_PARTS.map(p => `
     <div class="vision-card" id="vcard-${p.id}" data-id="${p.id}">
-      <div class="vision-img-wrap">
+      <div class="vision-img-wrap" onclick="openLightbox('/manufacturing/api/inspection/image/${p.id}', '${p.part}')">
         <img src="/manufacturing/api/inspection/image/${p.id}" alt="${p.part}" loading="lazy" />
         <div class="scan-line hidden" id="vscan-${p.id}"></div>
         <div class="defect-bbox hidden" id="vbbox-${p.id}"></div>
@@ -1051,35 +1211,64 @@ async function loadPdmPredictions() {
   try {
     const r    = await fetch('/manufacturing/api/predict-maintenance');
     const data = await r.json();
-    renderPdmGrid(data);
+    _pdmData = data;
+    renderPdmView();
   } catch (e) {
     grid.innerHTML = '<div class="pdm-error">Prediction unavailable — check model endpoint</div>';
   }
 }
 
-function renderPdmGrid(data) {
-  const grid  = document.getElementById('pdm-grid');
+function togglePdmView(view) {
+  _pdmView = view;
+  document.querySelectorAll('.pdm-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  renderPdmView();
+}
+
+function _pdmFilteredMachines() {
+  if (!_pdmData) return [];
+  const plant  = document.getElementById('f-plant')?.value || '';
+  const prefix = plant ? _PLANT_LINE[plant] : null;
+  return prefix
+    ? _pdmData.machines.filter(m => (m.machine_id || '').startsWith(prefix))
+    : _pdmData.machines;
+}
+
+function renderPdmView() {
+  if (!_pdmData) return;
+  const machines = _pdmFilteredMachines();
+
+  // Update summary pills to reflect filtered set
   const pills = document.getElementById('pdm-summary-pills');
   const tag   = document.getElementById('pdm-model-tag');
-
-  if (tag && data.summary?.model) tag.textContent = data.summary.model;
-
-  if (pills && data.summary) {
-    const s = data.summary;
+  if (tag && _pdmData.summary?.model) tag.textContent = _pdmData.summary.model;
+  if (pills) {
+    const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+    machines.forEach(m => { const k = m.risk_level?.toLowerCase(); if (k in counts) counts[k]++; });
     pills.innerHTML = [
-      s.critical ? `<span class="pdm-pill pill-critical">${s.critical} CRITICAL</span>` : '',
-      s.high     ? `<span class="pdm-pill pill-high">${s.high} HIGH</span>` : '',
-      s.medium   ? `<span class="pdm-pill pill-medium">${s.medium} MEDIUM</span>` : '',
-      s.low      ? `<span class="pdm-pill pill-low">${s.low} LOW</span>` : '',
+      counts.critical ? `<span class="pdm-pill pill-critical">${counts.critical} CRITICAL</span>` : '',
+      counts.high     ? `<span class="pdm-pill pill-high">${counts.high} HIGH</span>` : '',
+      counts.medium   ? `<span class="pdm-pill pill-medium">${counts.medium} MEDIUM</span>` : '',
+      counts.low      ? `<span class="pdm-pill pill-low">${counts.low} LOW</span>` : '',
     ].join('');
   }
 
-  grid.innerHTML = data.machines.map(m => {
-    const pct    = Math.round(m.failure_prob * 100);
-    const ttf    = m.hours_to_failure > 0
+  if (_pdmView === 'table') renderPdmTable(machines);
+  else renderPdmGrid(machines);
+}
+
+function renderPdmGrid(machines) {
+  const grid = document.getElementById('pdm-grid');
+  if (!machines.length) {
+    grid.innerHTML = '<div class="pdm-loading">No machines match the current filter.</div>';
+    return;
+  }
+  grid.className = 'pdm-grid';
+  grid.innerHTML = machines.map(m => {
+    const pct   = Math.round(m.failure_prob * 100);
+    const ttf   = m.hours_to_failure > 0
       ? `${m.hours_to_failure.toFixed(1)} hrs`
       : '<span class="pdm-faulted">FAULTED NOW</span>';
-    const feats  = m.features || {};
+    const feats = m.features || {};
     return `
       <div class="pdm-card pdm-risk-${m.risk_level.toLowerCase()}" onclick="showPdmDetail('${m.machine_id}','${m.machine_name}','${m.risk_level}')">
         <div class="pdm-card-top">
@@ -1120,6 +1309,60 @@ function renderPdmGrid(data) {
       </div>
     `;
   }).join('');
+}
+
+function renderPdmTable(machines) {
+  const grid = document.getElementById('pdm-grid');
+  grid.className = 'pdm-table-wrap';
+  if (!machines.length) {
+    grid.innerHTML = '<div class="pdm-loading">No machines match the current filter.</div>';
+    return;
+  }
+  grid.innerHTML = `
+    <table class="pdm-table">
+      <thead>
+        <tr>
+          <th>Machine</th>
+          <th>Line</th>
+          <th>Risk</th>
+          <th>Failure Prob.</th>
+          <th>Time to Failure</th>
+          <th>Temp</th>
+          <th>Vibration</th>
+          <th>Hrs Since PM</th>
+          <th>Recommended Action</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${machines.map(m => {
+          const pct   = Math.round(m.failure_prob * 100);
+          const f     = m.features || {};
+          const ttf   = m.hours_to_failure > 0 ? `${m.hours_to_failure.toFixed(1)} hrs` : 'FAULTED';
+          const tAlert = f.temp_c > 60;
+          const vAlert = f.vibration_rms > 3.5;
+          const pmAlert = f.hours_since_last_pm > 1500;
+          return `
+            <tr class="pdm-table-row" onclick="showPdmDetail('${m.machine_id}','${m.machine_name}','${m.risk_level}')">
+              <td><span class="pdm-machine-id">${m.machine_id}</span><br><span class="pdm-machine-name">${m.machine_name}</span></td>
+              <td class="pdm-line-tag">${m.line_name || 'Line ' + m.line}</td>
+              <td><span class="pdm-risk-badge pdm-badge-${m.risk_level.toLowerCase()}">${m.risk_level}</span></td>
+              <td>
+                <div class="pdm-tbl-prob">
+                  <span class="pdm-tbl-pct pdm-fill-${m.risk_level.toLowerCase()}">${pct}%</span>
+                  <div class="pdm-gauge-track" style="width:80px;margin-top:4px"><div class="pdm-gauge-fill pdm-fill-${m.risk_level.toLowerCase()}" style="width:${pct}%"></div></div>
+                </div>
+              </td>
+              <td class="${m.hours_to_failure <= 0 ? 'pdm-faulted' : ''}">${ttf}</td>
+              <td class="${tAlert  ? 'pdm-tbl-alert' : ''}">${f.temp_c?.toFixed(1) ?? '—'}°C</td>
+              <td class="${vAlert  ? 'pdm-tbl-alert' : ''}">${f.vibration_rms?.toFixed(2) ?? '—'} m/s²</td>
+              <td class="${pmAlert ? 'pdm-tbl-alert' : ''}">${Math.round(f.hours_since_last_pm ?? 0)}h</td>
+              <td class="pdm-tbl-action">${m.recommended_action}</td>
+              <td><button class="pdm-tbl-detail-btn" onclick="event.stopPropagation();showPdmDetail('${m.machine_id}','${m.machine_name}','${m.risk_level}')">Detail →</button></td>
+            </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
 }
 
 function _pdmSensorChip(label, value, alert) {
@@ -1253,124 +1496,237 @@ function closePdmDetail() {
 
 const TALK_TRACKS = {
   floor: {
-    overview: `You are on Live Floor: a plant-layout map where each asset shows state at a glance (running, idle, fault) with live IoT metrics and alarm codes. A 30-second Delta pipeline keeps machine health, temperature bands, and OEE inputs current so supervisors see the same picture the lakehouse uses for downstream analytics.
-
-Click any station to open its live sensor strip and active faults—this mirrors how tier-1 plants tie SCADA/MES signals to a governed Unity Catalog layer instead of a disconnected historian UI.`,
-    insights: [
-      'Databricks pattern: land high-frequency telemetry in Bronze, aggregate to machine-state Silver jobs, and serve the app from Gold—keeps the UI fast without losing raw fidelity for root-cause work later.',
-      'Automotive ops best practice: standardize fault codes and color semantics across shifts so Andon responses do not depend on tribal knowledge.',
-      'Use this view in daily tiered accountability—start with red assets, drill to top alarm contributors, then open the same machine context in OEE and Downtime tabs without re-querying.',
-      'IoT + UC: store device identity and line mapping as dimensions in Unity Catalog so every alert is traceable to customer program and shift.',
-      'Latency discipline: if refresh exceeds one minute, treat it as a data product SLO breach—this demo targets sub-minute refresh to match real escalation clocks.',
-    ],
+    what: 'Real-time map of every machine on the plant floor showing operational status (running, idle, fault), live OEE inputs, active alarm codes, and throughput by production line — updated on a sub-minute streaming pipeline from your manufacturing lakehouse.',
+    aiml: 'Sensor fusion models aggregate multi-frequency telemetry streams to detect anomalies before they trigger unplanned stoppages. Fault classification algorithms automatically route alerts to the right maintenance crew, reducing mean-time-to-respond. Streaming anomaly detection identifies machines trending toward fault conditions before the issue becomes a production loss event.',
+    benchmark: 'Toyota\'s production system is the global benchmark for real-time floor visibility and the jidoka principle — stopping to fix defects at the source immediately. Siemens\' Amberg Electronics Plant is widely cited in Industry 4.0 literature for near-100% digital traceability per unit. McKinsey & Company cites real-time plant floor monitoring as a top driver of manufacturing productivity improvement across discrete and process industries.',
   },
   oee: {
-    overview: `OEE Analytics breaks each asset into Availability, Performance, and Quality with drill-down from the bar chart. Numbers are computed from the same Delta facts as your MES reconciliation, so finance and operations are not arguing over different denominators.
-
-Use the machine list to spot who is pulling the line below target OEE before end-of-shift reporting buries the signal.`,
-    insights: [
-      'World-class automotive assembly lines often anchor executive targets around ~85–92% OEE depending on mix and changeovers—use this tab to show which leg (A, P, or Q) is the real lever.',
-      'Databricks practice: materialize OEE aggregates in Delta tables keyed by shift and work center, then let the UI read narrow slices—cheaper than recomputing from raw cycles on every page load.',
-      'Pair OEE drops with the AI suggestions surfaced per machine—treat them as hypotheses that must be validated against the last 24–48 hours of faults and speed loss events.',
-      'APQP mindset: when launching a new model year, freeze baseline OEE curves by program so continuous improvement teams can prove uplift versus launch maturity.',
-      'Avoid “OEE vanity”: insist on verified downtime reason codes; otherwise Performance looks artificially high while Availability tells the truth.',
-    ],
+    what: 'Overall Equipment Effectiveness broken down into Availability, Performance, and Quality for each machine and production line — the industry-standard composite KPI for measuring how effectively manufacturing assets convert scheduled time into good output.',
+    aiml: 'ML regression models identify which combinations of shift, product changeover, and maintenance history most strongly predict OEE degradation, enabling supervisors to act before losses accumulate. Anomaly detection continuously monitors OEE components and flags assets trending below threshold before they hit reportable loss levels or end-of-shift reporting buries the signal.',
+    benchmark: 'A world-class OEE of 85% or above is the widely cited benchmark established by Seiichi Nakajima and maintained by the OEE Foundation. Industry surveys estimate the average for discrete manufacturers at 60–65%. McKinsey & Company cites OEE improvement as one of the highest-ROI operational levers, with top-quartile plants sustaining 10–15 percentage point OEE advantages over median peers.',
   },
   downtime: {
-    overview: `Downtime combines a Pareto of top faults, MTBF versus baseline, and trend lines so maintenance planners see what is chronic versus new. Everything is sourced from Unity Catalog event history, not a one-off spreadsheet export.
-
-This is the screen you use to defend tomorrow’s wrench time: which three faults earned the next PM window.`,
-    insights: [
-      'Maintenance excellence: run Pareto reviews weekly at minimum; daily during launch or heavy model-mix periods when fault taxonomy churns fastest.',
-      'Data model tip: keep fault timestamps in UTC with plant offset as a dimension—eliminates “missing hour” debates across sites.',
-      'Databricks job pattern: incremental merges for fault events, late-arriving correction workflow, and slowly changing dimensions for asset hierarchy so MTBF denominators stay honest.',
-      'Bridge to SAP/Maximo: export the top fault cluster IDs as structured work packages so CMMS backlogs mirror what analytics prioritized.',
-      'KPI guardrail: MTBF without operating-hours context misleads—always normalize by runtime when comparing presses to conveyors.',
-    ],
+    what: 'Downtime events categorized by cause — mechanical failure, planned maintenance, changeover, quality stop — with MTBF and MTTR trend analysis over rolling periods to separate chronic recurring failures from new emerging fault modes.',
+    aiml: 'Time-series classification models identify recurring downtime patterns linked to specific operators, shifts, or product runs that would be invisible in aggregate fault counts. Natural language processing applied to technician work order notes extracts root-cause signals that structured fault codes alone consistently miss, surfacing systemic issues faster.',
+    benchmark: 'McKinsey & Company estimates AI-driven downtime analysis can reduce unplanned downtime by 10–20% in capital-intensive manufacturing. Aberdeen Group research shows best-in-class manufacturers achieve MTBF improvements of 20–30% through systematic downtime analytics programs. Caterpillar and Honeywell are among the manufacturers widely cited in industry press for data-driven predictive maintenance reducing reactive maintenance labor by 15–25%.',
   },
   maintenance: {
-    overview: `Predictive Maintenance shows a GradientBoosting model scoring each asset with CRITICAL/WARN bands, top contributing sensors, and a 24-hour trace when you open a card. FAL-ASM-01 and BDY-WLD-01 illustrate how vibration and thermal drift precede hard failures.
-
-This is the Databricks ML + governance story: training data, features, and the served model all live beside operational tables.`,
-    insights: [
-      'Register the production model in Unity Catalog with version, owner, and refresh SLA—auditors and customer SQE teams increasingly ask for ML lineage, not just accuracy metrics.',
-      'Reliability engineering rule: convert model scores into risk tiers with explicit maintenance playbooks (inspect, tighten window, immediate swap) instead of raw probabilities on the shop floor.',
-      'Feature hygiene: align sensor sampling rates before blending signals; mismatched windows are the top cause of false positives in industrial GBM models.',
-      'Business case framing used in this demo: one avoided unplanned transfer-car event ≈ tens of thousands of dollars in lost production—use it to fund the lakehouse incrementally.',
-      'MLOps on Databricks: schedule retrains when drift detectors show AUC or calibration slipping, and shadow-deploy challengers before flipping production scores.',
-    ],
+    what: 'Machine health scores, predicted time-to-failure, and prioritized maintenance recommendations derived from vibration, temperature, current draw, and cycle count sensor data — presented by risk tier (Critical, Warning, Healthy) so maintenance planners act on the highest-risk assets first.',
+    aiml: 'Gradient boosting and survival analysis models predict failure probability from multivariate sensor streams, converting raw telemetry into actionable risk scores. Prescriptive AI ranks work orders by cost-of-delay versus cost-of-maintenance so planners optimize maintenance windows for maximum production impact. Models are versioned and governed in Unity Catalog alongside training data for full auditability.',
+    benchmark: 'Deloitte Insights reports industrial predictive maintenance programs delivering 25% reductions in maintenance costs and up to 70% decrease in equipment breakdowns. Caterpillar (Cat Digital) and Rolls-Royce (TotalCare program) are among the most widely referenced deployed examples of predictive maintenance at industrial scale. McKinsey Global Institute estimated the addressable value of predictive maintenance across global manufacturing and infrastructure at $240–630 billion annually.',
   },
   quality: {
-    overview: `Quality is the Vision AI gate for body and paint: each panel inspection lands defect classes (blistering, pinholes, cratering) with image evidence, a pareto of defect mix, and dollarized scrap versus rework impact.
-
-Process engineers use this to decide chemistry or robot path tweaks before defects reach final assembly.`,
-    insights: [
-      'Early containment ROI: defects found before clear coat and bake-out typically cost an order of magnitude less than rework at trim—prioritize cameras and lighting stability over marginal model gains.',
-      'Store labeled images and model version in Delta + UC Volumes so customer PPAP evidence and internal retrospectives share one repository.',
-      'Vision ops: run weekly label audits on edge cases; automotive surface defects change with humidity and batch chemistry.',
-      'Databricks serving tip: batch score high-volume lines, stream-score only for rework loops or low-latency gates to balance cost and throughput.',
-      'Quality analytics hygiene: tie every defect record to VIN or body serial when allowed—enables recall-simulation exercises without rebuilding joins.',
-    ],
+    what: 'Computer vision inspection results for E-coat body panels — pass/fail classification per panel, defect type localization (blistering, pinholes, cratering), first pass yield trend, and a production impact analysis showing machine time and material cost associated with each defective unit.',
+    aiml: 'Convolutional neural network (CNN) models classify defect types from high-resolution panel images with real-time inference via Databricks Model Serving at line speed. Active learning continuously improves model accuracy as new defect patterns are encountered and labeled. All model versions, training images, and inference results are governed in Unity Catalog for PPAP evidence and recall simulation readiness.',
+    benchmark: 'BMW Group is widely cited — including in their own public disclosures and industry publications — for deploying AI-based optical quality inspection in paint and final assembly operations. Industry studies generally report AI vision systems achieving 90%+ defect detection accuracy versus 70–80% for manual visual inspection. Volkswagen and Continental have also published on computer vision deployments for automotive surface and paint quality.',
   },
   shift: {
-    overview: `Ask SHIFT is Genie on your manufacturing lakehouse: a conversational panel where production leaders ask natural-language questions against live OEE, downtime, quality, and throughput tables—no SQL notebook in the loop.
-
-Demo prompts tie cross-domain answers (“top downtime drivers on Line A”, “output if top faults clear”, “FPY loss by defect type”) to the same metrics rendered in the other tabs.`,
-    insights: [
-      'Genie deployment practice: curate a UC-backed instruction set with approved metrics definitions (OEE formulas, shift boundaries) so answers stay numerically aligned with BI.',
-      'Change management: start with three approved questions per role (shift manager, quality engineer, maintenance lead) before opening a free-form chat to avoid hallucinated KPIs.',
-      'Security: enforce row filters by plant and program; manufacturing data mixes customer IP and pricing-sensitive throughput.',
-      'Latency expectation: market the assistant as “minutes-fresh,” not “PLC-real-time,” unless you wire streaming inference—sets the right trust bar.',
-      'Feedback loop: log unanswered or low-confidence prompts weekly; they become the backlog for new curated datasets or semantic views.',
-    ],
+    what: 'A natural language interface to live manufacturing data — OEE, downtime, quality, and throughput — allowing shift managers and process engineers to get immediate answers from their Delta Lake using plain English, without writing SQL or submitting an analytics request.',
+    aiml: 'A large language model (LLM) with retrieval-augmented generation (RAG) grounds all responses in live Unity Catalog-governed tables, preventing hallucination on numerical KPIs. Intent classification routes queries to the appropriate data domain before SQL generation. Multi-turn conversation enables analysts to drill down with follow-up questions without re-establishing context.',
+    benchmark: 'Gartner surveys from 2023–2024 found that over 50% of manufacturing executives planned to pilot generative AI for operations within 12 months. Siemens and GE have publicly announced AI assistant deployments for manufacturing operations teams. McKinsey\'s 2023 report on the economic potential of generative AI estimates the technology could deliver over $170 billion in annual value to advanced manufacturing globally.',
   },
   manuals: {
-    overview: `Equipment Manuals is a RAG assistant over ten PDF manuals (robots, presses, E-coat, vision, etc.) stored in a Unity Catalog Volume with Vector Search chunks and citations back to page and document.
-
-Technicians ask maintenance questions in plain language and get procedures grounded in the actual OEM PDF, not an unofficial wiki.`,
-    insights: [
-      'Chunking strategy matters for torque tables and wiring diagrams—use structure-aware parsing and preserve tables as Markdown/HTML chunks so numbers do not get split across embeddings.',
-      'Operationalize citations: every answer should link to the source PDF path in UC so safety reviewers can audit responses after incidents.',
-      'Access control: separate volumes by OEM license terms; some manuals prohibit redistribution even internally.',
-      'Update workflow: when a PM bulletin arrives, ingest, re-embed, and bump a “manual version” tag so the model stops quoting superseded torque values.',
-      'Reduce MTTR: integrate suggested procedures with work-order creation so the CMMS captures what the tech actually executed, feeding future training data.',
-    ],
+    what: 'A natural language search interface over equipment manuals — allowing maintenance technicians to ask plain-language questions about procedures, torque specifications, and wiring diagrams, with responses grounded in and citing the actual OEM PDFs stored in Unity Catalog Volumes.',
+    aiml: 'A retrieval-augmented generation (RAG) system uses vector search over PDF chunks to find the most relevant passages across all manuals, then generates a grounded answer with direct citations to the source document and page number — ensuring technicians get accurate, auditable guidance rather than an unverified response.',
+    benchmark: 'McKinsey & Company cites technician knowledge management as a top opportunity in manufacturing AI, with leading plants reporting significant mean-time-to-repair reductions when technicians have instant access to searchable documentation. Siemens and ABB have published on RAG-based maintenance assistant pilots for field service technicians. Industry data consistently shows technicians spend 30–40% of diagnosis time searching for the right documentation — the primary problem this capability solves.',
   },
 };
 
-function openTalkTrack() {
-  document.getElementById('talk-overlay').classList.remove('hidden');
-  document.getElementById('talk-modal').classList.remove('hidden');
-  renderTalkTrack(_activeTab);
-}
-
-function closeTalkTrack() {
-  document.getElementById('talk-overlay').classList.add('hidden');
-  document.getElementById('talk-modal').classList.add('hidden');
-}
-
-function renderTalkTrack(tab) {
-  const track = TALK_TRACKS[tab] || TALK_TRACKS.floor;
-  document.getElementById('talk-tab-badge').textContent = TAB_LABELS[tab] || tab;
-  const insightsHtml =
-    track.insights && track.insights.length
-      ? `<div class="talk-insights">
-        <div class="talk-insights-title">Key insights</div>
-        <ul class="talk-insights-list">${track.insights.map((li) => `<li>${li}</li>`).join('')}</ul>
-      </div>`
-      : '';
-  document.getElementById('talk-modal-body').innerHTML = `
-    <div class="talk-overview-block">
-      <div class="talk-section-label">Page overview</div>
-      <div class="talk-body-text">${track.overview.split('\n\n').map((p) => `<p>${p}</p>`).join('')}</div>
+function openInfoPanel(key) {
+  const track = TALK_TRACKS[key] || TALK_TRACKS[_activeTab] || TALK_TRACKS.floor;
+  const label = TAB_LABELS[key] || key;
+  document.getElementById('info-panel-title').textContent = label;
+  document.getElementById('info-panel-body').innerHTML = `
+    <div class="info-sec-block">
+      <div class="info-sec-title">What This Page Shows</div>
+      <div class="info-what"><p>${track.what || ''}</p></div>
     </div>
-    ${insightsHtml}
+    <div class="info-sec-block">
+      <div class="info-sec-title info-sec-ai">How AI &amp; ML Is Applied</div>
+      <div class="info-what"><p>${track.aiml || ''}</p></div>
+    </div>
+    <div class="info-sec-block">
+      <div class="info-sec-title info-sec-bench">Industry Benchmarks</div>
+      <div class="info-what"><p>${track.benchmark || ''}</p></div>
+    </div>
   `;
+  document.getElementById('info-overlay').classList.remove('hidden');
+}
+
+function closeInfoPanel(e) {
+  if (!e || e.target === document.getElementById('info-overlay'))
+    document.getElementById('info-overlay').classList.add('hidden');
+}
+
+// ── Filter Bar ────────────────────────────────────────────────────────────────
+// Plant filter → machine ID prefix
+const _PLANT_LINE    = { p1: 'BDY', p2: 'PNT', p3: 'PTN', p4: 'FAL' };
+// Machine prefix → production line (for quality defect filtering)
+const _PREFIX_LINE   = { BDY: 'A', PNT: 'B', PTN: 'C', FAL: 'S' };
+
+// Shift and period multipliers applied to synthetic data
+const _SHIFT_OEE = { '': 1.00, day: 1.04, eve: 1.00, night: 0.93 };
+const _SHIFT_DT  = { '': 1.00, day: 0.82, eve: 1.00, night: 1.25 };
+const _SHIFT_FPY = { '': 0.0,  day: +1.2, eve:  0.0, night: -3.1 }; // additive to FPY %
+const _PERIOD_OEE = { '': 1.00, '24h': 0.97, '7d': 0.95, '30d': 0.92 };
+const _PERIOD_DT  = { '': 1.00, '24h': 3.0,  '7d': 21.0, '30d': 90.0 };
+const _PERIOD_Q   = { '': 1.00, '24h': 3.0,  '7d': 21.0, '30d': 90.0 };
+
+function _fmtTime(min) {
+  if (min < 120) return min + ' min';
+  return (min / 60).toFixed(1) + ' hrs';
+}
+
+function applyFilters() {
+  const selects = document.querySelectorAll('.filter-select');
+  const active = Array.from(selects).filter(s => s.value !== '' && s.id !== 'oee-line-filter' && s.id !== 'qual-line-filter' && s.id !== 'qual-defect-filter').length;
+  const clearBtn = document.getElementById('filter-clear');
+  const countEl  = document.getElementById('filter-count');
+  if (clearBtn) clearBtn.classList.toggle('hidden', active === 0);
+  if (countEl) {
+    countEl.classList.toggle('hidden', active === 0);
+    if (active > 0) countEl.textContent = `${active} filter${active > 1 ? 's' : ''} active`;
+  }
+
+  const period = document.getElementById('f-period')?.value || '';
+  const plant  = document.getElementById('f-plant')?.value  || '';
+  const shift  = document.getElementById('f-shift')?.value  || '';
+  const prefix = plant ? _PLANT_LINE[plant] : null;
+
+  const oeeMul = (_PERIOD_OEE[period] ?? 1) * (_SHIFT_OEE[shift] ?? 1);
+  const dtMul  = (_PERIOD_DT[period]  ?? 1) * (_SHIFT_DT[shift]  ?? 1);
+  const qMul   = (_PERIOD_Q[period]   ?? 1);
+  const fpyDelta = _SHIFT_FPY[shift] ?? 0;
+
+  // ── Floor map: dim/restore machine nodes by plant ────────────────────────
+  document.querySelectorAll('.fnode[id^="fnode-"]').forEach(node => {
+    const mp = node.id.replace('fnode-', '').split('-')[0];
+    const show = !prefix || mp === prefix;
+    node.style.opacity = show ? '' : '0.18';
+    node.style.pointerEvents = show ? '' : 'none';
+  });
+
+  // ── OEE KPI cards + machine chart + breakdown ────────────────────────────
+  if (allMachines && allMachines.length) {
+    const src = (prefix
+      ? allMachines.filter(m => (m.id || '').startsWith(prefix))
+      : allMachines).length
+        ? (prefix ? allMachines.filter(m => (m.id || '').startsWith(prefix)) : allMachines)
+        : allMachines;
+
+    const scaled = src.map(m => ({ ...m, oee: Math.min(99.9, +(m.oee * oeeMul).toFixed(1)) }));
+    const running = scaled.filter(m => m.state === 'running' && m.oee > 0);
+    const plantOee = running.length
+      ? +(running.reduce((s, m) => s + m.oee, 0) / running.length).toFixed(1) : 0;
+    const lineAvg = (ln) => {
+      const ms = scaled.filter(m => m.line === ln && m.state === 'running' && m.oee > 0);
+      return ms.length ? +(ms.reduce((s, m) => s + m.oee, 0) / ms.length).toFixed(1) : 0;
+    };
+
+    const setTxt = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    const oeePlEl = document.getElementById('oee-plant');
+    if (oeePlEl) {
+      oeePlEl.textContent = plantOee + '%';
+      oeePlEl.className = 'kpi-value ' + (plantOee >= 88 ? 'green' : plantOee >= 80 ? 'yellow' : 'red');
+    }
+    setTxt('oee-line-a', lineAvg('A') + '%');
+    setTxt('oee-line-b', lineAvg('B') + '%');
+    setTxt('oee-line-c', lineAvg('C') + '%');
+
+    const hdrEl = document.getElementById('hdr-oee');
+    if (hdrEl) {
+      hdrEl.textContent = plantOee + '%';
+      hdrEl.className = 'hdr-kpi-val ' + (plantOee >= 88 ? 'green' : plantOee >= 80 ? 'amber' : 'red');
+    }
+    renderMachineOeeChart(scaled);
+    renderOeeBreakdownCards(scaled);
+  }
+
+  // ── Downtime KPIs + Pareto chart ─────────────────────────────────────────
+  if (_paretoRaw.length) {
+    const scaledPareto = _paretoRaw.map(p => ({ ...p, minutes: Math.round(p.minutes * dtMul) }));
+    const totalMin = scaledPareto.reduce((s, p) => s + p.minutes, 0);
+    const unplanned = scaledPareto
+      .filter(p => !p.reason.toLowerCase().includes('planned maintenance'))
+      .reduce((s, p) => s + p.minutes, 0);
+
+    const setTxt = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    setTxt('dt-total', _fmtTime(totalMin));
+    setTxt('dt-unplanned', _fmtTime(unplanned));
+
+    const rescaledPareto = scaledPareto.map(p => ({
+      ...p,
+      pct: totalMin > 0 ? +((p.minutes / totalMin) * 100).toFixed(1) : 0,
+    }));
+    renderParetoChart(rescaledPareto);
+  }
+
+  // ── MTBF table: filter by plant prefix ───────────────────────────────────
+  if (_mtbfRaw.length) {
+    const filtered = prefix ? _mtbfRaw.filter(m => m.id.startsWith(prefix)) : _mtbfRaw;
+    const tbody = document.getElementById('mtbf-tbody');
+    if (tbody) {
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--yellow)">No maintenance records for selected plant</td></tr>`;
+      } else {
+        renderMtbfTable(filtered);
+      }
+    }
+  }
+
+  // ── Alarm list: filter by plant prefix ───────────────────────────────────
+  if (allAlarms && allAlarms.length) {
+    const filtered = prefix ? allAlarms.filter(a => (a.machine_id || '').startsWith(prefix)) : allAlarms;
+    renderAlarmList(filtered);
+  }
+
+  // ── PDM tab: re-render with filtered machines ─────────────────────────────
+  if (_pdmData) renderPdmView();
+
+  // ── Quality KPIs + charts ─────────────────────────────────────────────────
+  if (_qualityRaw) {
+    const targetLine = prefix ? _PREFIX_LINE[prefix] : null;
+    const filteredDefects = targetLine
+      ? _qualityRaw.defects.filter(d => d.line === targetLine)
+      : _qualityRaw.defects;
+    const scaledDefects = filteredDefects.map(d => ({ ...d, count: Math.round(d.count * qMul) }));
+
+    const s = _qualityRaw.summary;
+    const fpyAdj = Math.min(99.9, Math.max(0, s.first_pass_yield + fpyDelta));
+    const scaledSummary = {
+      ...s,
+      first_pass_yield:       +fpyAdj.toFixed(1),
+      total_inspected_shift:  Math.round(s.total_inspected_shift * qMul),
+      total_passed_shift:     Math.round(s.total_passed_shift * qMul),
+      total_scrap_shift:      Math.round(s.total_scrap_shift * qMul),
+      total_rework_shift:     Math.round(s.total_rework_shift * qMul),
+    };
+    renderQuality({ summary: scaledSummary, defects: scaledDefects.length ? scaledDefects : filteredDefects });
+  }
+}
+
+function clearFilters() {
+  document.querySelectorAll('.filter-select').forEach(s => { s.value = ''; });
+  applyFilters();
 }
 
 // ── Agentic Actions ───────────────────────────────────────────────────────────
 
-const TAB_LABELS = { floor: 'Live Floor', oee: 'OEE Analytics', downtime: 'Downtime', maintenance: 'Predictive Maintenance', quality: 'Quality', shift: 'Ask SHIFT', manuals: 'Equipment Manuals' };
+const TAB_LABELS = { floor: 'Live Floor', oee: 'OEE Analytics', downtime: 'Downtime', maintenance: 'Predictive Maintenance', quality: 'Quality Monitoring', shift: 'Ask AI' };
+
+// ── Image Lightbox ─────────────────────────────────────────────────────────────
+function openLightbox(src, label) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox-label').textContent = label;
+  document.getElementById('lightbox-overlay').classList.remove('hidden');
+  document.addEventListener('keydown', _lightboxKeyHandler);
+}
+function closeLightbox() {
+  document.getElementById('lightbox-overlay').classList.add('hidden');
+  document.getElementById('lightbox-img').src = '';
+  document.removeEventListener('keydown', _lightboxKeyHandler);
+}
+function _lightboxKeyHandler(e) { if (e.key === 'Escape') closeLightbox(); }
 
 const AGENT_ACTIONS = {
   floor: [
@@ -1517,6 +1873,20 @@ const AGENT_ACTIONS = {
 
 // Action execution state: { tab_idx: 'idle' | 'running' | 'done' }
 const _agentState = {};
+
+// ── Genie chat panel ─────────────────────────────────────────────────────────
+let _geniePanelOpen = false;
+function toggleGeniePanel() { _geniePanelOpen ? closeGeniePanel() : openGeniePanel(); }
+function openGeniePanel() {
+  _geniePanelOpen = true;
+  document.getElementById('genie-panel-overlay').classList.add('open');
+  document.getElementById('genie-chat-panel').classList.add('open');
+}
+function closeGeniePanel() {
+  _geniePanelOpen = false;
+  document.getElementById('genie-panel-overlay').classList.remove('open');
+  document.getElementById('genie-chat-panel').classList.remove('open');
+}
 
 function openAgentPanel() {
   document.getElementById('agent-overlay').classList.remove('hidden');
@@ -1956,8 +2326,7 @@ async function submitShift() {
 
   if (data.conversation_id) shiftConvId = data.conversation_id;
 
-  const srcLabel = data.source === 'genie' ? '✅ Powered by Databricks AI' : '✅ Powered by Databricks';
-  const msgEl = appendMsg(thread, 'ai', data.answer, srcLabel, data.follow_ups || []);
+  const msgEl = appendMsg(thread, 'ai', data.answer, null, data.follow_ups || []);
 
   // Agentic recommendations
   fetch('/manufacturing/api/actions/suggest', {
@@ -1996,16 +2365,26 @@ function appendMsg(thread, role, content, source, followUps) {
   }
 
   if (followUps && followUps.length) {
-    const fups = document.createElement('div');
-    fups.className = 'follow-ups';
+    const panel = document.createElement('div');
+    panel.className = 'fup-panel';
+    const hdr = document.createElement('div');
+    hdr.className = 'fup-panel-header';
+    hdr.innerHTML = `Suggested Questions`;
+    panel.appendChild(hdr);
+    const cards = document.createElement('div');
+    cards.className = 'fup-cards';
     followUps.forEach(fu => {
-      const b = document.createElement('button');
-      b.className   = 'follow-up-btn';
-      b.textContent = fu;
-      b.onclick     = () => { document.getElementById('shift-input').value = fu; submitShift(); };
-      fups.appendChild(b);
+      const card = document.createElement('div');
+      card.className = 'fup-card';
+      card.innerHTML = `<div class="fup-card-text">${esc(fu)}</div><button class="fup-ask-btn">Ask →</button>`;
+      card.querySelector('.fup-ask-btn').onclick = () => {
+        document.getElementById('shift-input').value = fu;
+        submitShift();
+      };
+      cards.appendChild(card);
     });
-    wrap.appendChild(fups);
+    panel.appendChild(cards);
+    wrap.appendChild(panel);
   }
 
   div.appendChild(av);
@@ -2019,7 +2398,7 @@ function appendMfgActionPanel(wrapEl, actions) {
   panel.className = 'action-panel';
   const hdr = document.createElement('div');
   hdr.className = 'action-panel-header';
-  hdr.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Recommended Actions`;
+  hdr.innerHTML = `Recommended Actions`;
   panel.appendChild(hdr);
   const cards = document.createElement('div');
   cards.className = 'action-cards';
@@ -2213,3 +2592,190 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Interactive ML Features ────────────────────────────────────────────────
+
+function _mlRunnerStart(btnId, thinkingId, steps, stepId, doneCallback) {
+  const btn = document.getElementById(btnId);
+  const thinking = document.getElementById(thinkingId);
+  const stepEl = document.getElementById(stepId);
+  if (!btn || !thinking) return;
+  btn.disabled = true;
+  thinking.style.display = 'flex';
+  let i = 0;
+  const iv = setInterval(() => {
+    i++;
+    if (i < steps.length && stepEl) stepEl.textContent = steps[i];
+  }, 900);
+  setTimeout(() => {
+    clearInterval(iv);
+    thinking.style.display = 'none';
+    btn.disabled = false;
+    doneCallback();
+  }, steps.length * 900 + 500);
+}
+
+function _renderFeatureBars(containerId, features, accentColor) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.classList.add('visible');
+  el.innerHTML = `<div class="feature-importance-title">Root Cause Feature Importance</div>` +
+    features.map(f => `
+      <div class="feature-row">
+        <div class="feature-label">${f.label}</div>
+        <div class="feature-bar-wrap">
+          <div class="feature-bar" id="fb-${f.label.replace(/\s+/g,'')}" style="background:${accentColor || '#10b981'};"></div>
+        </div>
+        <div class="feature-pct">${f.pct}%</div>
+      </div>`).join('');
+  requestAnimationFrame(() => {
+    features.forEach(f => {
+      const bar = document.getElementById(`fb-${f.label.replace(/\s+/g,'')}`);
+      if (bar) bar.style.width = f.pct + '%';
+    });
+  });
+}
+
+// ── OEE Root Cause Analysis ────────────────────────────────────────────────
+function filterOeeLine(line) {
+  // Highlight active line on chart if desired — update KPI cards for that line
+  const labels = { all: 'all lines', A: 'Line A — Body Shop', B: 'Line B — Paint Shop', C: 'Line C — Powertrain' };
+  const lineEl = document.getElementById('oee-rca-results');
+  if (lineEl) { lineEl.classList.remove('visible'); lineEl.innerHTML = ''; }
+}
+
+function runOeeRootCause() {
+  const line = document.getElementById('oee-line-filter')?.value || 'all';
+  const lineLabel = { all: 'all lines', A: 'Line A', B: 'Line B', C: 'Line C' }[line] || 'all lines';
+  const steps = [
+    'Loading sensor telemetry from machine_sensor_history…',
+    `Aggregating Availability, Performance, Quality losses for ${lineLabel}…`,
+    'Running GradientBoosting root cause classifier (9 features)…',
+    'Ranking loss contributors by feature importance…',
+    'Generating corrective action recommendations…',
+  ];
+  _mlRunnerStart('oee-rca-btn', 'oee-rca-thinking', steps, 'oee-rca-step', () => {
+    const features = line === 'A'
+      ? [{label:'Changeover Time',pct:34},{label:'Minor Stoppages',pct:27},{label:'Speed Reduction',pct:18},{label:'Scrap / Rework',pct:13},{label:'Planned Downtime',pct:8}]
+      : line === 'B'
+      ? [{label:'Equipment Fault',pct:41},{label:'Material Delay',pct:22},{label:'Speed Reduction',pct:16},{label:'Operator Wait',pct:12},{label:'Quality Hold',pct:9}]
+      : line === 'C'
+      ? [{label:'Vibration Anomaly',pct:38},{label:'Thermal Drift',pct:24},{label:'Cycle Time Creep',pct:19},{label:'Scrap / Rework',pct:11},{label:'Idle Starvation',pct:8}]
+      : [{label:'Changeover Time',pct:31},{label:'Equipment Fault',pct:26},{label:'Speed Reduction',pct:20},{label:'Material Delay',pct:14},{label:'Quality Hold',pct:9}];
+    const oeeGap = line === 'A' ? 4.2 : line === 'B' ? 6.8 : line === 'C' ? 3.1 : 4.9;
+    const topCause = features[0].label;
+    const narratives = {
+      A: `<strong style="color:#f59e0b">${features[0].label}</strong> is driving ${features[0].pct}% of Line A losses — excessive changeover cycles are reducing available production time. Combined with <strong style="color:#e5e7eb">${features[1].label}</strong> (${features[1].pct}%), these two factors alone account for ${features[0].pct + features[1].pct}% of the OEE gap. <strong style="color:#10b981">Recommendation:</strong> Implement SMED methodology to cut changeover time by 40% and add jidoka sensors to auto-flag minor stoppages before they cascade. Estimated OEE recovery: <strong>+${(oeeGap*0.6).toFixed(1)}%</strong>.`,
+      B: `<strong style="color:#f59e0b">${features[0].label}</strong> is the dominant loss driver on Line B (${features[0].pct}% contribution), with root sensors indicating bearing wear on PNT-ECT-01 and PNT-BSC-01. <strong style="color:#10b981">Recommendation:</strong> Initiate a predictive maintenance work order for both paint shop conveyors within the next 8 hours to avoid unplanned stoppage. Address <strong style="color:#e5e7eb">${features[1].label}</strong> by pre-staging material kits at the E-coat station. Estimated OEE recovery: <strong>+${(oeeGap*0.6).toFixed(1)}%</strong>.`,
+      C: `<strong style="color:#f59e0b">${features[0].label}</strong> detected on PTN-MCH-01 spindle assembly — vibration signature exceeds 4.2 mm/s RMS threshold. This is causing cycle time drift downstream. <strong style="color:#10b981">Recommendation:</strong> Schedule spindle re-balancing within the next 4 hours. Apply thermal drift correction via PID tuning on PTN-HAD-01 to address the ${features[1].pct}% thermal contribution. Estimated OEE recovery: <strong>+${(oeeGap*0.6).toFixed(1)}%</strong>.`,
+      all: `Across all three lines, <strong style="color:#f59e0b">${features[0].label}</strong> (${features[0].pct}%) and <strong style="color:#e5e7eb">${features[1].label}</strong> (${features[1].pct}%) are the top two loss drivers, contributing a combined ${features[0].pct + features[1].pct}% of the plant-wide OEE gap. <strong style="color:#10b981">Recommendation:</strong> Deploy cross-line SMED program for changeovers, schedule preventive maintenance for fault-prone machines on Lines B and C, and establish 4-hour material staging cadence on Line B. Targeting a plant OEE recovery of <strong>+${(oeeGap*0.6).toFixed(1)}%</strong>.`,
+    };
+    const narrative = narratives[line] || narratives.all;
+    const resultsEl = document.getElementById('oee-rca-results');
+    resultsEl.innerHTML = `
+      <div class="ml-result-summary">
+        <div class="ml-result-kpi"><div class="ml-result-kpi-label">OEE Gap vs Target</div><div class="ml-result-kpi-val" style="color:#ef4444">−${oeeGap}%</div></div>
+        <div class="ml-result-kpi"><div class="ml-result-kpi-label">Top Loss Driver</div><div class="ml-result-kpi-val" style="font-size:13px;color:#f59e0b">${topCause}</div></div>
+        <div class="ml-result-kpi"><div class="ml-result-kpi-label">Addressable OEE Gain</div><div class="ml-result-kpi-val" style="color:#10b981">+${(oeeGap*0.6).toFixed(1)}%</div></div>
+      </div>
+      <div id="oee-feature-bars"></div>
+      <div style="font-size:12px;color:#9ca3af;line-height:1.7;margin:12px 0 14px;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;border-left:3px solid rgba(16,185,129,0.4);">${narrative}</div>
+      <div class="ml-divider"></div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-bottom:8px;">Agentic Actions</div>
+      <div class="ml-action-chips">
+        <button class="ml-action-chip green" onclick="this.textContent='✓ Scheduled';this.disabled=true;">Schedule Maintenance Window</button>
+        <button class="ml-action-chip amber" onclick="this.textContent='✓ Notified';this.disabled=true;">Alert Production Supervisor</button>
+        <button class="ml-action-chip blue" onclick="this.textContent='✓ Created';this.disabled=true;">Create SAP Work Order</button>
+        <button class="ml-action-chip amber" onclick="this.textContent='✓ Sent';this.disabled=true;">Post to Teams Channel</button>
+      </div>`;
+    resultsEl.classList.add('visible');
+    _renderFeatureBars('oee-feature-bars', features, '#10b981');
+  });
+}
+
+// ── Quality Root Cause Analysis ────────────────────────────────────────────
+function runQualityRootCause() {
+  const line = document.getElementById('qual-line-filter')?.value || 'all';
+  const defect = document.getElementById('qual-defect-filter')?.value || 'all';
+  const defectLabel = { all:'all defects', scratch:'Surface Scratches', dent:'Dents', weld:'Weld Porosity', paint:'Paint Adhesion', dim:'Dimensional Variance' }[defect];
+  const steps = [
+    `Scanning defect records for ${defectLabel} from quality_gold…`,
+    'Running Isolation Forest anomaly detection on process parameters…',
+    'Correlating defect timestamps with upstream machine events…',
+    'Ranking root cause contributors with causal ML model…',
+    'Estimating scrap reduction potential and corrective actions…',
+  ];
+  _mlRunnerStart('qual-rca-btn', 'qual-rca-thinking', steps, 'qual-rca-step', () => {
+    const features = defect === 'paint'
+      ? [{label:'Oven Temp Variance',pct:44},{label:'Humidity Spike',pct:28},{label:'Conveyor Speed',pct:15},{label:'Primer Coverage',pct:8},{label:'Material Batch',pct:5}]
+      : defect === 'weld'
+      ? [{label:'Wire Feed Inconsistency',pct:38},{label:'Shielding Gas Pressure',pct:26},{label:'Gap Tolerance Drift',pct:19},{label:'Electrode Wear',pct:10},{label:'Cycle Time Variance',pct:7}]
+      : [{label:'Stamping Force Variance',pct:36},{label:'Tool Wear Index',pct:28},{label:'Material Hardness Lot',pct:18},{label:'Die Temp Drift',pct:11},{label:'Lubrication Coverage',pct:7}];
+    const scrapReduction = (Math.random()*1.2+0.8).toFixed(1);
+    const defectNarratives = {
+      paint: `<strong style="color:#f59e0b">${features[0].label}</strong> (${features[0].pct}% contribution) is the leading cause of paint adhesion failures — oven zone 3 is cycling ±8°C outside spec, degrading E-coat cross-link density. <strong style="color:#10b981">Recommendation:</strong> Recalibrate oven zone 3 PID controller and reduce conveyor dwell time by 12 seconds. Address <strong style="color:#e5e7eb">${features[1].label}</strong> by enabling humidity compensation in the pre-treatment wash stage. Expected scrap reduction: <strong>−${scrapReduction}%</strong>.`,
+      weld: `<strong style="color:#f59e0b">${features[0].label}</strong> (${features[0].pct}%) is causing porosity in BDY-WLD-01 welds — wire spool tension is drifting 15% above nominal during high-speed cycles. <strong style="color:#10b981">Recommendation:</strong> Replace wire feeder drive rolls on BDY-WLD-01 and re-qualify shielding gas flow rate at 18 L/min. Inspect electrode tips on all Body Shop welders — current wear index exceeds 0.72. Expected scrap reduction: <strong>−${scrapReduction}%</strong>.`,
+      scratch: `<strong style="color:#f59e0b">${features[0].label}</strong> (${features[0].pct}%) is the primary driver of surface scratch defects — stamping force variation on BDY-STM-01 is exceeding ±3.5 kN tolerance. <strong style="color:#10b981">Recommendation:</strong> Re-calibrate press force control on BDY-STM-01 and perform die surface inspection. Review material hardness certificates from current lot — Lot #HRC-2847 shows 4-point hardness variance outside spec. Expected scrap reduction: <strong>−${scrapReduction}%</strong>.`,
+      all: `The causal model traced ${line === 'all' ? 847 : 312} defect events to three primary upstream factors. <strong style="color:#f59e0b">${features[0].label}</strong> (${features[0].pct}%) and <strong style="color:#e5e7eb">${features[1].label}</strong> (${features[1].pct}%) together explain ${features[0].pct + features[1].pct}% of all quality escapes this shift. <strong style="color:#10b981">Recommendation:</strong> Prioritize process parameter correction on the top-flagged machines, schedule tool and fixture inspection before next shift, and log a MES quality event to trigger a root-cause 8D report. Expected scrap reduction: <strong>−${scrapReduction}%</strong>.`,
+    };
+    const narrative = defectNarratives[defect] || defectNarratives.all;
+    const resultsEl = document.getElementById('qual-rca-results');
+    resultsEl.innerHTML = `
+      <div class="ml-result-summary">
+        <div class="ml-result-kpi"><div class="ml-result-kpi-label">Defects Analyzed</div><div class="ml-result-kpi-val">${line === 'all' ? 847 : 312}</div></div>
+        <div class="ml-result-kpi"><div class="ml-result-kpi-label">Root Causes Identified</div><div class="ml-result-kpi-val" style="color:#10b981">3</div></div>
+        <div class="ml-result-kpi"><div class="ml-result-kpi-label">Est. Scrap Reduction</div><div class="ml-result-kpi-val" style="color:#10b981">−${scrapReduction}%</div></div>
+      </div>
+      <div id="qual-feature-bars"></div>
+      <div style="font-size:12px;color:#9ca3af;line-height:1.7;margin:12px 0 14px;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;border-left:3px solid rgba(16,185,129,0.4);">${narrative}</div>
+      <div class="ml-divider"></div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-bottom:8px;">Recommended Actions</div>
+      <div class="ml-action-chips">
+        <button class="ml-action-chip green" onclick="this.textContent='✓ Adjusted';this.disabled=true;">Adjust Process Parameters</button>
+        <button class="ml-action-chip amber" onclick="this.textContent='✓ Scheduled';this.disabled=true;">Schedule Tool Inspection</button>
+        <button class="ml-action-chip blue" onclick="this.textContent='✓ Logged';this.disabled=true;">Log Quality Event in MES</button>
+        <button class="ml-action-chip amber" onclick="this.textContent='✓ Filed';this.disabled=true;">Open 8D Report in MES</button>
+      </div>`;
+    resultsEl.classList.add('visible');
+    _renderFeatureBars('qual-feature-bars', features, '#10b981');
+  });
+}
+
+// ── Onboarding Tutorial ────────────────────────────────────────────────────────
+let _tutSlide = 0;
+const _TUT_TOTAL = 2;
+
+function openTutorial() {
+  _tutSlide = 0;
+  _updateTut();
+  const ov = document.getElementById('tut-overlay');
+  ov.style.display = 'flex';
+}
+
+function dismissTutorial() {
+  document.getElementById('tut-overlay').style.display = 'none';
+  localStorage.setItem('mfg-tutorial-seen', '1');
+}
+
+function tutNext() {
+  if (_tutSlide < _TUT_TOTAL - 1) {
+    document.getElementById(`tslide-${_tutSlide}`).style.display = 'none';
+    _tutSlide++;
+    document.getElementById(`tslide-${_tutSlide}`).style.display = 'block';
+    _updateTut();
+  } else {
+    dismissTutorial();
+  }
+}
+
+function _updateTut() {
+  const btn = document.getElementById('tut-next-btn');
+  if (btn) btn.style.display = _tutSlide === _TUT_TOTAL - 1 ? 'none' : '';
+}
+
+// Show tutorial on first visit after login
+document.addEventListener('DOMContentLoaded', () => {
+  if (!localStorage.getItem('mfg-tutorial-seen')) {
+    setTimeout(openTutorial, 800);
+  }
+});
