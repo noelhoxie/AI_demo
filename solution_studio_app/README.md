@@ -97,15 +97,37 @@ databricks bundle run    -t solution_studio solution_studio
 The app's service principal needs `CAN USE` on the SQL warehouse and `CAN RUN`
 on the Genie spaces it queries (declared as resources in `app.yaml`).
 
-### Local run (optional)
+### Local run (offline UI verification)
+
+The app runs standalone with **no Databricks credentials** — data endpoints
+fall back to synthetic data and the lead-capture login works on its own. AI
+features (Genie chat, briefings, model serving, Sheets logging) return their
+built-in fallbacks until real secrets are provided.
 
 ```bash
 cd solution_studio_app
 python3 -m venv .venv
-uv pip install --python .venv/bin/python -r requirements.txt
-export SECRET_KEY=dev-only DATABRICKS_HOST=... DATABRICKS_TOKEN=... SESSION_COOKIE_SECURE=false
-PORT=5000 ./start.sh
+uv pip install --python .venv/bin/python -r requirements.txt   # or: pip install -r requirements.txt
+
+# Single-process Flask dev server — simplest for local verification.
+SECRET_KEY=local-dev-key SESSION_COOKIE_SECURE=false PORT=8080 \
+  .venv/bin/python api.py
 ```
+
+Then open **http://127.0.0.1:8080**, sign in with any name + company (the
+lead-capture gate), and explore the portal. Try a company like "Exxon" to see
+the energy vertical. Stop with `pkill -f "python api.py"`.
+
+To connect a real workspace, also export `DATABRICKS_HOST` and
+`DATABRICKS_TOKEN` (and any of the AI keys you want live).
+
+> **macOS note:** run the **Flask dev server** locally as shown above, not
+> Gunicorn. Gunicorn's `--preload` forks workers after importing the Google
+> client libs, which trips the macOS Objective-C fork-safety crash
+> (`+[NSCharacterSet initialize]... fork()`). This is macOS-only; the
+> Gunicorn command in `app.yaml`/`start.sh` is correct for the Linux runtime.
+> If you must use Gunicorn on macOS, prefix with
+> `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES`.
 
 ---
 
