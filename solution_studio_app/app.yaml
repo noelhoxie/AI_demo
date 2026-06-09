@@ -1,8 +1,22 @@
 command:
   - "sh"
   - "-c"
-  - "gunicorn --bind 0.0.0.0:$DATABRICKS_APP_PORT --workers 2 --worker-class gthread --threads 4 --timeout 180 api:app"
+  - "gunicorn --preload --bind 0.0.0.0:$DATABRICKS_APP_PORT --workers 2 --worker-class gthread --threads 4 --timeout 180 api:app"
 
+# ── Resources ───────────────────────────────────────────────────────────────────
+# Secrets are injected from a Databricks secret scope via `valueFrom` — never
+# committed here (ai-dev-kit: "use UC connections or secrets, never hardcode").
+#
+# Before deploying, create the scope and keys, e.g.:
+#   databricks secrets create-scope solution_studio
+#   databricks secrets put-secret solution_studio session_secret_key
+#   databricks secrets put-secret solution_studio google_credentials_b64
+#   databricks secrets put-secret solution_studio anthropic_api_key
+#   databricks secrets put-secret solution_studio fin_google_api_key
+#   databricks secrets put-secret solution_studio lakebase_databricks_token
+#
+# NOTE: the GCP service-account key previously committed in this file must be
+# treated as compromised and ROTATED in GCP before the new value is stored.
 resources:
   - name: sql-warehouse
     description: Shared SQL Warehouse for all Solution Studio sub-apps
@@ -10,18 +24,61 @@ resources:
       id: 17e5cb93c5f1758e
       permission: CAN_USE
 
+  - name: secret-session-key
+    description: Flask session signing key
+    secret:
+      scope: solution_studio
+      key: session_secret_key
+      permission: READ
+
+  - name: secret-google-credentials
+    description: Base64 GCP service-account JSON for Google Sheets lead logging
+    secret:
+      scope: solution_studio
+      key: google_credentials_b64
+      permission: READ
+
+  - name: secret-anthropic-api-key
+    description: Anthropic API key for Claude briefings and vertical classification
+    secret:
+      scope: solution_studio
+      key: anthropic_api_key
+      permission: READ
+
+  - name: secret-google-api-key
+    description: Google Generative AI (Gemini) API key for finance briefings
+    secret:
+      scope: solution_studio
+      key: fin_google_api_key
+      permission: READ
+
+  - name: secret-lakebase-token
+    description: Databricks token for Lakebase Postgres OAuth
+    secret:
+      scope: solution_studio
+      key: lakebase_databricks_token
+      permission: READ
+
 env:
+  # ── Secrets (injected from the scope declared above) ────────────────────────
+  - name: SECRET_KEY
+    valueFrom: secret-session-key
+  - name: GOOGLE_CREDENTIALS_B64
+    valueFrom: secret-google-credentials
+  - name: ANTHROPIC_API_KEY
+    valueFrom: secret-anthropic-api-key
+  - name: FIN_GOOGLE_API_KEY
+    valueFrom: secret-google-api-key
+  - name: LAKEBASE_DATABRICKS_TOKEN
+    valueFrom: secret-lakebase-token
+
   # ── Shared ──────────────────────────────────────────────────────────────────
   - name: DATABRICKS_HOST
     value: "https://fevm-solution-studio.cloud.databricks.com"
   - name: COMPANY_NAME
     value: ""
-  - name: ANTHROPIC_API_KEY
-    value: ""
   - name: ENERGY_APP_URL
     value: ""
-  - name: GOOGLE_CREDENTIALS_B64
-    value: "eyJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsICJwcm9qZWN0X2lkIjogImdjcC1zYW5kYm94LWZpZWxkLWVuZyIsICJwcml2YXRlX2tleV9pZCI6ICIzOTc2MzgwMWM3Yjg5MmFlZjQ2YzRkYmRmOTkwYWMzMjdjODIwMWQ2IiwgInByaXZhdGVfa2V5IjogIi0tLS0tQkVHSU4gUFJJVkFURSBLRVktLS0tLVxuTUlJRXZnSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS2d3Z2dTa0FnRUFBb0lCQVFEbGlsVjU1NTBrRzhERlxuck1zbU1qdFB3VTgxWnRUZ2pCWmtDSG8vNVpISjZBZi9ZRk1TMFRkT1FHK1BUR2p2KzZpRDV1ZzFzTnFhK0hwSVxuaDY0VjlVVjR0clFqdG8venFzdVk5T3RKYWJnQndTdUQ0Y2RoSDlkMHVhWXZLcDZkZElIaFNtbGRhV3daQzlMUlxuMFB3Tm5zTkFTQkp3NnFhOU4weTFjaEdBY3NyU09yaG5tNitqbVlTV0ZyWCtiN1ZMdkUxdVFkYkovdlNIQll5MFxuV3J2akp0c1dZVGQzNUYyRnpibzlvREdHQ1VUaFlhZkhLSjNIaXBlN25vYWpuSXZuV1diWXcxT3pOMDVKK3UxTFxublpHZ2dUUE50aWxjK2R1clkrYWkrTEFtOFdjb3Q3ZWxmUzZpVWxYbStxRmpET1UxODhmQTIrbFBEUmwwZGZWK1xubW1KVTVDczlBZ01CQUFFQ2dnRUFPRDNWbFRXMnAwMEVoZnJCV09YSWFoR0ZvS0pHU1JHUi8rY2kyd3FiRnROYlxuT0V1bjl5MmJoVGtkREltdWtaU0NGUFdNRW5HM2ttNk0rYjRDM2Q3M3EyenF4UEJibzVyRzRYNnJNdFRzTU1QZFxucjJYdjlnQjVDR0Rma3VGNHRVQkJmWXUvdHROWW1PZHdlNWZlMWxCKzZ6NXRoRXkrVjVEWDR3Smt2dW9CZjVKTVxuWjF2dUl3TnVqcG1TMmI1am1ucDYvSThOYUNoYUxNRHRjR0Fyd1lIU3BNWWRVOTFoT0JkMGNJdmJUY05MS3Q2YVxuVXVxd25wVjZNVncyNURiZHZJNWpmWWxTdjNZY05qc2xnL2V5Uk9HQmhLRTF3VkdreGh2SkNVSXZyZkhlU3hQTlxuSktSUytraUE2cjZIN1lNSFdOZ1hOZll6ck5EbWFxOEJ1OHhrMExsblVRS0JnUUR6USsyT3VSVWthT1dvdmcrK1xueUgzeFpZZ1BGZUlqVjlIblRnaWFGNEYxczgxRnJmby9JVEZTMklzdW8wZjU4SWdZaVBTdFp2QU9RNU1ITStWMFxuWnNuVHBTNEdCMWk0aFlWbVQ4Z0NXR2tLWFdOTjlCV25nUzlWcXlDYnF0M3pvQU1hYW5yV0taamhUWDV0dDZ4YVxuYitSYWhZMDlQSlJ4Mld5T05HUndJYTY1a1FLQmdRRHhqbmt3RHU2OEU0bkJvcVB0bGtZSVNhaWhheHVneXhqd1xuZk9HeklNb2M4L1VCS1Z6WjdMSnRpbWdZQXZnZXRia1IyT1o2WE9sVUF6RXhseXN1ZkFiMm5hblBFRlJDOHVublxuUGhKZVVTNWlIcmo0YUpvaU5hckI0d29pNXd5U2c5cUFmTFpvNWdqQkNTT1ZPNHlvT0s3OFk5N01PbEY2K2pQVVxuNThXaE1jeGc3UUtCZ0hvYUsyQUsrRmk1S2lVam1RV2EzdFJPc1JkWlZaT0YzZjdxeFJpTEdkajVjZHc2c2pRRFxudGgwdVFkWWI4T0c4WUtOb0F1QVNuZ1dhMTI2ekZzWHhYZmFVbjJBNVNjZjhoUFBRc2NTem1hMnhLRW9WYk5VUlxuMjY5MVlMMmg2eHdBd2UzOWFrQ2F5bmkwQy9TSVQ4TnBERVovYUdCSFN2OUdNZDNDNEhNRUJRNXhBb0dCQU10Z1xuRXpTZFBlOW4yOUlHSjFLLzlSTEJRWk0yWkxxS2hPTGxvZmw1SC9Ja2pDR0FPOGJYZkpxeHIxYVlHV054eVBIM1xuMW9VcmVOL2RHQ3dTaEs3TWllaFZja1QrRUpPVmhjM0YreDBoNkpXQUhHZzVXWngzNXQ3N1V1dHo4S2ZqRDdLaVxuVGNvZjh6cmpnT3dDaVRpUkVQTTYrcmlrV1RuYk1veU0zMTRLV1hNNUFvR0JBTy9tb01EcVRRUkZhQzR6bnlueFxuVXRBWThYR0g1TVh2TlV5SHl4ZjRORFZreUEwM05iV25odVRMRlJ1bE9seVN4NENQbGtHZkFmOGtQWGJpNlJkSFxuVkgzMGIyQUJ5OVljUktvMjByR08wdWI0TW5STVJrOG42anBtY2swY3JaU1dmTXExMW5tZ3d3a3ZaM0FnOWYzQ1xuV1NGb1pEY0J6NFhDbFRxeFc3UzNoa0ZWXG4tLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tXG4iLCAiY2xpZW50X2VtYWlsIjogInNoZWV0cy13cml0ZXJAZ2NwLXNhbmRib3gtZmllbGQtZW5nLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwgImNsaWVudF9pZCI6ICIxMTMxMjk0MTI3MzcyMzMxOTkwNjMiLCAiYXV0aF91cmkiOiAiaHR0cHM6Ly9hY2NvdW50cy5nb29nbGUuY29tL28vb2F1dGgyL2F1dGgiLCAidG9rZW5fdXJpIjogImh0dHBzOi8vb2F1dGgyLmdvb2dsZWFwaXMuY29tL3Rva2VuIiwgImF1dGhfcHJvdmlkZXJfeDUwOV9jZXJ0X3VybCI6ICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9vYXV0aDIvdjEvY2VydHMiLCAiY2xpZW50X3g1MDlfY2VydF91cmwiOiAiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vcm9ib3QvdjEvbWV0YWRhdGEveDUwOS9zaGVldHMtd3JpdGVyJTQwZ2NwLXNhbmRib3gtZmllbGQtZW5nLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwgInVuaXZlcnNlX2RvbWFpbiI6ICJnb29nbGVhcGlzLmNvbSJ9"
   - name: LOG_SHEET_ID
     value: "1IcUqjBdtb__MHmgozi2RgsVzmizN_SUZp0Fdt8ympDs"
 
@@ -36,8 +93,6 @@ env:
     value: "noel.hoxie@databricks.com"
   - name: LAKEBASE_ENDPOINT
     value: "projects/solution-studio-analytics/branches/production/endpoints/primary"
-  - name: LAKEBASE_DATABRICKS_TOKEN
-    value: ""
 
   # ── Supply Chain (/supply-chain/) ───────────────────────────────────────────
   - name: SC_GENIE_SPACE_ID
@@ -76,5 +131,3 @@ env:
     value: "solution_studio_catalog"
   - name: FIN_GOLD_SCHEMA
     value: "duracell_finance_gold"
-  - name: FIN_GOOGLE_API_KEY
-    value: ""

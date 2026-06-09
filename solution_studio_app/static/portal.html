@@ -361,16 +361,15 @@ function renderCards(apps) {
 
 let _portalUser    = '';
 let _portalCompany = '';
-let _portalToken   = '';
 
 function launch(url) {
-  // Append auto-auth params so the target app logs the user in automatically
+  // Append the captured lead identity so the target app pre-fills it. Internal
+  // sub-apps already share this app's session cookie; no token is passed.
   let target = url;
   const sep = url.includes('?') ? '&' : '?';
   let params = '';
   if (_portalUser)    params += 'auto_user='    + encodeURIComponent(_portalUser);
   if (_portalCompany) params += (params ? '&' : '') + 'auto_company=' + encodeURIComponent(_portalCompany);
-  if (_portalToken)   params += (params ? '&' : '') + 'auto_token='   + encodeURIComponent(_portalToken);
   if (params) target = url + sep + params;
   if (target.startsWith('http')) {
     window.open(target, '_blank', 'noopener');
@@ -426,7 +425,6 @@ async function init() {
     const username = d.username || '';
     _portalUser    = username;
     _portalCompany = company;
-    _portalToken   = d.launch_token || '';
     document.title = 'Design Studio' + (company ? ' — ' + company : '');
     if (username) document.getElementById('header-username').textContent = username + (company ? ' · ' + company : '');
 

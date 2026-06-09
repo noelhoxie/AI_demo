@@ -6,11 +6,12 @@ Routes: /supply-chain/api/... · /manufacturing/api/... · /finance/api/...
 """
 
 import base64
-import hashlib
 import json
 import math
 import os
 import random
+import re
+import secrets
 import threading
 import time
 from datetime import datetime, timezone
@@ -26,14 +27,41 @@ try:
 except ImportError:
     _DBSQL_OK = False
 
+# Databricks SDK — used for service-principal ("app") authorization on
+# Databricks Apps, where DATABRICKS_CLIENT_ID/SECRET are auto-injected and
+# Config() resolves an OAuth token for us (ai-dev-kit app-auth pattern).
+try:
+    from databricks.sdk.core import Config as _DBConfig
+except Exception:
+    _DBConfig = None
+
 # ── Flask app ───────────────────────────────────────────────────────────────────
 BASE_DIR   = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
 
 app = Flask(__name__, static_folder=str(STATIC_DIR), static_url_path="")
 
-_sk = os.getenv("SECRET_KEY") or os.getenv("DATABRICKS_TOKEN", "")
-app.secret_key = _sk if _sk else hashlib.sha256(b"solution-studio-master-2024").hexdigest()
+# Session signing key. Set SECRET_KEY (a Databricks app secret) so sessions stay
+# valid across gunicorn workers and restarts. Without it we generate a random
+# per-process key — sessions won't survive a restart, but we never ship a
+# predictable signing key. gunicorn runs with --preload so forked workers share
+# this module-level key.
+_sk = os.getenv("SECRET_KEY", "")
+if not _sk:
+    app.logger.warning(
+        "SECRET_KEY not set — using an ephemeral random key. "
+        "Set SECRET_KEY for stable sessions across workers/restarts."
+    )
+    _sk = secrets.token_hex(32)
+app.secret_key = _sk
+
+# Cookie hardening. SESSION_COOKIE_SECURE defaults on; set the env to "false"
+# only for local HTTP development.
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE", "true").lower() != "false",
+)
 
 # ── Shared env vars ─────────────────────────────────────────────────────────────
 DATABRICKS_HOST = os.getenv("DATABRICKS_HOST", "")
@@ -402,57 +430,42 @@ def _auto_auth():
         return
     auto_user    = request.args.get("auto_user",    "").strip()
     auto_company = request.args.get("auto_company", "").strip()
-    auto_token   = request.args.get("auto_token",   "").strip()
-    expected_tok = os.getenv("DATABRICKS_TOKEN", "")
-    if auto_token and expected_tok and auto_token == expected_tok:
-        session["authenticated"] = True
-        session["username"]      = auto_user or "Portal User"
-        session["company_name"]  = auto_company or COMPANY_NAME or "Databricks"
-        return
     if auto_user and auto_company:
         session["authenticated"] = True
         session["username"]      = auto_user
         session["company_name"]  = auto_company
         return
-    import re as _re
     fwd_user = (request.headers.get("X-Forwarded-User") or
                 request.headers.get("X-Forwarded-Email", "")).strip()
-    if fwd_user and not _re.match(r'^\d+@\d+$', fwd_user):
+    if fwd_user and not re.match(r'^\d+@\d+$', fwd_user):
         session["authenticated"] = True
         session["username"]      = fwd_user
         session["company_name"]  = COMPANY_NAME or "Databricks"
 
 
-# ── Company Logo ─────────────────────────────────────────────────────────────────
-
-def _clearbit_logo(name: str) -> str:
-    """Return a Brandfetch logo URL for the given company name via Clearbit autocomplete domain lookup."""
-    if not name:
-        return ""
-    try:
-        r = requests.get(
-            "https://autocomplete.clearbit.com/v1/companies/suggest",
-            params={"query": name},
-            timeout=5,
-        )
-        results = r.json()
-        if results and isinstance(results, list) and results[0].get("domain"):
-            domain = results[0]["domain"]
-            return f"https://cdn.brandfetch.io/domain/{domain}?c=1idGdcDDyuPmwhnhURl"
-    except Exception:
-        pass
-    return ""
-
-
 # ── Credentials ─────────────────────────────────────────────────────────────────
 
-def _creds():
-    """Return (host, headers) — forwarded OAuth token preferred, env token fallback."""
-    raw  = os.environ.get("DATABRICKS_HOST", "").rstrip("/")
-    host = raw if raw.startswith("http") else f"https://{raw}"
-    from flask import has_request_context
-    user_token = request.headers.get("X-Forwarded-Access-Token", "") if has_request_context() else ""
-    token = user_token or os.environ.get("DATABRICKS_TOKEN", "")
+def _workspace_creds():
+    """Return (host, headers) for Databricks workspace REST calls.
+
+    Prefers the app's own service principal via the Databricks SDK — on
+    Databricks Apps the platform auto-injects DATABRICKS_CLIENT_ID/SECRET and
+    Config() resolves the OAuth token with no token handling on our side
+    (ai-dev-kit "app authorization" pattern). Falls back to a DATABRICKS_TOKEN
+    env var so the app still runs on non-Databricks hosts.
+    """
+    raw   = os.environ.get("DATABRICKS_HOST", "").rstrip("/")
+    host  = raw if raw.startswith("http") else (f"https://{raw}" if raw else "")
+    token = os.environ.get("DATABRICKS_TOKEN", "")
+    if not token and _DBConfig is not None:
+        try:
+            cfg  = _DBConfig()
+            hdrs = cfg.authenticate()  # {"Authorization": "Bearer <oauth>"}
+            if hdrs.get("Authorization"):
+                hdrs.setdefault("Content-Type", "application/json")
+                return host or (cfg.host or "").rstrip("/"), hdrs
+        except Exception as e:
+            app.logger.warning(f"SDK Config auth unavailable, using token fallback: {e}")
     return host, {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
 
@@ -504,15 +517,17 @@ def _warm_warehouse():
 _DELTA_LOG_OK = bool(DATABRICKS_HOST) and bool(LOG_HTTP_PATH)
 
 
-def _delta_sql_exec(statement):
-    host  = DATABRICKS_HOST.rstrip("/")
-    token = os.getenv("DATABRICKS_TOKEN", "")
+def _delta_sql_exec(statement, parameters=None):
+    host, hdrs = _workspace_creds()
     wh_id = LOG_HTTP_PATH.rstrip("/").split("/")[-1]
+    body  = {"warehouse_id": wh_id, "statement": statement, "wait_timeout": "30s"}
+    if parameters:
+        body["parameters"] = parameters
     try:
         r = requests.post(
             f"{host}/api/2.0/sql/statements",
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-            json={"warehouse_id": wh_id, "statement": statement, "wait_timeout": "30s"},
+            headers=hdrs,
+            json=body,
             timeout=35,
         )
         r.raise_for_status()
@@ -529,14 +544,25 @@ def _delta_sql_exec(statement):
 def _delta_log_write(sql, params=()):
     if not _DELTA_LOG_OK:
         return False
-    escaped = []
-    for p in params:
-        if isinstance(p, int):
-            escaped.append(str(p))
+    # Bind values as server-side parameters rather than interpolating them into
+    # the statement. Legacy %s placeholders are rewritten to named markers.
+    counter   = {"i": 0}
+    def _marker(_m):
+        name = f"p{counter['i']}"
+        counter["i"] += 1
+        return f":{name}"
+    stmt = re.sub(r"%s", _marker, sql)
+    parameters = []
+    for i, p in enumerate(params):
+        if isinstance(p, bool):
+            parameters.append({"name": f"p{i}", "value": str(p).lower(), "type": "BOOLEAN"})
+        elif isinstance(p, int):
+            parameters.append({"name": f"p{i}", "value": str(p), "type": "INT"})
+        elif isinstance(p, float):
+            parameters.append({"name": f"p{i}", "value": str(p), "type": "DOUBLE"})
         else:
-            escaped.append("'" + str(p).replace("'", "''") + "'")
-    stmt = sql % tuple(escaped) if escaped else sql
-    return _delta_sql_exec(stmt)
+            parameters.append({"name": f"p{i}", "value": str(p), "type": "STRING"})
+    return _delta_sql_exec(stmt, parameters or None)
 
 
 def _sheets_log_write(data: dict):
@@ -899,8 +925,8 @@ def mobile_ask():
         )
         return jsonify({"answer": parsed.get("answer", ""), "follow_ups": parsed.get("follow_ups", []), "source": "claude"})
     except Exception as e:
-        print(f"[Mobile Ask] fallback error: {e}", flush=True)
-        return jsonify({"error": str(e)}), 500
+        app.logger.exception("[Mobile Ask] fallback error")
+        return jsonify({"error": "internal server error"}), 500
 
 
 
@@ -1020,8 +1046,8 @@ def mobile_exec_briefing():
         )
         return jsonify(parsed)
     except Exception as e:
-        print(f"[Exec Briefing] error: {e}", flush=True)
-        return jsonify({"error": str(e)}), 500
+        app.logger.exception("[Exec Briefing] error")
+        return jsonify({"error": "internal server error"}), 500
 
 
 @app.route("/mobile/api/log-event", methods=["POST"])
@@ -1073,7 +1099,6 @@ def config():
         "company_name":    session.get("company_name", COMPANY_NAME),
         "username":        session.get("username", ""),
         "company_logo":    session.get("company_logo", ""),
-        "launch_token":    os.getenv("DATABRICKS_TOKEN", ""),
         "vertical":        vertical,
         "portal_headline": VERTICAL_LABELS.get(vertical, "Operations Intelligence Hub"),
         "apps":            apps,
@@ -1372,8 +1397,9 @@ def sales_genie_ask():
             if status in ("FAILED", "CANCELLED"):
                 return jsonify({"error": f"Query failed: {st.get('error', '')}"}), 502
         return jsonify({"error": "Query timed out"}), 504
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        app.logger.exception("request failed")
+        return jsonify({"error": "internal server error"}), 500
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1881,13 +1907,15 @@ def _mfg_query_gold(sql_text):
         return None
     try:
         from databricks import sql as dbsql
-        host  = os.environ["DATABRICKS_HOST"].replace("https://", "").rstrip("/")
-        token = os.environ["DATABRICKS_TOKEN"]
-        with dbsql.connect(
-            server_hostname=host,
-            http_path=MFG_SQL_WAREHOUSE_HTTP_PATH,
-            access_token=token,
-        ) as conn:
+        host = os.environ.get("DATABRICKS_HOST", "").replace("https://", "").rstrip("/")
+        token = os.environ.get("DATABRICKS_TOKEN", "")
+        connect_kwargs = {"server_hostname": host, "http_path": MFG_SQL_WAREHOUSE_HTTP_PATH}
+        if token:
+            connect_kwargs["access_token"] = token
+        elif _DBConfig is not None:
+            cfg = _DBConfig()
+            connect_kwargs["credentials_provider"] = lambda: cfg.authenticate
+        with dbsql.connect(**connect_kwargs) as conn:
             with conn.cursor() as c:
                 c.execute(sql_text)
                 cols = [d[0] for d in c.description]
@@ -2061,9 +2089,7 @@ def _mfg_uc_image_url(filename):
 
 def _mfg_fetch_image_bytes(filename):
     try:
-        host  = os.environ["DATABRICKS_HOST"].rstrip("/")
-        token = os.environ["DATABRICKS_TOKEN"]
-        hdrs  = {"Authorization": f"Bearer {token}"}
+        host, hdrs = _workspace_creds()
         r = requests.get(
             f"{host}/api/2.0/fs/files/Volumes/{MFG_UC_CATALOG}/{MFG_UC_SCHEMA}/{MFG_UC_VOLUME}/{filename}",
             headers=hdrs, timeout=15,
@@ -2120,9 +2146,7 @@ def _mfg_call_vision_endpoint(image_bytes, image_id, spec):
     if feats is None:
         return None
     try:
-        host  = os.environ["DATABRICKS_HOST"].rstrip("/")
-        token = os.environ["DATABRICKS_TOKEN"]
-        hdrs  = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        host, hdrs = _workspace_creds()
         payload = {"dataframe_records": [{f"x{i}": v for i, v in enumerate(feats)}]}
         r = requests.post(f"{host}/serving-endpoints/{MFG_VISION_ENDPOINT}/invocations",
                           headers=hdrs, json=payload, timeout=20)
@@ -2384,9 +2408,7 @@ def _mfg_generate_ai_recommendation(machine_id: str) -> str:
     if not machine:
         return "Machine not found."
     try:
-        host  = os.environ["DATABRICKS_HOST"].rstrip("/")
-        token = os.environ["DATABRICKS_TOKEN"]
-        hdrs  = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        host, hdrs = _workspace_creds()
         alarm_text = "\n".join(f"- [{a['severity']}] {a['message']}" for a in alarms) or "No active alarms."
         prompt = (
             f"You are the Databricks Operational Excellence AI — an expert in automotive manufacturing operations.\n\n"
@@ -2532,9 +2554,7 @@ def mfg_ask():
 
     if not MFG_GENIE_SPACE_ID:
         try:
-            host  = os.environ["DATABRICKS_HOST"].rstrip("/")
-            token = os.environ["DATABRICKS_TOKEN"]
-            hdrs  = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+            host, hdrs = _workspace_creds()
             context = (
                 f"You are SHIFT, the Databricks Operational Excellence AI. "
                 f"Plant OEE: {kpi['plant_oee']}% (target {kpi['oee_target']}%). "
@@ -2660,8 +2680,9 @@ def mfg_ask():
                         "follow_ups": ["Which machine has the worst MTBF?",
                                        "What is the shift OEE trend for Line A?",
                                        "Show me the top 3 defect types this week."]})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        app.logger.exception("request failed")
+        return jsonify({"error": "internal server error"}), 500
 
 
 @app.route("/manufacturing/api/inspection/images")
@@ -2764,9 +2785,7 @@ def mfg_impact(image_id):
         return jsonify({"error": "No defect data for this image"}), 404
     fallback = _MFG_IMPACT_DATA.get(image_id)
     try:
-        host  = os.environ["DATABRICKS_HOST"].rstrip("/")
-        token = os.environ["DATABRICKS_TOKEN"]
-        hdrs  = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        host, hdrs = _workspace_creds()
         fb    = fallback or {}
         prompt = (
             f"You are a manufacturing quality engineer at an automotive paint shop. "
@@ -2871,9 +2890,7 @@ def mfg_predict_maintenance():
     pdm_results = None
     if MFG_PDM_ENDPOINT:
         try:
-            host  = os.environ["DATABRICKS_HOST"].rstrip("/")
-            token = os.environ["DATABRICKS_TOKEN"]
-            hdrs  = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+            host, hdrs = _workspace_creds()
             all_features = []
             for m in machines:
                 profile = _MFG_PDM_PROFILES.get(m.get("id", ""), {"failure_prob": 0.10,
@@ -3042,9 +3059,7 @@ def mfg_manuals_query():
     if not question:
         return jsonify({"error": "question is required"}), 400
     try:
-        host  = os.environ["DATABRICKS_HOST"].rstrip("/")
-        token = os.environ["DATABRICKS_TOKEN"]
-        hdrs  = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        host, hdrs = _workspace_creds()
         resp  = requests.post(
             f"{host}/serving-endpoints/{MFG_MANUALS_ENDPOINT}/invocations",
             headers=hdrs, json={"dataframe_records": [{"question": question}]}, timeout=30,
@@ -3171,16 +3186,13 @@ FIN_GOOGLE_API_KEY = os.getenv("FIN_GOOGLE_API_KEY", "")
 
 # ── Finance helpers ────────────────────────────────────────────────────────────
 
-def _fin_headers():
-    return {"Authorization": f"Bearer {DATABRICKS_TOKEN}", "Content-Type": "application/json"}
-
-
 def _fin_sql(query: str) -> tuple[bool, list]:
     """Execute SQL on Databricks SQL Warehouse and return (ok, rows)."""
+    host, hdrs = _workspace_creds()
     try:
         r = requests.post(
-            f"{DATABRICKS_HOST.rstrip('/')}/api/2.0/sql/statements",
-            headers=_fin_headers(),
+            f"{host}/api/2.0/sql/statements",
+            headers=hdrs,
             json={"statement": query, "warehouse_id": FIN_WAREHOUSE_ID, "wait_timeout": "30s"},
             timeout=35,
         )

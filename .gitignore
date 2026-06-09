@@ -31,3 +31,7 @@ Thumbs.db
 # Local config or secrets
 *.pem
 .env.*
+
+# Test virtualenv
+solution_studio_app/.venv-test/
+.venv-test/

@@ -1,0 +1,3 @@
+# Test/dev dependencies — not shipped to the app runtime.
+-r requirements.txt
+pytest>=8.0,<9.0
