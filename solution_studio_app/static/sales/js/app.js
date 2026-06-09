@@ -696,7 +696,7 @@ function getGenieResponse(q) {
     return {
       html: `The AI has ranked <strong>12 accounts</strong> by expansion potential this week, with a combined uplift of <strong>${uplift}</strong>:<br><br>
         🥇 <strong>TechDyn Corporation</strong> — Recommend Premium Support + Actuator Module expansion. Confidence 91%, uplift <strong>$184K</strong>. Renewal in 90 days creates urgency.<br><br>
-        🥈 <strong>Vertex Manufacturing</strong> — Multi-year renewal + IoT Sensor Bundle. Confidence 87%, uplift <strong>$127K</strong>. High product usage growth signals appetite.<br><br>
+        🥈 <strong>Northwind Manufacturing</strong> — Multi-year renewal + IoT Sensor Bundle. Confidence 87%, uplift <strong>$127K</strong>. High product usage growth signals appetite.<br><br>
         🥉 <strong>Apex Systems</strong> — Service Contract + Hydraulic Manifold Suite. Confidence 82%, uplift <strong>$94K</strong>. They've been evaluating the manifold line for 60 days.<br><br>
         Shall I generate a quote for any of these accounts?`,
       followUps: ['Generate a quote for TechDyn Corporation expansion', "What is TechDyn's current product usage trend?", 'Which accounts have renewals coming up in 90 days?'],

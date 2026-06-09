@@ -63,7 +63,6 @@ committed.
 | `GOOGLE_CREDENTIALS_B64` | `google_credentials_b64` | Base64 GCP service-account JSON for Sheets logging |
 | `ANTHROPIC_API_KEY` | `anthropic_api_key` | Claude briefings + vertical classification |
 | `FIN_GOOGLE_API_KEY` | `fin_google_api_key` | Gemini finance briefings |
-| `LAKEBASE_DATABRICKS_TOKEN` | `lakebase_databricks_token` | Lakebase Postgres OAuth |
 
 All AI/logging features degrade gracefully (fallbacks) when their secret is
 absent, so the core lead-capture flow works without any of them.
@@ -85,7 +84,6 @@ databricks secrets put-secret  solution_studio session_secret_key
 databricks secrets put-secret  solution_studio google_credentials_b64   # rotated GCP key
 databricks secrets put-secret  solution_studio anthropic_api_key
 databricks secrets put-secret  solution_studio fin_google_api_key
-databricks secrets put-secret  solution_studio lakebase_databricks_token
 ```
 
 ### 2. Deploy and run

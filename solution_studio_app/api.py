@@ -1215,7 +1215,7 @@ def sales_pricing():
 def sales_quotes():
     quotes = [
         {"id": "QUOTE-2025-0892", "account": "TechDyn Corporation",       "product": "Industrial Pump Series A", "value": 127500, "stage": "Approval",     "close_date": "May 28"},
-        {"id": "QUOTE-2025-0887", "account": "Vertex Manufacturing",       "product": "Hydraulic Suite",          "value":  84200, "stage": "Negotiation",  "close_date": "Jun 2"},
+        {"id": "QUOTE-2025-0887", "account": "Northwind Manufacturing",       "product": "Hydraulic Suite",          "value":  84200, "stage": "Negotiation",  "close_date": "Jun 2"},
         {"id": "QUOTE-2025-0881", "account": "Apex Systems",               "product": "Valve Kit Bundle",         "value":  42600, "stage": "Sent",         "close_date": "Jun 5"},
         {"id": "QUOTE-2025-0876", "account": "CoreMfg Inc.",               "product": "Sensor Array Unit",        "value":  31800, "stage": "Draft",        "close_date": "Jun 10"},
         {"id": "QUOTE-2025-0871", "account": "Horizon Industrial",         "product": "Actuator Control Module",  "value":  63000, "stage": "Negotiation",  "close_date": "Jun 12"},
@@ -1240,7 +1240,7 @@ def sales_recommendations():
             "confidence": "91%",
         },
         {
-            "account":    "Vertex Manufacturing",
+            "account":    "Northwind Manufacturing",
             "arr":        "$840K",
             "csm":        "Sam R.",
             "priority":   "High",
@@ -1260,7 +1260,7 @@ def sales_recommendations():
     ]
     all_recos = [
         {"account": "TechDyn Corporation",     "tier": "Strategic",  "arr": "$1.2M",  "offer": "Premium Support + Actuator Expansion",    "uplift": "+$184K", "confidence": "91%", "churn": "Low"},
-        {"account": "Vertex Manufacturing",    "tier": "Enterprise", "arr": "$840K",  "offer": "3-Year Renewal + IoT Sensor Bundle",       "uplift": "+$127K", "confidence": "87%", "churn": "Low"},
+        {"account": "Northwind Manufacturing",    "tier": "Enterprise", "arr": "$840K",  "offer": "3-Year Renewal + IoT Sensor Bundle",       "uplift": "+$127K", "confidence": "87%", "churn": "Low"},
         {"account": "Apex Systems",            "tier": "Enterprise", "arr": "$560K",  "offer": "Service Contract + Hydraulic Suite",       "uplift": "+$94K",  "confidence": "82%", "churn": "Medium"},
         {"account": "Horizon Industrial",      "tier": "Enterprise", "arr": "$420K",  "offer": "Valve Kit Volume Expansion",               "uplift": "+$58K",  "confidence": "78%", "churn": "Medium"},
         {"account": "Summit Fabrication",      "tier": "Mid-Market", "arr": "$310K",  "offer": "Multi-Year Renewal + Filter Bundle",       "uplift": "+$42K",  "confidence": "75%", "churn": "Low"},
@@ -1285,7 +1285,7 @@ def sales_recommendations():
 def sales_accounts():
     accounts = [
         {"name": "TechDyn Corporation",     "tier": "Strategic",  "health": 88, "arr": "$1.2M",  "tickets": 2,  "renewal": "Aug 2025", "csm": "Jordan M.",  "risk": "Low"},
-        {"name": "Vertex Manufacturing",    "tier": "Enterprise", "health": 82, "arr": "$840K",  "tickets": 1,  "renewal": "Sep 2025", "csm": "Sam R.",     "risk": "Low"},
+        {"name": "Northwind Manufacturing",    "tier": "Enterprise", "health": 82, "arr": "$840K",  "tickets": 1,  "renewal": "Sep 2025", "csm": "Sam R.",     "risk": "Low"},
         {"name": "Apex Systems",            "tier": "Enterprise", "health": 74, "arr": "$560K",  "tickets": 3,  "renewal": "Oct 2025", "csm": "Taylor K.",  "risk": "Medium"},
         {"name": "CoreMfg Inc.",            "tier": "Enterprise", "health": 43, "arr": "$720K",  "tickets": 7,  "renewal": "Jul 2025", "csm": "Jordan M.",  "risk": "High"},
         {"name": "Horizon Industrial",      "tier": "Enterprise", "health": 79, "arr": "$420K",  "tickets": 2,  "renewal": "Nov 2025", "csm": "Sam R.",     "risk": "Medium"},

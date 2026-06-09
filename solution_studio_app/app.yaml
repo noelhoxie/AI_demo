@@ -13,7 +13,6 @@ command:
 #   databricks secrets put-secret solution_studio google_credentials_b64
 #   databricks secrets put-secret solution_studio anthropic_api_key
 #   databricks secrets put-secret solution_studio fin_google_api_key
-#   databricks secrets put-secret solution_studio lakebase_databricks_token
 #
 # NOTE: the GCP service-account key previously committed in this file must be
 # treated as compromised and ROTATED in GCP before the new value is stored.
@@ -52,13 +51,6 @@ resources:
       key: fin_google_api_key
       permission: READ
 
-  - name: secret-lakebase-token
-    description: Databricks token for Lakebase Postgres OAuth
-    secret:
-      scope: solution_studio
-      key: lakebase_databricks_token
-      permission: READ
-
 env:
   # ── Secrets (injected from the scope declared above) ────────────────────────
   - name: SECRET_KEY
@@ -69,8 +61,6 @@ env:
     valueFrom: secret-anthropic-api-key
   - name: FIN_GOOGLE_API_KEY
     valueFrom: secret-google-api-key
-  - name: LAKEBASE_DATABRICKS_TOKEN
-    valueFrom: secret-lakebase-token
 
   # ── Shared ──────────────────────────────────────────────────────────────────
   - name: DATABRICKS_HOST
@@ -81,18 +71,6 @@ env:
     value: ""
   - name: LOG_SHEET_ID
     value: "1IcUqjBdtb__MHmgozi2RgsVzmizN_SUZp0Fdt8ympDs"
-
-  # ── Lakebase ─────────────────────────────────────────────────────────────────
-  - name: LAKEBASE_HOST
-    value: "ep-fragrant-resonance-d2ojfexl.database.us-east-1.cloud.databricks.com"
-  - name: LAKEBASE_PORT
-    value: "5432"
-  - name: LAKEBASE_DB
-    value: "databricks_postgres"
-  - name: LAKEBASE_USER
-    value: "noel.hoxie@databricks.com"
-  - name: LAKEBASE_ENDPOINT
-    value: "projects/solution-studio-analytics/branches/production/endpoints/primary"
 
   # ── Supply Chain (/supply-chain/) ───────────────────────────────────────────
   - name: SC_GENIE_SPACE_ID
@@ -130,4 +108,4 @@ env:
   - name: FIN_CATALOG
     value: "solution_studio_catalog"
   - name: FIN_GOLD_SCHEMA
-    value: "duracell_finance_gold"
+    value: "finance_gold"
