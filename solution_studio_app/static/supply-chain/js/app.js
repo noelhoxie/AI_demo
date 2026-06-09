@@ -2643,17 +2643,7 @@ async function submitAi() {
     const source = isGenie
       ? '✅ Powered by Databricks AI'
       : (data.sources ? `Sources: ${data.sources.join(', ')}` : '✅ Powered by Databricks');
-    const msgEl = appendAiMsg('ai', data.answer, source, data.follow_ups || []);
-
-    // Fetch agentic recommendations based on the question + AI answer
-    fetch('/supply-chain/api/actions/suggest', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question, answer: data.answer }),
-    })
-      .then(r => r.json())
-      .then(actions => { if (actions.length) appendActionPanel(msgEl, actions); })
-      .catch(() => {});
+    appendAiMsg('ai', data.answer, source, data.follow_ups || []);
   } catch (e) {
     if (loading) { loading.classList.add('hidden'); loading.style.display = 'none'; }
     appendAiMsg('ai', 'Network error — please try again.');
@@ -2729,32 +2719,16 @@ function appendAiMsg(role, content, source, followUps) {
   wrap.appendChild(bubble);
 
   if (role === 'ai' && followUps && followUps.length) {
-    const row = document.createElement('div');
-    row.className = 'sc-panels-row';
-
-    const fupPanel = document.createElement('div');
-    fupPanel.className = 'fup-panel sc-panel-col';
-    fupPanel.innerHTML = `<div class="fup-panel-header">Suggested Questions</div>`;
-    const fupCards = document.createElement('div');
-    fupCards.className = 'fup-cards';
+    const pills = document.createElement('div');
+    pills.className = 'fup-pills';
     followUps.forEach(fu => {
-      const card = document.createElement('div');
-      card.className = 'fup-card';
-      card.innerHTML = `<div class="fup-card-text">${esc(fu)}</div><button class="fup-ask-btn">Ask →</button>`;
-      card.querySelector('.fup-ask-btn').onclick = () => {
-        document.getElementById('ai-input').value = fu;
-        submitAi();
-      };
-      fupCards.appendChild(card);
+      const pill = document.createElement('button');
+      pill.className = 'fup-pill';
+      pill.textContent = fu;
+      pill.onclick = () => { document.getElementById('ai-input').value = fu; submitAi(); };
+      pills.appendChild(pill);
     });
-    fupPanel.appendChild(fupCards);
-    row.appendChild(fupPanel);
-
-    const actionCol = document.createElement('div');
-    actionCol.className = 'sc-action-col sc-panel-col';
-    row.appendChild(actionCol);
-
-    wrap.appendChild(row);
+    wrap.appendChild(pills);
   }
 
   div.appendChild(av);

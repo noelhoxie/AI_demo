@@ -1712,7 +1712,7 @@ function clearFilters() {
 
 // ── Agentic Actions ───────────────────────────────────────────────────────────
 
-const TAB_LABELS = { floor: 'Live Floor', oee: 'OEE Analytics', downtime: 'Downtime', maintenance: 'Predictive Maintenance', quality: 'Quality Monitoring', shift: 'Ask AI' };
+const TAB_LABELS = { floor: 'Live Floor', oee: 'OEE Analytics', downtime: 'Downtime', maintenance: 'Predictive Maintenance', quality: 'Quality Monitoring', shift: 'Ask Genie' };
 
 // ── Image Lightbox ─────────────────────────────────────────────────────────────
 function openLightbox(src, label) {
@@ -2326,17 +2326,7 @@ async function submitShift() {
 
   if (data.conversation_id) shiftConvId = data.conversation_id;
 
-  const msgEl = appendMsg(thread, 'ai', data.answer, null, data.follow_ups || []);
-
-  // Agentic recommendations
-  fetch('/manufacturing/api/actions/suggest', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question: q, answer: data.answer }),
-  })
-    .then(r => r.json())
-    .then(actions => { if (actions.length) appendMfgActionPanel(msgEl, actions); })
-    .catch(() => {});
+  appendMsg(thread, 'ai', data.answer, null, data.follow_ups || []);
 
   btn.disabled = false;
   document.querySelector('.shift-chat-body').scrollTop = 99999;
@@ -2365,26 +2355,16 @@ function appendMsg(thread, role, content, source, followUps) {
   }
 
   if (followUps && followUps.length) {
-    const panel = document.createElement('div');
-    panel.className = 'fup-panel';
-    const hdr = document.createElement('div');
-    hdr.className = 'fup-panel-header';
-    hdr.innerHTML = `Suggested Questions`;
-    panel.appendChild(hdr);
-    const cards = document.createElement('div');
-    cards.className = 'fup-cards';
+    const pills = document.createElement('div');
+    pills.className = 'fup-pills';
     followUps.forEach(fu => {
-      const card = document.createElement('div');
-      card.className = 'fup-card';
-      card.innerHTML = `<div class="fup-card-text">${esc(fu)}</div><button class="fup-ask-btn">Ask →</button>`;
-      card.querySelector('.fup-ask-btn').onclick = () => {
-        document.getElementById('shift-input').value = fu;
-        submitShift();
-      };
-      cards.appendChild(card);
+      const pill = document.createElement('button');
+      pill.className = 'fup-pill';
+      pill.textContent = fu;
+      pill.onclick = () => { document.getElementById('shift-input').value = fu; submitShift(); };
+      pills.appendChild(pill);
     });
-    panel.appendChild(cards);
-    wrap.appendChild(panel);
+    wrap.appendChild(pills);
   }
 
   div.appendChild(av);

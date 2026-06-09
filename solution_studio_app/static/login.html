@@ -5,6 +5,14 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sign In — Design Studio</title>
+  <!-- Mobile redirect fallback: catches edge-case UAs (e.g. iPad with desktop UA) -->
+  <script>
+    (function() {
+      if (document.cookie.indexOf('prefer_desktop=') === -1 && window.innerWidth <= 768) {
+        location.replace('/mobile');
+      }
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -184,6 +192,28 @@
       line-height: 1.6;
     }
     .legal-text a { color: #374151; text-decoration: underline; }
+
+    /* Role selector */
+    .role-group { display: flex; gap: 8px; }
+    .role-btn {
+      flex: 1;
+      background: #0d0d0d;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 9px;
+      padding: 9px 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color .15s, color .15s, background .15s;
+      text-align: center;
+    }
+    .role-btn.active {
+      border-color: #1B6FEB;
+      color: #1B6FEB;
+      background: rgba(27,111,235,0.1);
+    }
   </style>
 </head>
 <body>
@@ -216,8 +246,17 @@
       <input type="text" id="password" name="password" placeholder="Acme Corp" required autocomplete="organization"/>
     </div>
     <div class="field">
-      <label for="email">Your Email</label>
-      <input type="email" id="email" name="email" placeholder="jane.smith@company.com" autocomplete="email"/>
+      <label>Your Role</label>
+      <div class="role-group">
+        <button type="button" class="role-btn active" data-role="business" onclick="selectRole(this)">Business</button>
+        <button type="button" class="role-btn" data-role="data" onclick="selectRole(this)">Data</button>
+        <button type="button" class="role-btn" data-role="other" onclick="selectRole(this)">Other</button>
+      </div>
+      <input type="hidden" id="role" name="role" value="business"/>
+    </div>
+    <div class="field">
+      <label for="email">Work Email</label>
+      <input type="email" id="email" name="email" placeholder="jane@company.com" autocomplete="email"/>
     </div>
     <button class="submit-btn" type="submit">Sign In</button>
   </form>
@@ -246,6 +285,14 @@
 </div>
 
 <script>
+  const PERSONAL_DOMAINS = ['gmail.com','googlemail.com','yahoo.com','yahoo.co.uk','hotmail.com','hotmail.co.uk','outlook.com','live.com','icloud.com','me.com','mac.com','aol.com','protonmail.com','protonmail.ch','msn.com','ymail.com','zoho.com'];
+
+  function selectRole(btn) {
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('role').value = btn.dataset.role;
+  }
+
   // Show error passed via URL param (set by server on failed login)
   const params = new URLSearchParams(window.location.search);
   const err = params.get('error');
@@ -260,6 +307,17 @@
     e.preventDefault();
     const form = e.target;
     const data = new FormData(form);
+    const emailVal = (data.get('email') || '').trim();
+    if (emailVal) {
+      const domain = emailVal.split('@')[1] || '';
+      if (PERSONAL_DOMAINS.includes(domain.toLowerCase())) {
+        const box = document.getElementById('error-box');
+        box.textContent = 'Please use your company email address, not a personal email (e.g. Gmail, Yahoo, Hotmail).';
+        box.style.display = 'block';
+        document.getElementById('email').focus();
+        return;
+      }
+    }
     const res  = await fetch('/login', { method: 'POST', body: data });
     if (res.redirected) {
       window.location.href = res.url;

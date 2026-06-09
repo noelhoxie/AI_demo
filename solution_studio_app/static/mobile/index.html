@@ -755,6 +755,29 @@
     .login-footer { margin-top: 24px; font-size: 11px; color: var(--text-3); text-align: center; line-height: 1.6; }
     .login-legal { margin-top: 12px; font-size: 10px; color: var(--text-3); text-align: center; line-height: 1.6; opacity: 0.6; padding: 0 8px; }
 
+    /* Role selector – mobile login */
+    .role-group { display: flex; gap: 8px; }
+    .role-btn {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-hi);
+      border-radius: 10px;
+      padding: 10px 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-3);
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color .15s, color .15s, background .15s;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .role-btn.active {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: rgba(27,111,235,0.07);
+    }
+
     /* ── Genie FAB ──────────────────────────── */
     @keyframes fab-pulse {
       0%, 100% { box-shadow: 0 4px 20px rgba(255,54,33,0.5), 0 0 0 2px rgba(255,54,33,0.2); }
@@ -1179,8 +1202,17 @@
         <input class="login-input" type="text" id="l-company" placeholder="Acme Corporation" required autocomplete="organization">
       </div>
       <div class="login-field">
-        <label class="login-label">Email <span class="login-opt">optional</span></label>
-        <input class="login-input" type="email" id="l-email" placeholder="jane@acme.com" autocomplete="email">
+        <label class="login-label">Your Role</label>
+        <div class="role-group">
+          <button type="button" class="role-btn active" data-role="business" onclick="mSelectRole(this)">Business</button>
+          <button type="button" class="role-btn" data-role="data" onclick="mSelectRole(this)">Data</button>
+          <button type="button" class="role-btn" data-role="other" onclick="mSelectRole(this)">Other</button>
+        </div>
+        <input type="hidden" id="l-role" value="business"/>
+      </div>
+      <div class="login-field">
+        <label class="login-label">Work Email <span class="login-opt">optional</span></label>
+        <input class="login-input" type="email" id="l-email" placeholder="jane@company.com" autocomplete="email">
       </div>
       <button type="submit" class="login-btn" id="login-btn">
         Explore Demo
@@ -1188,6 +1220,7 @@
       </button>
     </form>
     <div class="login-footer">Powered by Databricks</div>
+    <div style="text-align:center;margin-top:12px;"><a href="/prefer-desktop" style="font-size:11px;color:#888;text-decoration:underline;">View desktop site</a></div>
     <div class="login-legal">&copy; 2026 Databricks, Inc. This demo uses synthetic data for illustrative purposes only. Use of this app is subject to your Databricks Agreement. No warranties. No liability beyond $1,000.</div>
   </div>
 </div>
@@ -1593,8 +1626,50 @@ const fmt       = (n, d=1) => Number(n).toFixed(d);
 
 const TAB_LABELS = { mfg: 'Operational Excellence', sc: 'Supply Chain Control Tower', fin: 'Financial Intelligence', sales: 'Sales Optimization', exec: 'Executive Briefing' };
 
+// ── Analytics ─────────────────────────────────────────────────────────────────
+let _tabStartTime    = null;   // set after login
+let _subTabStartTime = null;
+const _tabClicks     = {};
+const _subTabClicks  = {};
+document.addEventListener('click', () => {
+  if (_tab) _tabClicks[_tab] = (_tabClicks[_tab] || 0) + 1;
+  const sub = _tab && _subTab[_tab];
+  if (sub) { const k = `${_tab}/${sub}`; _subTabClicks[k] = (_subTabClicks[k] || 0) + 1; }
+});
+
+function _sendPageTime(page, secs, clicks) {
+  if (secs < 1) return;
+  try {
+    const body = JSON.stringify({ type: 'page_time', page, seconds_spent: secs, click_count: clicks });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/mobile/api/log-event', new Blob([body], { type: 'application/json' }));
+    } else {
+      fetch('/mobile/api/log-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true }).catch(() => {});
+    }
+  } catch (_) {}
+}
+
+function _flushTabTime(tab) {
+  if (!tab || _tabStartTime === null) return;
+  const secs = Math.floor((Date.now() - _tabStartTime) / 1000);
+  const clicks = _tabClicks[tab] || 0;
+  _tabClicks[tab] = 0;
+  _sendPageTime(TAB_LABELS[tab] || tab, secs, clicks);
+}
+
+function _flushSubTabTime(main, sub) {
+  if (!main || !sub || _subTabStartTime === null) return;
+  const secs = Math.floor((Date.now() - _subTabStartTime) / 1000);
+  const k = `${main}/${sub}`;
+  const clicks = _subTabClicks[k] || 0;
+  _subTabClicks[k] = 0;
+  _sendPageTime(`${TAB_LABELS[main] || main} / ${sub}`, secs, clicks);
+}
+
 // ── Sub-tab switching ─────────────────────────────────────────────────────────
 function switchSubTab(main, sub) {
+  _flushSubTabTime(main, _subTab[main]);
+  _subTabStartTime = Date.now();
   _subTab[main] = sub;
   document.querySelectorAll(`#sub-nav-${main} .sub-nav-btn`).forEach(b =>
     b.classList.toggle('active', b.id === `sub-${main}-${sub}`)
@@ -1611,6 +1686,10 @@ function switchSubTab(main, sub) {
 
 // ── Main tab switching ────────────────────────────────────────────────────────
 function switchTab(tab, swipeDir) {
+  _flushSubTabTime(_tab, _subTab[_tab]);
+  _flushTabTime(_tab);
+  _tabStartTime    = Date.now();
+  _subTabStartTime = Date.now();
   _tab = tab;
   document.querySelectorAll('.tab-panel').forEach(p => {
     p.classList.remove('active', 'swipe-in-right', 'swipe-in-left');
@@ -3405,7 +3484,30 @@ function openStoryPopup() {
   overlay.classList.add('open');
 }
 
+// ── Flush analytics on page hide / close ─────────────────────────────────────
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    _flushSubTabTime(_tab, _subTab[_tab]);
+    _flushTabTime(_tab);
+    // Reset timers so we don't double-count if page becomes visible again
+    _tabStartTime    = Date.now();
+    _subTabStartTime = Date.now();
+  }
+});
+window.addEventListener('pagehide', () => {
+  _flushSubTabTime(_tab, _subTab[_tab]);
+  _flushTabTime(_tab);
+});
+
 // ── Login ─────────────────────────────────────────────────────────────────────
+const _PERSONAL_DOMAINS = ['gmail.com','googlemail.com','yahoo.com','yahoo.co.uk','hotmail.com','hotmail.co.uk','outlook.com','live.com','icloud.com','me.com','mac.com','aol.com','protonmail.com','protonmail.ch','msn.com','ymail.com','zoho.com'];
+
+function mSelectRole(btn) {
+  btn.closest('.role-group').querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('l-role').value = btn.dataset.role;
+}
+
 function _applyCompanyLogo() {
   if (!_companyLogoUrl) return;
   // Header top-left logo
@@ -3452,6 +3554,15 @@ async function submitLogin(e) {
   const name    = document.getElementById('l-name').value.trim();
   const company = document.getElementById('l-company').value.trim();
   const email   = document.getElementById('l-email').value.trim();
+  const role    = document.getElementById('l-role').value;
+  if (email) {
+    const domain = email.split('@')[1] || '';
+    if (_PERSONAL_DOMAINS.includes(domain.toLowerCase())) {
+      alert('Please use your company email address, not a personal email (e.g. Gmail, Yahoo, Hotmail).');
+      document.getElementById('l-email').focus();
+      return;
+    }
+  }
   const btn     = document.getElementById('login-btn');
   btn.disabled  = true;
   btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 0.7s linear infinite"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';
@@ -3459,11 +3570,14 @@ async function submitLogin(e) {
     const fd = new FormData();
     fd.append('username', name);
     fd.append('password', company);
+    fd.append('role', role);
     if (email) fd.append('email', email);
     await fetch('/login', { method: 'POST', body: fd, redirect: 'manual' });
     document.getElementById('app-title').textContent = company;
     document.title = company + ' — Solution Studio';
     _fetchCompanyLogo(company, email);
+    _tabStartTime    = Date.now();
+    _subTabStartTime = Date.now();
     const screen = document.getElementById('login-screen');
     screen.classList.add('out');
     setTimeout(() => { screen.style.display = 'none'; openTutorial(); }, 380);

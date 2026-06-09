@@ -219,7 +219,9 @@ async function loadTrend() {
 function renderTrendChart(rows, svgId, col1, col2) {
   const svg = document.getElementById(svgId);
   if (!svg) return;
-  const W = 460, H = 130, padL = 36, padR = 12, padT = 14, padB = 22;
+  const W = svg.clientWidth || 460, H = 160, padL = 36, padR = 12, padT = 14, padB = 22;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('height', H);
   const cw = W - padL - padR, ch = H - padT - padB, n = rows.length;
   const xs = i => padL + (i / (n - 1)) * cw;
   const v1 = rows.map(r => parseFloat(r.revenue_m || r.operating_cf) || 0);
@@ -315,15 +317,7 @@ async function sendMessage(overrideText) {
     });
     const d = await resp.json();
     removeMsg(typingId);
-    const msgEl = appendGenieAnswer(d);
-    // Agentic recommendations
-    fetch('/finance/api/actions/suggest', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question, answer: d.answer || '' }),
-    })
-      .then(r => r.json())
-      .then(actions => { if (actions.length && msgEl) appendFinActionPanel(msgEl, actions); })
-      .catch(() => {});
+    appendGenieAnswer(d);
   } catch (_) {
     removeMsg(typingId);
     appendMsg('system', 'Sorry, I couldn\'t reach the Genie space. Please try again.');
@@ -392,26 +386,16 @@ function appendGenieAnswer(d) {
 
   const followUps = d.follow_ups || [];
   if (followUps.length) {
-    const row = document.createElement('div');
-    row.className = 'fin-panels-row';
-    const fupPanel = document.createElement('div');
-    fupPanel.className = 'fup-panel fin-panel-col';
-    fupPanel.innerHTML = `<div class="fup-panel-header">Suggested Questions</div>`;
-    const fupCards = document.createElement('div');
-    fupCards.className = 'fup-cards';
+    const pills = document.createElement('div');
+    pills.className = 'fup-pills';
     followUps.forEach(fu => {
-      const card = document.createElement('div');
-      card.className = 'fup-card';
-      card.innerHTML = `<div class="fup-card-text">${escHtml(fu)}</div><button class="fup-ask-btn">Ask →</button>`;
-      card.querySelector('.fup-ask-btn').onclick = () => sendMessage(fu);
-      fupCards.appendChild(card);
+      const pill = document.createElement('button');
+      pill.className = 'fup-pill';
+      pill.textContent = fu;
+      pill.onclick = () => sendMessage(fu);
+      pills.appendChild(pill);
     });
-    fupPanel.appendChild(fupCards);
-    row.appendChild(fupPanel);
-    const actionCol = document.createElement('div');
-    actionCol.className = 'fin-action-col fin-panel-col';
-    row.appendChild(actionCol);
-    wrap.appendChild(row);
+    wrap.appendChild(pills);
   }
 
   div.appendChild(avatar);

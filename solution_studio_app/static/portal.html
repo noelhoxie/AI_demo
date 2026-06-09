@@ -379,7 +379,45 @@ function launch(url) {
   }
 }
 
+const MODULES = [
+  {
+    name: 'Operational Excellence',
+    tagline: 'Manufacturing',
+    desc: 'Real-time OEE, downtime pareto, predictive maintenance, and shift-level quality analytics across all plant lines.',
+    color: '#10b981',
+    url: '/manufacturing',
+    badge: 'Manufacturing',
+  },
+  {
+    name: 'Financial Intelligence',
+    tagline: 'Finance',
+    desc: 'P&L variance, working capital trends, cost management, and budget-vs-actuals with AI-powered anomaly detection.',
+    color: '#f59e0b',
+    url: '/finance',
+    badge: 'Finance',
+  },
+  {
+    name: 'Supply Chain Control Tower',
+    tagline: 'Supply Chain',
+    desc: 'IBP planning, inventory optimization, logistics tracking, and demand forecasting across your supplier network.',
+    color: '#1B6FEB',
+    url: '/supply-chain',
+    badge: 'Supply Chain',
+  },
+  {
+    name: 'Sales Intelligence',
+    tagline: 'Sales',
+    desc: 'Dynamic pricing, CPQ optimization, next-best-offer recommendations, and revenue pipeline analytics.',
+    color: '#6366f1',
+    url: '/sales',
+    badge: 'Sales',
+  },
+];
+
 async function init() {
+  // Render the 4 hardcoded modules immediately
+  renderCards(MODULES);
+
   try {
     const d = await (await fetch('/api/config')).json();
 
@@ -412,20 +450,7 @@ async function init() {
         })
         .catch(() => {});
     }
-
-    // Show vertical-specific headline
-    if (d.portal_headline) {
-      const hl = document.getElementById('portal-headline');
-      hl.textContent = d.portal_headline;
-      hl.style.display = 'block';
-    }
-
-    // Render app cards
-    if (d.apps && d.apps.length) renderCards(d.apps);
-  } catch (e) {
-    document.getElementById('cards-grid').innerHTML =
-      `<div style="color:#6b7280;font-size:14px;padding:32px 0;">Could not load app configuration. Please refresh.</div>`;
-  }
+  } catch (_) {}
 }
 
 init();

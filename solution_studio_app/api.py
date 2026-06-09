@@ -651,8 +651,20 @@ def _j(base, pct=0.02):
 # PORTAL ROUTES
 # ══════════════════════════════════════════════════════════════════════════════
 
+_MOBILE_UA_TOKENS = ('Mobile', 'Android', 'iPhone', 'iPod', 'webOS', 'BlackBerry', 'Windows Phone')
+
+def _is_mobile_request() -> bool:
+    """True when the User-Agent looks like a phone/small-tablet."""
+    if request.cookies.get('prefer_desktop'):
+        return False
+    ua = request.headers.get('User-Agent', '')
+    return any(t in ua for t in _MOBILE_UA_TOKENS)
+
+
 @app.route("/")
 def index():
+    if _is_mobile_request():
+        return redirect("/mobile")
     if not session.get("authenticated"):
         return redirect("/login")
     return redirect("/portal")
@@ -661,6 +673,8 @@ def index():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "GET":
+        if _is_mobile_request():
+            return redirect("/mobile")
         auto_user    = request.args.get("auto_user", "").strip()
         auto_company = request.args.get("auto_company", "").strip()
         if auto_user and auto_company:
@@ -676,6 +690,7 @@ def login():
     username     = (request.form.get("username") or "").strip()
     company_name = (request.form.get("password") or "").strip()
     email        = (request.form.get("email")    or "").strip()
+    role         = (request.form.get("role")     or "").strip()
     if username and company_name:
         session["authenticated"] = True
         session["username"]      = username
@@ -684,9 +699,11 @@ def login():
         session["vertical"]      = vertical
         if email and email != "other":
             session["email"] = email
+        if role:
+            session["role"] = role
         _sheets_log_write({"type": "login", "username": username,
                            "company_name": company_name, "email": email,
-                           "app_name": "Design Studio"})
+                           "role": role, "app_name": "Design Studio"})
         threading.Thread(target=_warm_warehouse, daemon=True).start()
         return redirect(_get_post_login_redirect(vertical))
     return send_from_directory(str(STATIC_DIR), "login.html"), 401
@@ -695,7 +712,17 @@ def login():
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect("/login")
+    resp = redirect("/login")
+    resp.delete_cookie('prefer_desktop')
+    return resp
+
+
+@app.route("/prefer-desktop")
+def prefer_desktop():
+    """Set a cookie so mobile UA users can opt into the desktop app."""
+    resp = redirect("/login")
+    resp.set_cookie('prefer_desktop', '1', max_age=60 * 60 * 24 * 30)  # 30 days
+    return resp
 
 
 @app.route("/health")
@@ -1012,6 +1039,18 @@ def mobile_log_event():
 
     if etype == "question":
         _sheets_log_question(user, company, f"Mobile / {page}", detail, answer, tokens)
+    elif etype == "page_time":
+        seconds = int(data.get("seconds_spent", 0))
+        clicks  = int(data.get("click_count",  0))
+        _delta_log_write(
+            f"INSERT INTO {LOG_CATALOG}.{LOG_SCHEMA}.page_time_log "
+            "(username, company_name, page, seconds_spent, click_count, app_name, recorded_at) "
+            "VALUES (%s, %s, %s, %s, %s, %s, current_timestamp())",
+            (user, company, page, seconds, clicks, "Mobile Dashboard"),
+        )
+        _sheets_log_write({"type": "page_view", "username": user, "company_name": company,
+                           "page": page, "seconds_spent": seconds, "click_count": clicks,
+                           "app_name": "Mobile Dashboard"})
     else:
         _sheets_log_write({
             "type":         f"mobile_{etype}",

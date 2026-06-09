@@ -894,9 +894,10 @@
       <div class="shift-input-area">
         <div class="shift-input-inner">
           <div class="shift-form">
-            <textarea class="shift-textarea" id="shift-input" rows="2"
-              placeholder="Ask about OEE, downtime root cause, quality trends, machine health, production forecast…"></textarea>
-            <button class="shift-btn" id="shift-btn" onclick="submitShift()">Ask AI</button>
+            <textarea class="shift-textarea" id="shift-input" rows="2" placeholder=""></textarea>
+            <button class="shift-btn" id="shift-btn" onclick="submitShift()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
           </div>
           <div class="shift-hint">Connected to <strong>auto_mfg_catalog — Databricks IoT Pipeline</strong> · Cmd+Enter to submit</div>
         </div>
@@ -1020,7 +1021,7 @@
             <div style="font-size:11px;color:#6b7280;line-height:1.4;">Defect tracking, FPY &amp; inspection results</div>
           </div>
           <div onclick="switchTab('shift');dismissTutorial()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s;" onmouseover="this.style.borderColor='#1B6FEB';this.style.background='rgba(27,111,235,0.1)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';this.style.background='rgba(255,255,255,0.05)'">
-            <div style="font-size:13px;font-weight:700;color:#f0f0f0;margin-bottom:3px;">Ask AI</div>
+            <div style="font-size:13px;font-weight:700;color:#f0f0f0;margin-bottom:3px;">Ask Genie</div>
             <div style="font-size:11px;color:#6b7280;line-height:1.4;">Natural language queries on live plant data</div>
           </div>
         </div>

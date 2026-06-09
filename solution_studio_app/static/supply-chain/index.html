@@ -739,9 +739,10 @@
       <div class="ai-input-area">
         <div class="ai-input-inner">
           <div class="ai-form">
-            <textarea class="ai-textarea" id="ai-input" rows="2"
-              placeholder="Ask about S&OP, inventory positions, demand forecasts, order automation…"></textarea>
-            <button class="ai-btn" id="ai-btn" onclick="submitAi()">Ask AI</button>
+            <textarea class="ai-textarea" id="ai-input" rows="2" placeholder=""></textarea>
+            <button class="ai-btn" id="ai-btn" onclick="submitAi()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
           </div>
           <div class="ai-hint">Connected to <strong>supply_chain_catalog — Databricks Delta Lake</strong> · Cmd+Enter to submit</div>
           <div id="genie-diag" class="hidden" style="margin-top:10px;padding:12px 14px;background:var(--bg-2);border:1px solid var(--border-1);border-radius:8px;font-size:12px;font-family:monospace;white-space:pre-wrap;color:var(--text-2);max-height:200px;overflow:auto;"></div>

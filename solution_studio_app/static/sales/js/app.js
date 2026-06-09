@@ -635,14 +635,7 @@ async function triggerGenieResponse(question) {
     _genieTyping = false;
     const html     = data.answer || data.error || 'No answer returned.';
     const followUps = data.follow_ups || [];
-    const wrapEl   = addGenieBotMsg(html, followUps);
-    fetch('/sales/api/actions/suggest', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question, answer: html }),
-    })
-      .then(r => r.json())
-      .then(actions => { if (actions.length) appendGenieActions(wrapEl, actions); })
-      .catch(() => {});
+    addGenieBotMsg(html, followUps);
   } catch (e) {
     typRow.remove();
     _genieTyping = false;
@@ -757,32 +750,16 @@ function addGenieBotMsg(html, followUps) {
   wrap.appendChild(bubble);
 
   if (followUps && followUps.length) {
-    const panelsRow = document.createElement('div');
-    panelsRow.className = 'genie-panels-row';
-
-    const fupPanel = document.createElement('div');
-    fupPanel.className = 'fup-panel genie-panel-col';
-    fupPanel.innerHTML = `<div class="fup-panel-header">Suggested Questions</div>`;
-    const fupCards = document.createElement('div');
-    fupCards.className = 'fup-cards';
+    const pills = document.createElement('div');
+    pills.className = 'fup-pills';
     followUps.forEach(fu => {
-      const card = document.createElement('div');
-      card.className = 'fup-card';
-      card.innerHTML = `<div class="fup-card-text">${esc(fu)}</div><button class="fup-ask-btn">Ask →</button>`;
-      card.querySelector('.fup-ask-btn').onclick = () => {
-        const inp = document.getElementById('genie-input');
-        if (inp) inp.value = fu;
-        sendGenieMsg();
-      };
-      fupCards.appendChild(card);
+      const pill = document.createElement('button');
+      pill.className = 'fup-pill';
+      pill.textContent = fu;
+      pill.onclick = () => { const inp = document.getElementById('genie-input'); if (inp) inp.value = fu; sendGenieMsg(); };
+      pills.appendChild(pill);
     });
-    fupPanel.appendChild(fupCards);
-    panelsRow.appendChild(fupPanel);
-
-    const actionCol = document.createElement('div');
-    actionCol.className = 'genie-action-col genie-panel-col';
-    panelsRow.appendChild(actionCol);
-    wrap.appendChild(panelsRow);
+    wrap.appendChild(pills);
   }
 
   row.appendChild(avt);
