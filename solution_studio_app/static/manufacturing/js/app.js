@@ -2344,7 +2344,10 @@ function appendMsg(thread, role, content, source, followUps) {
 
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
-  bubble.innerHTML = role === 'ai' ? marked.parse(content) : esc(content);
+  const _parsed = role === 'ai' ? marked.parse(content) : null;
+  bubble.innerHTML = role === 'ai'
+    ? ((typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(_parsed) : _parsed)
+    : esc(content);
   wrap.appendChild(bubble);
 
   if (source) {
@@ -2546,7 +2549,8 @@ function appendManualsMessage(role, content, extraHtml = '') {
   const bubble = document.createElement('div');
   bubble.className = 'manuals-bubble';
   if (role === 'ai' && typeof marked !== 'undefined') {
-    bubble.innerHTML = marked.parse(content) + extraHtml;
+    const raw = marked.parse(content) + extraHtml;
+    bubble.innerHTML = (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(raw) : raw;
   } else {
     bubble.textContent = content;
     if (extraHtml) bubble.insertAdjacentHTML('beforeend', extraHtml);

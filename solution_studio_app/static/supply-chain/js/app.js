@@ -2712,7 +2712,8 @@ function appendAiMsg(role, content, source, followUps) {
   const bubble = document.createElement('div');
   bubble.className = 'ai-bubble';
   if (role === 'ai' && typeof marked !== 'undefined') {
-    bubble.innerHTML = marked.parse(content);
+    const raw = marked.parse(content);
+    bubble.innerHTML = (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(raw) : raw;
   } else {
     bubble.textContent = content;
   }

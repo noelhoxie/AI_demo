@@ -20,6 +20,9 @@ from pathlib import Path
 
 import requests
 from flask import Flask, jsonify, redirect, request, send_from_directory, session
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 try:
     from databricks import sql as dbsql
@@ -40,6 +43,22 @@ BASE_DIR   = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
 
 app = Flask(__name__, static_folder=str(STATIC_DIR), static_url_path="")
+# Trust one layer of reverse-proxy headers (Azure Front Door / Azure App Service).
+# This makes Flask use X-Forwarded-Host and X-Forwarded-Proto when building
+# redirect URLs, so trailing-slash redirects use the correct public hostname
+# (mfg.databricks-demo.com) and scheme (https) rather than the backend origin.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+# Rate limiter — in-memory per worker. Protects AI/LLM endpoints from
+# request floods and API credit exhaustion.  With --workers 2 the effective
+# limit is 2× the configured value; acceptable for a demo environment. For
+# production replace storage_uri with a shared Redis instance.
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[],          # no default; limits are set per-route
+    storage_uri="memory://",
+)
 
 # Session signing key. Set SECRET_KEY (a Databricks app secret) so sessions stay
 # valid across gunicorn workers and restarts. Without it we generate a random
@@ -62,6 +81,32 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE", "true").lower() != "false",
 )
+
+# ── Security response headers ───────────────────────────────────────────────────
+_CSP = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline' "
+        "https://cdn.jsdelivr.net https://unpkg.com; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com; "
+    "img-src 'self' data: https:; "
+    "connect-src 'self' https://autocomplete.clearbit.com; "
+    "frame-ancestors 'none'; "
+    "object-src 'none'; "
+    "base-uri 'self';"
+)
+
+@app.after_request
+def _security_headers(response):
+    response.headers["X-Content-Type-Options"]  = "nosniff"
+    response.headers["X-Frame-Options"]          = "SAMEORIGIN"
+    response.headers["Referrer-Policy"]          = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"]       = "geolocation=(), microphone=(), camera=()"
+    response.headers["Content-Security-Policy"]  = _CSP
+    if request.is_secure:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+
 
 # ── Shared env vars ─────────────────────────────────────────────────────────────
 DATABRICKS_HOST = os.getenv("DATABRICKS_HOST", "")
@@ -862,6 +907,7 @@ def _mobile_genie_ask(host, hdrs, space_id, question, conversation_id=None):
 
 
 @app.route("/mobile/api/ask", methods=["POST"])
+@limiter.limit("30/minute")
 def mobile_ask():
     """Genie-powered AI assistant for the mobile dashboard, falls back to Claude Haiku."""
     data            = request.get_json(force=True, silent=True) or {}
@@ -931,6 +977,7 @@ def mobile_ask():
 
 
 @app.route("/mobile/api/exec-briefing", methods=["POST"])
+@limiter.limit("15/minute")
 def mobile_exec_briefing():
     """Generate a Claude-powered executive briefing for CEO, CFO, or COO."""
     data    = request.get_json(silent=True) or {}
@@ -1352,8 +1399,9 @@ def sales_suggest_actions():
 
 @app.route("/sales/api/genie/ask", methods=["POST"])
 @login_required
+@limiter.limit("30/minute")
 def sales_genie_ask():
-    question = (request.get_json() or {}).get("question", "").strip()
+    question = (request.get_json() or {}).get("question", "").strip()[:2000]
     if not question:
         return jsonify({"error": "question required"}), 400
     if not SALES_GENIE_SPACE_ID:
@@ -1770,9 +1818,10 @@ _ACTIONS = [
 
 @app.route("/supply-chain/api/ai-chat", methods=["POST"])
 @login_required
+@limiter.limit("30/minute")
 def sc_ai_chat():
     data     = request.get_json(silent=True) or {}
-    question = (data.get("question") or "").strip()
+    question = (data.get("question") or "").strip()[:2000]
     if not question:
         return jsonify({"error": "question required"}), 400
     if SC_GENIE_SPACE_ID:
@@ -2542,9 +2591,10 @@ def mfg_diagnose(machine_id):
 
 @app.route("/manufacturing/api/ask", methods=["POST"])
 @login_required
+@limiter.limit("30/minute")
 def mfg_ask():
     data            = request.get_json(force=True) or {}
-    question        = data.get("question", "").strip()
+    question        = data.get("question", "").strip()[:2000]
     conversation_id = data.get("conversation_id") or None
     if not question:
         return jsonify({"error": "No question provided"}), 400
@@ -3053,9 +3103,10 @@ def _mfg_manual_fallback_answer(question: str) -> dict:
 
 @app.route("/manufacturing/api/manuals-query", methods=["POST"])
 @login_required
+@limiter.limit("30/minute")
 def mfg_manuals_query():
     data     = request.get_json(silent=True) or {}
-    question = (data.get("question") or "").strip()
+    question = (data.get("question") or "").strip()[:2000]
     if not question:
         return jsonify({"error": "question is required"}), 400
     try:
@@ -3463,6 +3514,7 @@ def fin_cost_centers():
 
 @app.route("/finance/api/gemini/briefing", methods=["POST"])
 @login_required
+@limiter.limit("15/minute")
 def fin_gemini_briefing():
     ok, pl_rows = _fin_sql(f"""
         SELECT business_unit, region,
@@ -3487,8 +3539,9 @@ def fin_gemini_briefing():
 
 @app.route("/finance/api/genie/ask", methods=["POST"])
 @login_required
+@limiter.limit("30/minute")
 def fin_genie_ask():
-    question = (request.get_json() or {}).get("question", "").strip()
+    question = (request.get_json() or {}).get("question", "").strip()[:2000]
     if not question:
         return jsonify({"error": "question required"}), 400
 
