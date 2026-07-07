@@ -1,0 +1,11 @@
+frontend/node_modules/
+frontend/src/
+frontend/.npmrc
+frontend/bun.lock
+frontend/tsconfig.json
+frontend/vite.config.ts
+frontend/tailwind.config.js
+frontend/postcss.config.js
+__pycache__/
+*.pyc
+.git/

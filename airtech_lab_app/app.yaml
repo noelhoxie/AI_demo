@@ -1,0 +1,29 @@
+command:
+  - gunicorn
+  - "--bind"
+  - "0.0.0.0:$DATABRICKS_APP_PORT"
+  - "--workers"
+  - "2"
+  - "--timeout"
+  - "180"
+  - api:app
+
+resources:
+  - name: sql-warehouse
+    sql_warehouse:
+      id: "23720e4bb845c623"
+      permission: CAN_USE
+
+env:
+  - name: DATABRICKS_HOST
+    value: https://fevm-demo-nah.cloud.databricks.com
+  - name: DATABRICKS_WAREHOUSE_ID
+    value: 23720e4bb845c623
+  - name: DATABRICKS_CATALOG
+    value: nah_demo
+  - name: DATABRICKS_SCHEMA
+    value: airtech_lab_bronze
+
+  # Supabase PostgreSQL (session pooler — port 5432, best for multi-worker gunicorn)
+  - name: DATABASE_URL
+    value: ""  # Set via environment variable on your hosting platform — do not commit credentials

@@ -1,0 +1,18 @@
+bundle:
+  name: airtech-lab-intelligence
+
+resources:
+  apps:
+    airtech_lab:
+      name: airtech-lab
+      source_code_path: .
+      description: >
+        Airtech Lab Intelligence Platform — bronze layer machine readings,
+        manual enhancement overlay, Claude AI success-probability predictions,
+        and technician leaderboard / test queue management.
+
+targets:
+  dev:
+    default: true
+    workspace:
+      host: https://fevm-demo-nah.cloud.databricks.com
